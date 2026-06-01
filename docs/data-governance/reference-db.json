@@ -1,0 +1,285 @@
+{
+  "meta": {
+    "name": "Uncharted Waters 2 remake data governance database",
+    "version": 1,
+    "createdFor": "QCaine13/uncharted-waters-2",
+    "updated": "2026-06-01",
+    "format": "plain JSON for source control review",
+    "policy": "Research references and implementation data are tracked separately."
+  },
+  "sources": [
+    {
+      "id": "src-current",
+      "label": "Current repository data",
+      "url": "src/data",
+      "language": "en",
+      "sourceType": "implementation",
+      "useFor": ["current-state", "code-alignment"],
+      "confidence": "high",
+      "notes": "Authoritative for what the current browser remake actually implements."
+    },
+    {
+      "id": "gcgx-dkj2",
+      "label": "GCGX Daikoukai Jidai II strategy and analysis",
+      "url": "https://gcgx.games/dkj2/",
+      "language": "ja",
+      "sourceType": "strategy-analysis",
+      "useFor": ["ports", "trade", "ships", "items", "sailors", "discoveries", "walkthroughs"],
+      "confidence": "high",
+      "notes": "Most structured source found for original-game systems."
+    },
+    {
+      "id": "offlinedaikoukai-wiki",
+      "label": "Offline Daikoukai series wiki",
+      "url": "https://w.atwiki.jp/offlinedaikoukai/",
+      "language": "ja",
+      "sourceType": "community-wiki",
+      "useFor": ["strategy", "balance", "ships", "sailors", "trade"],
+      "confidence": "medium",
+      "notes": "Useful for player practice and interpretation."
+    },
+    {
+      "id": "gamefaqs-new-horizons",
+      "label": "GameFAQs New Horizons guides",
+      "url": "https://gamefaqs.gamespot.com/pc/564431-new-horizons/faqs",
+      "language": "en",
+      "sourceType": "walkthrough-archive",
+      "useFor": ["english-names", "walkthroughs", "maps"],
+      "confidence": "medium",
+      "notes": "Good for cross-checking English-version names and walkthrough order."
+    },
+    {
+      "id": "koei-wiki-trading",
+      "label": "Koei Wiki trading data",
+      "url": "https://koei.fandom.com/wiki/Uncharted_Waters%3A_New_Horizons/Trading_Data",
+      "language": "en",
+      "sourceType": "wiki",
+      "useFor": ["trade", "market-terminology"],
+      "confidence": "medium",
+      "notes": "Helpful secondary source for trading-system language."
+    },
+    {
+      "id": "cn-character-guide",
+      "label": "Chinese full character walkthrough",
+      "url": "https://www.top10bit.com/dai-koukai-jidai-2-guide/",
+      "language": "zh",
+      "sourceType": "walkthrough",
+      "useFor": ["story", "chinese-terms"],
+      "confidence": "medium",
+      "notes": "Useful for protagonist event flow and Chinese naming conventions."
+    },
+    {
+      "id": "cn-port-list",
+      "label": "Chinese port list",
+      "url": "https://blog.sina.com.cn/s/blog_590a34ba0100vyut.html",
+      "language": "zh",
+      "sourceType": "data-table",
+      "useFor": ["ports", "specialties", "coordinates", "facilities", "black-market-items"],
+      "confidence": "medium",
+      "notes": "Useful for Chinese port names and quick port-facility checks."
+    },
+    {
+      "id": "cn-marked-map",
+      "label": "Marked world map reference",
+      "url": "https://www.usold.cn/post/333.html",
+      "language": "zh",
+      "sourceType": "map-reference",
+      "useFor": ["ports", "supply-ports", "discoveries", "coordinates"],
+      "confidence": "medium",
+      "notes": "Useful when building coordinate and discovery datasets."
+    }
+  ],
+  "entityTypes": [
+    {
+      "id": "port",
+      "label": "Port",
+      "canonicalIdPrefix": "port",
+      "currentSourceFiles": ["src/data/portData.ts"],
+      "targetFields": ["id", "names.en", "names.zh", "names.ja", "position", "coordinates", "regionId", "marketId", "economy", "industry", "allegiances", "facilities", "specialtyGoodId", "blackMarketItemId", "sourceRefs"],
+      "notes": "Split regular ports and supply ports while keeping one canonical port namespace."
+    },
+    {
+      "id": "building",
+      "label": "Building",
+      "canonicalIdPrefix": "building",
+      "currentSourceFiles": ["src/data/buildingData.ts"],
+      "targetFields": ["id", "names.en", "names.zh", "names.ja", "options", "openingHours", "implementationStatus", "sourceRefs"],
+      "notes": "Current menu labels are hard-coded English and should become localization keys."
+    },
+    {
+      "id": "trade-good",
+      "label": "Trade Good",
+      "canonicalIdPrefix": "good",
+      "currentSourceFiles": [],
+      "targetFields": ["id", "names.en", "names.zh", "names.ja", "category", "basePrice", "requiredCommerce", "regions", "specialtyPorts", "sourceRefs"],
+      "notes": "Not yet implemented as its own table."
+    },
+    {
+      "id": "ship",
+      "label": "Ship",
+      "canonicalIdPrefix": "ship",
+      "currentSourceFiles": ["src/data/shipData.ts", "src/data/portShipyardData.ts"],
+      "targetFields": ["id", "names.en", "names.zh", "names.ja", "stats", "availability", "industryRequirement", "recommendedUses", "sourceRefs"],
+      "notes": "Current data is implementation-ready but needs localization and source verification."
+    },
+    {
+      "id": "item",
+      "label": "Item",
+      "canonicalIdPrefix": "item",
+      "currentSourceFiles": ["src/data/itemData.ts"],
+      "targetFields": ["id", "names.en", "names.zh", "names.ja", "categoryId", "price", "rating", "effect", "availability", "sourceRefs"],
+      "notes": "Current data has categories and prices, but item effects and shop availability are incomplete."
+    },
+    {
+      "id": "sailor",
+      "label": "Sailor",
+      "canonicalIdPrefix": "sailor",
+      "currentSourceFiles": ["src/data/sailorData.ts"],
+      "targetFields": ["id", "names.en", "names.zh", "names.ja", "age", "stats", "skills", "startingLocation", "recruitmentConditions", "sourceRefs"],
+      "notes": "Current implementation only includes Joao, Rocco, and Enrico."
+    },
+    {
+      "id": "character",
+      "label": "Dialog Character",
+      "canonicalIdPrefix": "char",
+      "currentSourceFiles": ["src/data/characterData.ts"],
+      "targetFields": ["id", "names.en", "names.zh", "names.ja", "dialogColor", "linkedSailorId", "sourceRefs"],
+      "notes": "Dialog characters and sailors currently overlap but are separate tables."
+    },
+    {
+      "id": "discovery",
+      "label": "Discovery",
+      "canonicalIdPrefix": "discovery",
+      "currentSourceFiles": [],
+      "targetFields": ["id", "names.en", "names.zh", "names.ja", "type", "coordinates", "nearestPortId", "reward", "fameReward", "sourceRefs"],
+      "notes": "Missing system. Should be added after port/coordinate normalization."
+    },
+    {
+      "id": "story-event",
+      "label": "Story Event",
+      "canonicalIdPrefix": "event",
+      "currentSourceFiles": ["src/interface/quest/questData.ts"],
+      "targetFields": ["id", "protagonist", "trigger", "location", "messages", "rewards", "stateChanges", "sourceRefs"],
+      "notes": "Current quest data is UI-oriented and should eventually be normalized."
+    }
+  ],
+  "currentDatasets": [
+    {
+      "id": "current-regular-ports",
+      "entityType": "port",
+      "sourceFile": "src/data/portData.ts",
+      "recordCount": 130,
+      "status": "implemented",
+      "qualityNotes": ["English names only", "Tilemap positions present", "Real-world coordinates not represented", "Facility data is encoded as building positions"]
+    },
+    {
+      "id": "current-supply-ports",
+      "entityType": "port",
+      "sourceFile": "src/data/portData.ts",
+      "recordCount": 12,
+      "status": "implemented",
+      "qualityNotes": ["Supply ports are separate from regular ports", "Need unified canonical port IDs"]
+    },
+    {
+      "id": "current-buildings",
+      "entityType": "building",
+      "sourceFile": "src/data/buildingData.ts",
+      "recordCount": 12,
+      "status": "implemented-partial-ui",
+      "qualityNotes": ["Menu labels are hard-coded English", "Opening hours are not data-driven", "Several building commands are disabled or unimplemented"]
+    },
+    {
+      "id": "current-regions",
+      "entityType": "region",
+      "sourceFile": "src/data/portExtraData.ts",
+      "recordCount": 8,
+      "status": "implemented",
+      "qualityNotes": ["Used for sphere of influence", "Needs localization"]
+    },
+    {
+      "id": "current-markets",
+      "entityType": "market",
+      "sourceFile": "src/data/portExtraData.ts",
+      "recordCount": 13,
+      "status": "implemented-as-labels",
+      "qualityNotes": ["Market labels exist", "Trade goods and prices are not implemented yet"]
+    },
+    {
+      "id": "current-ships",
+      "entityType": "ship",
+      "sourceFile": "src/data/shipData.ts",
+      "recordCount": 25,
+      "status": "implemented",
+      "qualityNotes": ["English names only", "Stats used by speed and shipyard UI", "Availability partly handled by shipyard type"]
+    },
+    {
+      "id": "current-shipyard-availability",
+      "entityType": "ship",
+      "sourceFile": "src/data/portShipyardData.ts",
+      "recordCount": 11,
+      "status": "implemented",
+      "qualityNotes": ["Shipyard types map to ships and industry requirements", "Needs cross-check with original guide data"]
+    },
+    {
+      "id": "current-items",
+      "entityType": "item",
+      "sourceFile": "src/data/itemData.ts",
+      "recordCount": 70,
+      "status": "implemented-partial",
+      "qualityNotes": ["English names and descriptions only", "Effects are not fully modeled", "Shop and black-market availability need normalization"]
+    },
+    {
+      "id": "current-sailors",
+      "entityType": "sailor",
+      "sourceFile": "src/data/sailorData.ts",
+      "recordCount": 3,
+      "status": "implemented-minimal",
+      "qualityNotes": ["Only Joao, Rocco, and Enrico are present", "Recruitment locations and conditions are missing"]
+    },
+    {
+      "id": "current-dialog-characters",
+      "entityType": "character",
+      "sourceFile": "src/data/characterData.ts",
+      "recordCount": 8,
+      "status": "implemented-minimal",
+      "qualityNotes": ["Dialog-only table", "Needs linkage to sailors and story roles"]
+    }
+  ],
+  "normalizationTargets": [
+    {
+      "id": "normalize-port-catalog",
+      "priority": 1,
+      "description": "Create a canonical port catalog with English, Chinese, and Japanese names plus source references.",
+      "dependsOn": ["current-regular-ports", "current-supply-ports", "cn-port-list", "gcgx-dkj2"],
+      "output": "src/data/portCatalogData.ts or docs/data-governance/entities/ports.json"
+    },
+    {
+      "id": "create-trade-good-catalog",
+      "priority": 2,
+      "description": "Build the missing trade-good table from original-game references.",
+      "dependsOn": ["normalize-port-catalog", "gcgx-dkj2", "koei-wiki-trading"],
+      "output": "src/data/tradeGoodData.ts"
+    },
+    {
+      "id": "localize-building-menus",
+      "priority": 3,
+      "description": "Replace hard-coded building option labels with stable localization keys.",
+      "dependsOn": ["current-buildings"],
+      "output": "src/data/localizationData.ts"
+    },
+    {
+      "id": "verify-ship-catalog",
+      "priority": 4,
+      "description": "Cross-check current ship stats and shipyard availability against guide data.",
+      "dependsOn": ["current-ships", "current-shipyard-availability", "gcgx-dkj2"],
+      "output": "docs/data-governance/audits/ships.md"
+    },
+    {
+      "id": "model-discoveries",
+      "priority": 5,
+      "description": "Create a discovery catalog with coordinates, rewards, and report targets.",
+      "dependsOn": ["normalize-port-catalog", "cn-marked-map", "gcgx-dkj2"],
+      "output": "src/data/discoveryData.ts"
+    }
+  ]
+}

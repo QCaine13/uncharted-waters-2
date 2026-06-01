@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/uw2-data-governance.schema.json",
+  "title": "UW2 Data Governance Mini Database",
+  "type": "object",
+  "required": ["meta", "sources", "entityTypes", "currentDatasets", "normalizationTargets"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["name", "version", "createdFor", "updated"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "integer" },
+        "createdFor": { "type": "string" },
+        "updated": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "url", "language", "sourceType", "useFor"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "url": { "type": "string" },
+          "language": { "type": "string" },
+          "sourceType": { "type": "string" },
+          "useFor": { "type": "array", "items": { "type": "string" } },
+          "confidence": { "type": "string" },
+          "notes": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "entityTypes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "canonicalIdPrefix", "currentSourceFiles", "targetFields"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "canonicalIdPrefix": { "type": "string" },
+          "currentSourceFiles": { "type": "array", "items": { "type": "string" } },
+          "targetFields": { "type": "array", "items": { "type": "string" } },
+          "notes": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "currentDatasets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "entityType", "sourceFile", "recordCount", "status", "qualityNotes"],
+        "properties": {
+          "id": { "type": "string" },
+          "entityType": { "type": "string" },
+          "sourceFile": { "type": "string" },
+          "recordCount": { "type": "integer" },
+          "status": { "type": "string" },
+          "qualityNotes": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    },
+    "normalizationTargets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "priority", "description", "dependsOn"],
+        "properties": {
+          "id": { "type": "string" },
+          "priority": { "type": "integer" },
+          "description": { "type": "string" },
+          "dependsOn": { "type": "array", "items": { "type": "string" } },
+          "output": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
