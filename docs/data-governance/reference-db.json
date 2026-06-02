@@ -168,7 +168,7 @@
       "id": "current-regular-ports",
       "entityType": "port",
       "sourceFile": "src/data/portData.ts",
-      "recordCount": 130,
+      "recordCount": 100,
       "status": "implemented",
       "qualityNotes": ["English names only", "Tilemap positions present", "Real-world coordinates not represented", "Facility data is encoded as building positions"]
     },
@@ -176,7 +176,7 @@
       "id": "current-supply-ports",
       "entityType": "port",
       "sourceFile": "src/data/portData.ts",
-      "recordCount": 12,
+      "recordCount": 30,
       "status": "implemented",
       "qualityNotes": ["Supply ports are separate from regular ports", "Need unified canonical port IDs"]
     },

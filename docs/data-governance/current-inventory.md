@@ -7,8 +7,8 @@ checked-out source as of 2026-06-01.
 
 | Dataset | File | Count | Status |
 | --- | --- | ---: | --- |
-| Regular ports | `src/data/portData.ts` | 130 | Implemented |
-| Supply ports | `src/data/portData.ts` | 12 | Implemented |
+| Regular ports | `src/data/portData.ts` | 100 | Implemented |
+| Supply ports | `src/data/portData.ts` | 30 | Implemented |
 | Buildings | `src/data/buildingData.ts` | 12 | Partial UI |
 | Regions | `src/data/portExtraData.ts` | 8 | Implemented |
 | Markets | `src/data/portExtraData.ts` | 13 | Labels only |

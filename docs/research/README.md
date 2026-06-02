@@ -60,6 +60,10 @@ implemented in this codebase.
 - [data-targets.md](data-targets.md): data tables we should build or expand.
 - [story-outline.md](story-outline.md): six-protagonist story outline and
   current repo coverage.
+- [world-map-modernization.md](world-map-modernization.md): setting anchors,
+  map expansion layers, and modernization principles.
+- [port-expansion-strategy.md](port-expansion-strategy.md): target port count,
+  port classes, and Asia/China expansion priorities.
 - [implementation-plan.md](implementation-plan.md): practical phases for using
   the research in this repo.
 
