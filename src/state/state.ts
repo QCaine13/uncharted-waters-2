@@ -54,9 +54,23 @@ export interface State {
 
 export const SAVED_STATE_KEY = 'savedState';
 
-const savedState = JSON.parse(
-  window.localStorage.getItem(SAVED_STATE_KEY) || '{}',
-);
+const loadSavedState = (): Partial<State> => {
+  try {
+    const raw = window.localStorage.getItem(SAVED_STATE_KEY);
+    if (!raw) return {};
+
+    const parsed = JSON.parse(raw);
+    // Only use saved data if it has a valid version
+    if (parsed && parsed.version === 1) {
+      return parsed;
+    }
+    return {};
+  } catch {
+    return {};
+  }
+};
+
+const savedState = loadSavedState();
 
 const state = {
   portId: '1',

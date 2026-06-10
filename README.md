@@ -21,13 +21,17 @@ employers see my code.
 - Walking around in any of the 130 ports and entering their buildings.
 - Sailing around the world map, where your speed takes into account all the
   factors of the original game.
+- **Save / Load** system — progress is persisted to `localStorage` with
+  auto-save on key actions (trading, docking, buying ships, etc.) and a
+  manual System menu (Save / Load / Reset).
+- **Market trading** — buy and sell 24 trade goods across 13 market
+  regions. Each region has local supply (cheap) and demand (expensive)
+  goods, enabling the classic buy-low-sell-high trade routes.
 
 This game can be played at [https://johan.li/uncharted-waters-2/](https://johan.li/uncharted-waters-2/).
 
 #### Next up on the roadmap
 
-- Markets
-  - Trade goods, taking into account price indices.
 - Shipyards
   - Buy and remodel used ships.
 - Pubs
@@ -73,7 +77,5 @@ The interface alone is too simple to warrant using Redux.
 
 #### Future considerations
 
-- Players need the ability to save and resume: State, and some local state,
-  needs to be serialized and stored in localStorage, on a server, or both.
 - Using a service worker so the game can be played offline.
 - Pathfinding for NPC fleets.

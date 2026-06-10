@@ -11,6 +11,7 @@ import Bank from './bank/Bank';
 import Church from './Church';
 import ItemShop from './ItemShop';
 import Pub from './Pub';
+import Market from './Market';
 
 interface Props {
   buildingId: string;
@@ -18,6 +19,10 @@ interface Props {
 
 export default function Building({ buildingId }: Props) {
   const { options } = buildings[buildingId];
+
+  if (buildingId === '1') {
+    return <Market />;
+  }
 
   if (buildingId === '2') {
     return <Pub />;

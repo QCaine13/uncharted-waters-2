@@ -8,6 +8,7 @@ import { minutesUntilNextMorning } from '../interface/interfaceUtils';
 import type { QuestId } from '../interface/quest/questData';
 import { getPlayerFleet, getPlayerFleetShip } from './selectorsFleet';
 import { itemData, ItemId } from '../data/itemData';
+import { save } from './saveLoad';
 
 export const updateGeneral = () => {
   updateInterface.general({
@@ -40,6 +41,7 @@ export const exitBuilding = (sleep = false) => {
   }
 
   updateGeneral();
+  save();
 };
 
 export const getAvailableSailorId = () =>
@@ -82,6 +84,7 @@ export const buyUsedShip = (id: string, shipName: string) => {
   delete usedShip[id];
 
   updateGeneral();
+  save();
 };
 
 export const SELL_SHIP_MODIFIER = 0.5;
@@ -113,6 +116,7 @@ export const sellShipNumber = (shipNumber: number) => {
   }
 
   updateGeneral();
+  save();
 };
 
 export const provisionCost: { [key in Provisions]: number } = {
@@ -151,10 +155,12 @@ export const supplyShip = (
   state.gold -= provisionCost[provision] * quantity;
 
   updateGeneral();
+  save();
 };
 
 export const completeQuest = (id: QuestId) => {
   state.quests.push(id);
+  save();
 };
 
 export const receiveGold = (amount: number) => {
@@ -189,6 +195,7 @@ export const receiveFirstShip = () => {
   });
 
   updateGeneral();
+  save();
 };
 
 export const recruitRocco = () => {
@@ -196,6 +203,7 @@ export const recruitRocco = () => {
     sailorId: '32',
     role: null,
   });
+  save();
 };
 
 export const recruitEnrico = () => {
@@ -203,6 +211,7 @@ export const recruitEnrico = () => {
     sailorId: '33',
     role: null,
   });
+  save();
 };
 
 export const assignFirstRoles = () => {
@@ -216,9 +225,10 @@ export const assignFirstRoles = () => {
 
   /*
     In the original game, no check is done before assigning Rocco and Enrico their roles.
-    If you hand them ships, they’ll be assigned First Mate and Bookkeeper while still
+    If you hand them ships, they'll be assigned First Mate and Bookkeeper while still
     remaining as captains (allowing them to captain 2 ships each).
    */
+  save();
 };
 
 export const deposit = (amount: number) => {
@@ -226,6 +236,7 @@ export const deposit = (amount: number) => {
   state.gold -= amount;
 
   updateGeneral();
+  save();
 };
 
 export const withdraw = (amount: number) => {
@@ -233,6 +244,7 @@ export const withdraw = (amount: number) => {
   state.gold += amount;
 
   updateGeneral();
+  save();
 };
 
 export const borrow = (amount: number) => {
@@ -240,6 +252,7 @@ export const borrow = (amount: number) => {
   state.gold += amount;
 
   updateGeneral();
+  save();
 };
 
 export const repay = (amount: number) => {
@@ -247,6 +260,7 @@ export const repay = (amount: number) => {
   state.gold -= amount;
 
   updateGeneral();
+  save();
 };
 
 // TODO implement luck
@@ -257,6 +271,7 @@ export const donate = (amount: number) => {
   state.gold -= amount;
 
   updateGeneral();
+  save();
 
   return percent;
 };
@@ -275,6 +290,7 @@ export const buyItem = (id: ItemId, gift = false) => {
   state.items.push(id);
 
   updateGeneral();
+  save();
 
   return true;
 };
@@ -289,6 +305,7 @@ export const sellItem = (i: number) => {
   state.items.splice(i, 1);
 
   updateGeneral();
+  save();
 
   return true;
 };
@@ -303,6 +320,7 @@ export const recruitCrew = (amount: number) => {
 
   for (let i = 0; i < ships.length; i += 1) {
     if (!remaining) {
+      save();
       return;
     }
 
@@ -319,4 +337,5 @@ export const recruitCrew = (amount: number) => {
   state.gold -= amount * CREW_COST;
 
   updateGeneral();
+  save();
 };

@@ -14,6 +14,7 @@ import Fleet from './Fleet';
 import Popover from './common/Popover';
 import Items from './Items';
 import Mates from './Mates';
+import System from './System';
 
 interface Props {
   portId: string | null;
@@ -69,6 +70,11 @@ export default function Left({
           </Popover>
         </div>
       )}
+      <div className="select-none">
+        <Popover label="System">
+          <System />
+        </Popover>
+      </div>
       <div className="p-5 text-right">
         <Sound portId={portId} buildingId={buildingId} />
       </div>

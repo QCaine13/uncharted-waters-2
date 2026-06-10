@@ -4,6 +4,8 @@ import createPort from '../game/port/port';
 import Input from '../input';
 import updateInterface from './updateInterface';
 import { updateGeneral } from './actionsPort';
+import { save } from './saveLoad';
+import type { Provisions } from '../game/world/fleets';
 import {
   getCurrent,
   getIsSummer,
@@ -42,6 +44,8 @@ export const dock = (position: Position) => {
   state.dayAtSea = 0;
   updateInterface.dayAtSea(state.dayAtSea);
 
+  save();
+
   return true;
 };
 
@@ -58,7 +62,7 @@ const updateProvisions = () => {
   playerFleet.ships.forEach((ship) => {
     ship.cargo.forEach((item) => {
       if (item.type in provisions) {
-        provisions[item.type] += item.quantity;
+        provisions[item.type as Provisions] += item.quantity;
       }
     });
   });
@@ -130,4 +134,5 @@ export const setSail = () => {
 
   updateGeneral();
   updateProvisions();
+  save();
 };
