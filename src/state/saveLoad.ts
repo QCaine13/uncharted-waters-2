@@ -1,6 +1,7 @@
 import state, { SAVED_STATE_KEY, State } from './state';
+import { migrate, SAVE_VERSION } from './saveMigrations';
 
-export const SAVE_VERSION = 1;
+export { SAVE_VERSION };
 
 interface SaveData {
   version: number;
@@ -16,6 +17,7 @@ interface SaveData {
   debt: State['debt'];
   items: State['items'];
   mates: State['mates'];
+  fame: State['fame'];
 }
 
 export const save = (): void => {
@@ -33,6 +35,7 @@ export const save = (): void => {
     debt: state.debt,
     items: [...state.items],
     mates: JSON.parse(JSON.stringify(state.mates)),
+    fame: { ...state.fame },
   };
 
   window.localStorage.setItem(SAVED_STATE_KEY, JSON.stringify(saveData));
@@ -45,15 +48,18 @@ export const load = (): boolean => {
     return false;
   }
 
-  let saveData: SaveData;
+  let parsed: unknown;
 
   try {
-    saveData = JSON.parse(raw);
+    parsed = JSON.parse(raw);
   } catch {
     return false;
   }
 
-  if (!saveData || saveData.version !== SAVE_VERSION) {
+  // Upgrade older saves through the migration chain instead of rejecting them.
+  const saveData = migrate(parsed as Record<string, unknown>) as SaveData | null;
+
+  if (!saveData) {
     return false;
   }
 
@@ -69,6 +75,7 @@ export const load = (): boolean => {
   state.debt = saveData.debt;
   state.items = saveData.items;
   state.mates = saveData.mates;
+  state.fame = saveData.fame;
 
   // Clear non-serializable objects so game loop recreates them
   state.world = undefined as unknown as State['world'];
