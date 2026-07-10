@@ -14,6 +14,12 @@ describe('Shipyard', () => {
       portId: '2',
       buildingId: '3',
       gold: 2000,
+      usedShipsAtPort: {
+        '2': {
+          'balsa-1': '1',
+          'balsa-2': '1',
+        },
+      },
       fleets: {
         '1': {
           position: undefined,
@@ -45,10 +51,6 @@ describe('Shipyard', () => {
   });
 
   it('used ship', () => {
-    cy.window().then((win) => {
-      cy.stub(win.Math, 'random').returns(0);
-    });
-
     clickMenu('Used Ship');
 
     clickMenu2('Balsa');
@@ -119,6 +121,12 @@ describe('Shipyard', () => {
       portId: '2',
       buildingId: '3',
       gold: 2000,
+      usedShipsAtPort: {
+        '2': {
+          'balsa-1': '1',
+          'balsa-2': '1',
+        },
+      },
       fleets: {
         '1': {
           position: undefined,
@@ -141,10 +149,6 @@ describe('Shipyard', () => {
       ],
     });
     cy.reload();
-
-    cy.window().then((win) => {
-      cy.stub(win.Math, 'random').returns(0);
-    });
 
     clickMenu('Used Ship');
 
