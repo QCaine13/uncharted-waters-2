@@ -7,6 +7,7 @@ const PNG_SIGNATURE = Buffer.from([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
 ]);
 const OGG_SIGNATURE = Buffer.from('OggS', 'ascii');
+const MP3_ID3_SIGNATURE = Buffer.from('ID3', 'ascii');
 
 const validateAssetBuffer = (filePath, buffer) => {
   if (buffer.subarray(0, LFS_SIGNATURE.length).toString() === LFS_SIGNATURE) {
@@ -24,11 +25,18 @@ const validateAssetBuffer = (filePath, buffer) => {
   ) {
     return `${filePath}: invalid Ogg signature`;
   }
+  if (
+    path.extname(filePath) === '.mp3' &&
+    !buffer.subarray(0, MP3_ID3_SIGNATURE.length).equals(MP3_ID3_SIGNATURE) &&
+    !(buffer[0] === 0xff && (buffer[1] & 0xe0) === 0xe0)
+  ) {
+    return `${filePath}: invalid MP3 signature`;
+  }
   return null;
 };
 
 const getTrackedAssetPaths = () =>
-  execFileSync('git', ['ls-files', '-z', '--', '*.png', '*.ogg'])
+  execFileSync('git', ['ls-files', '-z', '--', '*.png', '*.ogg', '*.mp3'])
     .toString()
     .split('\0')
     .filter(Boolean);
@@ -45,7 +53,7 @@ const main = (paths = getTrackedAssetPaths()) => {
     return 1;
   }
 
-  process.stdout.write(`Verified ${paths.length} PNG/OGG assets.\n`);
+  process.stdout.write(`Verified ${paths.length} PNG/OGG/MP3 assets.\n`);
   return 0;
 };
 

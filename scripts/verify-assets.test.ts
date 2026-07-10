@@ -10,6 +10,35 @@ describe('asset preflight', () => {
     expect(validateAssetBuffer('music.ogg', ogg)).toBeNull();
   });
 
+  test('accepts an MP3 ID3 header', () => {
+    expect(
+      validateAssetBuffer('music.mp3', Buffer.from('ID3', 'ascii')),
+    ).toBeNull();
+  });
+
+  test('accepts an MP3 MPEG frame sync', () => {
+    expect(
+      validateAssetBuffer('music.mp3', Buffer.from([0xff, 0xe0])),
+    ).toBeNull();
+  });
+
+  test('rejects an invalid MP3 signature', () => {
+    expect(validateAssetBuffer('music.mp3', Buffer.from('not mp3'))).toContain(
+      'invalid MP3 signature',
+    );
+  });
+
+  test('rejects an MP3 Git LFS pointer before format validation', () => {
+    const pointer = Buffer.from(
+      'version https://git-lfs.github.com/spec/v1\n' +
+        'oid sha256:abc\nsize 123\n',
+    );
+
+    expect(validateAssetBuffer('music.mp3', pointer)).toContain(
+      'Git LFS pointer',
+    );
+  });
+
   test('rejects pointers and invalid signatures', () => {
     const pointer = Buffer.from(
       'version https://git-lfs.github.com/spec/v1\n' +

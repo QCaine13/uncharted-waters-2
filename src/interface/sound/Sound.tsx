@@ -14,7 +14,7 @@ import supplyPort from './assets/supply-port.ogg';
 import emptyEyes from './assets/empty-eyes.ogg';
 import theMahout from './assets/the-mahout.ogg';
 import landOfLuxury from './assets/land-of-luxury.ogg';
-import moslemDance from './assets/moslem-dance.ogg';
+import moslemDance from './assets/moslem-dance.mp3';
 
 /*
   https://developer.mozilla.org/en-US/docs/Web/Media/Autoplay_guide

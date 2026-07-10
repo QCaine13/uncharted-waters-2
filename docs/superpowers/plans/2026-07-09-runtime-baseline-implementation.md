@@ -22,7 +22,7 @@
 
 **Create:**
 
-- `scripts/verify-assets.js` — validate tracked PNG/OGG content.
+- `scripts/verify-assets.js` — validate tracked PNG/OGG/MP3 content.
 - `scripts/verify-assets.test.ts` — preflight unit tests.
 - `.github/workflows/baseline.yml` — project-owned CI.
 - `tests/e2e/smoke.cy.ts` — production/João smoke test.
@@ -34,9 +34,13 @@
 **Modify:** `package.json`, `package-lock.json`, `tests/utils.ts`,
 `src/state/selectors.ts`, `src/state/actionsPort.ts`,
 `src/interface/port/harbor/HarborSupplyInput.tsx`,
-`src/interface/common/Confirm.tsx`, `README.md`, `docs/README.md`,
+`src/interface/common/Confirm.tsx`, `src/interface/sound/Sound.tsx`, `README.md`,
+`docs/README.md`,
 `docs/4-engineering/README.md`, and
 `docs/5-data-governance/current-inventory.md`.
+
+**Rename:** `src/interface/sound/assets/moslem-dance.ogg` to
+`src/interface/sound/assets/moslem-dance.mp3` without transcoding.
 
 **Delete:** `.github/workflows/tests.yml`.
 
@@ -48,7 +52,11 @@
 
 - Create: `scripts/verify-assets.js`
 - Create: `scripts/verify-assets.test.ts`
-- Modify: `package.json`
+- Modify: `package.json`, `src/interface/sound/Sound.tsx`
+- Modify: `docs/superpowers/specs/2026-07-09-runtime-baseline-design.md`
+- Modify: `docs/superpowers/plans/2026-07-09-runtime-baseline-implementation.md`
+- Rename: `src/interface/sound/assets/moslem-dance.ogg` to
+  `src/interface/sound/assets/moslem-dance.mp3`
 
 **Interfaces:**
 
@@ -72,6 +80,35 @@ describe('asset preflight', () => {
 
     expect(validateAssetBuffer('sprite.png', png)).toBeNull();
     expect(validateAssetBuffer('music.ogg', ogg)).toBeNull();
+  });
+
+  test('accepts an MP3 ID3 header', () => {
+    expect(
+      validateAssetBuffer('music.mp3', Buffer.from('ID3', 'ascii')),
+    ).toBeNull();
+  });
+
+  test('accepts an MP3 MPEG frame sync', () => {
+    expect(
+      validateAssetBuffer('music.mp3', Buffer.from([0xff, 0xe0])),
+    ).toBeNull();
+  });
+
+  test('rejects an invalid MP3 signature', () => {
+    expect(validateAssetBuffer('music.mp3', Buffer.from('not mp3'))).toContain(
+      'invalid MP3 signature',
+    );
+  });
+
+  test('rejects an MP3 Git LFS pointer before format validation', () => {
+    const pointer = Buffer.from(
+      'version https://git-lfs.github.com/spec/v1\n' +
+        'oid sha256:abc\nsize 123\n',
+    );
+
+    expect(validateAssetBuffer('music.mp3', pointer)).toContain(
+      'Git LFS pointer',
+    );
   });
 
   test('rejects pointers and invalid signatures', () => {
@@ -113,6 +150,7 @@ const PNG_SIGNATURE = Buffer.from([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
 ]);
 const OGG_SIGNATURE = Buffer.from('OggS', 'ascii');
+const MP3_ID3_SIGNATURE = Buffer.from('ID3', 'ascii');
 
 const validateAssetBuffer = (filePath, buffer) => {
   if (buffer.subarray(0, LFS_SIGNATURE.length).toString() === LFS_SIGNATURE) {
@@ -130,11 +168,18 @@ const validateAssetBuffer = (filePath, buffer) => {
   ) {
     return `${filePath}: invalid Ogg signature`;
   }
+  if (
+    path.extname(filePath) === '.mp3' &&
+    !buffer.subarray(0, MP3_ID3_SIGNATURE.length).equals(MP3_ID3_SIGNATURE) &&
+    !(buffer[0] === 0xff && (buffer[1] & 0xe0) === 0xe0)
+  ) {
+    return `${filePath}: invalid MP3 signature`;
+  }
   return null;
 };
 
 const getTrackedAssetPaths = () =>
-  execFileSync('git', ['ls-files', '-z', '--', '*.png', '*.ogg'])
+  execFileSync('git', ['ls-files', '-z', '--', '*.png', '*.ogg', '*.mp3'])
     .toString()
     .split('\0')
     .filter(Boolean);
@@ -151,7 +196,7 @@ const main = (paths = getTrackedAssetPaths()) => {
     return 1;
   }
 
-  process.stdout.write(`Verified ${paths.length} PNG/OGG assets.\n`);
+  process.stdout.write(`Verified ${paths.length} PNG/OGG/MP3 assets.\n`);
   return 0;
 };
 
@@ -166,13 +211,14 @@ Add `"verify:assets": "node scripts/verify-assets.js"` to `package.json`.
 
 Run `npx jest scripts/verify-assets.test.ts --runInBand`.
 
-Expected: 2 tests PASS.
+Expected: 6 tests PASS, including valid and invalid MP3 coverage.
 
 - [ ] **Step 5: Prove the current checkout is rejected before hydration**
 
 Run `npm run verify:assets`.
 
-Expected: non-zero exit with every pointer reported as `Git LFS pointer was not hydrated`.
+Expected: non-zero exit with every tracked PNG/OGG/MP3 pointer reported as
+`Git LFS pointer was not hydrated`.
 
 - [ ] **Step 6: Install and hydrate Git LFS**
 
@@ -191,7 +237,8 @@ npm run verify:assets
 git status --short
 ```
 
-Expected: preflight exits 0; assets are not modified; `docs/Chatlog copy.rtf` remains untracked.
+Expected: preflight exits 0 with `Verified 38 PNG/OGG/MP3 assets.`; hydrated
+asset contents are not modified; `docs/Chatlog copy.rtf` remains untracked.
 
 - [ ] **Step 8: Commit**
 
@@ -199,6 +246,37 @@ Expected: preflight exits 0; assets are not modified; `docs/Chatlog copy.rtf` re
 git add package.json scripts/verify-assets.js scripts/verify-assets.test.ts
 git diff --cached --check
 git commit -m "build: verify hydrated media assets"
+```
+
+#### Post-hydration resolution approved 2026-07-10
+
+Hydration proved that the authoritative LFS object at
+`src/interface/sound/assets/moslem-dance.ogg` contains MPEG Layer III bytes. The
+user selected方案 A: preserve those bytes, rename the tracked file to
+`moslem-dance.mp3`, and update the application import. Do not transcode or
+replace the remote object.
+
+- [ ] Add a new focused RED/GREEN cycle proving that `.mp3` validation accepts
+  `ID3` and MPEG frame-sync headers, rejects invalid bytes, and reports an LFS
+  pointer before format-specific validation.
+- [ ] Extend tracked-asset enumeration and success output to include MP3.
+- [ ] Use `git mv` for the hydrated binary rename and update
+  `src/interface/sound/Sound.tsx` to import the `.mp3` path.
+- [ ] Update this plan and the approved design only where their asset lists,
+  validator scope, affected files, and expected output changed.
+- [ ] Run the focused Jest test, full Jest suite, and `npm run verify:assets`.
+  Expected: all tests pass and the preflight prints
+  `Verified 38 PNG/OGG/MP3 assets.`
+- [ ] Commit the resolution separately:
+
+```bash
+git add scripts/verify-assets.js scripts/verify-assets.test.ts \
+  src/interface/sound/Sound.tsx \
+  src/interface/sound/assets/moslem-dance.mp3 \
+  docs/superpowers/specs/2026-07-09-runtime-baseline-design.md \
+  docs/superpowers/plans/2026-07-09-runtime-baseline-implementation.md
+git diff --cached --check
+git commit -m "fix: align mislabeled audio asset"
 ```
 
 ---
@@ -844,7 +922,7 @@ Create `docs/superpowers/verification/2026-07-09-runtime-baseline-verification.m
 with:
 
 - date, branch, and verified commit SHA;
-- `git lfs version` and the actual PNG/OGG asset count;
+- `git lfs version` and the actual PNG/OGG/MP3 asset count;
 - Jest suite/test counts;
 - TypeScript, ESLint, and Webpack outcomes, including non-fatal warnings;
 - Cypress browser, spec count, and test count;

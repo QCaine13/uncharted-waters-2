@@ -19,7 +19,7 @@ pipeline locally and in this repository's own GitHub Actions workflow.
 
 This phase includes:
 
-1. Restore the PNG and OGG objects managed by Git LFS.
+1. Restore the PNG, OGG, and MP3 objects managed by Git LFS.
 2. Add an explicit asset preflight that rejects Git LFS pointer files.
 3. Replace the inherited CI workflow with a new project-owned baseline workflow.
 4. Replace the broken E2E shell command with a reliable server lifecycle.
@@ -54,7 +54,12 @@ expansion do not become one unreviewable change.
 ### 4.1 Local restoration
 
 Git LFS will be installed through Homebrew, initialized for the current user, and
-used to pull the objects referenced by the current `origin` remote. Tracked asset
+used to pull the objects referenced by the current `origin` remote.
+
+Hydration established that the authoritative object tracked as
+`src/interface/sound/assets/moslem-dance.ogg` contains MPEG Layer III audio. On
+2026-07-10, the user approved renaming that path to `moslem-dance.mp3` without
+transcoding the binary and updating its application import. Other tracked asset
 paths and `.gitattributes` remain unchanged.
 
 The restored resources are local working-tree content, not new binary revisions.
@@ -66,10 +71,11 @@ Add `scripts/verify-assets.js` and expose it as `npm run verify:assets`.
 
 The verifier will:
 
-- enumerate tracked `.png` and `.ogg` files used by the application;
+- enumerate tracked `.png`, `.ogg`, and `.mp3` files used by the application;
 - reject files beginning with the Git LFS pointer signature;
 - verify the PNG magic bytes for `.png` files;
 - verify an Ogg container header for `.ogg` files;
+- verify either an ID3 header or MPEG frame sync for `.mp3` files;
 - report every invalid path in one run;
 - exit non-zero if any asset is missing or invalid.
 
@@ -153,7 +159,8 @@ Add focused tests proving:
 - invalid, fractional, negative, or excessive supply requests are atomic no-ops;
 - successful supply requests update cargo and gold once;
 - `Confirm` registers and removes matching global listeners;
-- the asset verifier accepts valid fixture headers and rejects LFS pointer data.
+- the asset verifier accepts valid PNG, Ogg, and MP3 fixture headers and rejects
+  invalid signatures and LFS pointer data.
 
 Tests will be written before the corresponding production change and observed
 failing for the intended reason.
@@ -207,7 +214,7 @@ Store final command results and deferred issues in
 
 The phase is complete only when:
 
-- all tracked PNG/OGG files are hydrated and pass the asset verifier;
+- all tracked PNG/OGG/MP3 files are hydrated and pass the asset verifier;
 - a production browser session reaches João's opening scene;
 - all existing and new Jest tests pass;
 - TypeScript and ESLint pass with zero errors;
