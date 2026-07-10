@@ -4,8 +4,11 @@ import createPort from '../game/port/port';
 import Input from '../input';
 import updateInterface from './updateInterface';
 import { updateGeneral } from './actionsPort';
+import {
+  refreshProvisionInterface,
+  settleDailyProvisions,
+} from './actionsProvisions';
 import { save } from './saveLoad';
-import { getProvisionSummary } from './provisions';
 import {
   getCurrent,
   getIsSummer,
@@ -14,7 +17,6 @@ import {
 } from '../game/world/windCurrent';
 import { START_DATE } from '../constants';
 import {
-  getTimeOfDay,
   positionAdjacentToPort,
   shouldUpdateWorldStatus,
 } from './selectors';
@@ -49,12 +51,6 @@ export const dock = (position: Position) => {
   return true;
 };
 
-const updateProvisions = () => {
-  const playerFleet = state.fleets[1];
-
-  updateInterface.provisions(getProvisionSummary(playerFleet.ships));
-};
-
 export const updateWorldStatus = () => {
   const { position } = state.fleets['1'];
 
@@ -76,18 +72,23 @@ export const updateWorldStatus = () => {
   });
 };
 
-export const worldTimeTick = () => {
-  state.timePassed += 20;
+export const worldTimeTick = (minutes = 20) => {
+  const previousDay = Math.floor(state.timePassed / 1440);
+  state.timePassed += minutes;
 
   if (shouldUpdateWorldStatus()) {
     updateWorldStatus();
   }
 
-  if (getTimeOfDay() === 0) {
+  const currentDay = Math.floor(state.timePassed / 1440);
+  const daysCrossed = currentDay - previousDay;
+
+  if (daysCrossed > 0) {
     updateGeneral();
 
-    state.dayAtSea += 1;
+    state.dayAtSea += daysCrossed;
     updateInterface.dayAtSea(state.dayAtSea);
+    settleDailyProvisions(daysCrossed);
   }
 };
 
@@ -118,6 +119,6 @@ export const setSail = () => {
   Input.reset();
 
   updateGeneral();
-  updateProvisions();
+  refreshProvisionInterface();
   save();
 };
