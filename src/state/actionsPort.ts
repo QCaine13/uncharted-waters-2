@@ -6,7 +6,11 @@ import { shipData } from '../data/shipData';
 import { Provisions, Ship } from '../game/world/fleets';
 import { minutesUntilNextMorning } from '../interface/interfaceUtils';
 import type { QuestId } from '../interface/quest/questData';
-import { getPlayerFleet, getPlayerFleetShip } from './selectorsFleet';
+import {
+  getAvailableSpace,
+  getPlayerFleet,
+  getPlayerFleetShip,
+} from './selectorsFleet';
 import { itemData, ItemId } from '../data/itemData';
 import { save } from './saveLoad';
 
@@ -126,36 +130,45 @@ export const provisionCost: { [key in Provisions]: number } = {
   shot: 120,
 };
 
+export const getSupplyLimit = (
+  shipNumber: number,
+  provision: Provisions,
+): number => {
+  const ship = state.fleets['1']?.ships[shipNumber];
+  if (!ship) return 0;
+
+  const availableSpace = getAvailableSpace(shipNumber);
+  const unitCost = provisionCost[provision];
+  const affordable =
+    unitCost === 0 ? availableSpace : Math.floor(state.gold / unitCost);
+
+  return Math.max(0, Math.min(availableSpace, affordable));
+};
+
 export const supplyShip = (
   shipNumber: number,
   provision: Provisions,
   quantity: number,
-) => {
-  const { cargo } = state.fleets['1'].ships[shipNumber];
-
-  const notNew = cargo.some((item) => {
-    if (item.type === provision) {
-      // eslint-disable-next-line no-param-reassign
-      item.quantity += quantity;
-      return true;
-    }
-
+): boolean => {
+  if (
+    !Number.isFinite(quantity) ||
+    !Number.isInteger(quantity) ||
+    quantity <= 0 ||
+    quantity > getSupplyLimit(shipNumber, provision)
+  ) {
     return false;
-  });
-
-  if (notNew) {
-    state.fleets['1'].ships[shipNumber].cargo = cargo;
-  } else {
-    state.fleets['1'].ships[shipNumber].cargo.push({
-      type: provision,
-      quantity,
-    });
   }
 
-  state.gold -= provisionCost[provision] * quantity;
+  const targetShip = state.fleets['1'].ships[shipNumber];
+  const existing = targetShip.cargo.find((item) => item.type === provision);
 
+  if (existing) existing.quantity += quantity;
+  else targetShip.cargo.push({ type: provision, quantity });
+
+  state.gold -= provisionCost[provision] * quantity;
   updateGeneral();
   save();
+  return true;
 };
 
 export const completeQuest = (id: QuestId) => {

@@ -1,0 +1,27 @@
+name: Baseline
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository and LFS assets
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run full baseline verification
+        run: npm run verify:full

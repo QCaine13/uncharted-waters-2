@@ -4,6 +4,7 @@ import type { Port } from '../game/port/port';
 import type { World } from '../game/world/world';
 import type { QuestId } from '../interface/quest/questData';
 import { ItemId } from '../data/itemData';
+import { migrate } from './saveMigrations';
 
 export type Stage = 'world' | 'port' | 'building';
 
@@ -31,6 +32,11 @@ type Mate = {
   role: Role;
 };
 
+// The three fame tracks most routes are gated by. (Duplicated minimally from
+// data/storyHooks.ts FameType for now; the two should converge later — see D5.)
+export type FameType = 'adventure' | 'pirate' | 'trade';
+export type Fame = { [key in FameType]: number };
+
 export interface State {
   portId: string | null;
   buildingId: string | null;
@@ -50,6 +56,7 @@ export interface State {
   debt: number;
   items: ItemId[];
   mates: Mate[];
+  fame: Fame;
 }
 
 export const SAVED_STATE_KEY = 'savedState';
@@ -59,12 +66,10 @@ const loadSavedState = (): Partial<State> => {
     const raw = window.localStorage.getItem(SAVED_STATE_KEY);
     if (!raw) return {};
 
-    const parsed = JSON.parse(raw);
-    // Only use saved data if it has a valid version
-    if (parsed && parsed.version === 1) {
-      return parsed;
-    }
-    return {};
+    // Run the save through the migration chain so older saves are upgraded
+    // (and given defaults for newer fields) instead of being discarded.
+    const migrated = migrate(JSON.parse(raw));
+    return migrated ? (migrated as Partial<State>) : {};
   } catch {
     return {};
   }
@@ -90,6 +95,7 @@ const state = {
       role: null,
     },
   ] as Mate[],
+  fame: { adventure: 0, pirate: 0, trade: 0 },
   ...savedState,
 } as State;
 

@@ -4,8 +4,11 @@ import React from 'react';
 
 import MessageBox from '../../common/MessageBox';
 import { Provisions } from '../../../game/world/fleets';
-import { getAvailableSpace } from '../../../state/selectorsFleet';
-import { provisionCost, supplyShip } from '../../../state/actionsPort';
+import {
+  getSupplyLimit,
+  provisionCost,
+  supplyShip,
+} from '../../../state/actionsPort';
 import InputNumber from '../../common/InputNumber';
 
 export type ShipProvision = {
@@ -26,7 +29,7 @@ export default function HarborSupplyInput({
 }: Props) {
   const { shipNumber, provision } = shipProvision;
 
-  const availableSpace = getAvailableSpace(shipNumber);
+  const limit = getSupplyLimit(shipNumber, provision);
 
   return (
     <div className="absolute bottom-[80px] left-[80px]">
@@ -41,10 +44,9 @@ export default function HarborSupplyInput({
           {provision === 'shot' &&
             `Cannonballs will cost us ${provisionCost[provision]} gold pieces per barrel. How many barrels will we buy?`}{' '}
           <InputNumber
-            limit={availableSpace}
+            limit={limit}
             onComplete={(quantity) => {
-              supplyShip(shipNumber, provision, quantity);
-              onComplete();
+              if (supplyShip(shipNumber, provision, quantity)) onComplete();
             }}
             onCancel={onCancel}
             inlined
