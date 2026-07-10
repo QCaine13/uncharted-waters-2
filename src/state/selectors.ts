@@ -42,7 +42,7 @@ export const positionAdjacentToPort = (portId: string) => {
 
 export const finishedQuest = (id: QuestId) => state.quests.includes(id);
 
-export const canAfford = (cost: number) => state.gold > cost;
+export const canAfford = (cost: number) => state.gold >= cost;
 
 // TODO reset used ships for a given port after some time has passed
 export const getUsedShips = () => {
