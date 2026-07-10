@@ -104,4 +104,31 @@ describe('provision state actions', () => {
     expect(updateInterface.provisions).toHaveBeenCalledTimes(1);
     expect(mockedSave).toHaveBeenCalledTimes(1);
   });
+
+  test('continues a deduction across duplicate provision cargo entries', () => {
+    state.fleets['1'].ships = [
+      {
+        id: '6',
+        name: 'Flagship',
+        crew: 11,
+        durability: 25,
+        cargo: [
+          { type: 'water', quantity: 1 },
+          { type: '1', quantity: 9 },
+          { type: 'water', quantity: 4 },
+          { type: 'lumber', quantity: 3 },
+          { type: 'shot', quantity: 2 },
+        ],
+      },
+    ];
+
+    settleDailyProvisions(1);
+
+    expect(state.fleets['1'].ships[0].cargo).toEqual([
+      { type: '1', quantity: 9 },
+      { type: 'water', quantity: 3 },
+      { type: 'lumber', quantity: 3 },
+      { type: 'shot', quantity: 2 },
+    ]);
+  });
 });
