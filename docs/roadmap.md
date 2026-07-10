@@ -1,12 +1,10 @@
 # 统一路线图 (Roadmap)
 
-**Status**: Living · **Date**: 2026-06-13 ·（原 `research/implementation-plan.md`，已提到 docs 顶层）
+**Status**: Living · **Date**: 2026-07-10 ·（原 `research/implementation-plan.md`，已提到 docs 顶层）
 
-> **进度快照（2026-06-13）**：Phase 2（Save/Load）与 Phase 4（Market MVP）**已完成**
-> （commit `9593a11`）。当前在推进的高杠杆项：存档**版本迁移**（见
-> [`4-engineering/save-load-persistence.md`](4-engineering/save-load-persistence.md)）、
-> **数据驱动剧情引擎**（见 [`4-engineering/quest-event-system.md`](4-engineering/quest-event-system.md)）、
-> **本地化层**。完整状态见 [`README.md`](README.md) 状态面板。下方 Phase 文本保留原始规划，
+> **进度快照（2026-07-10）**：Save/Load v2 migration、Market MVP、数据驱动剧情引擎
+> slice 1 与项目自有 runtime baseline 均已实现；海上每日补给消耗是最新完成的 gameplay
+> slice。完整状态见 [`README.md`](README.md) 状态面板。下方 Phase 文本保留原始规划，
 > 已完成项以 ✅ 标注。
 
 **有分寸的扩展原则（spare-time / measured expansion）**  
@@ -24,7 +22,7 @@
 - Avoid large rewrites until we know which data is missing versus merely
   untranslated.
 
-## Phase 2: Save/Load Boundary ✅ (MVP shipped — migration still TODO)
+## Phase 2: Save/Load Boundary ✅ (MVP + version 2 migration shipped)
 
 - Define which parts of `State` are serializable.
 - Exclude live objects such as `world` and `port`; recreate them after load.
@@ -85,12 +83,14 @@ MVP acceptance:
 ## Spare-time Slice Suggestions (推荐小切片)
 
 这些是按“有分寸”原则拆出来的小垂直切片，适合抽空完成。每个都应该有：
+
 - 数据/模型变更（如有）
 - 最小可玩/可见效果
 - Jest（必要时 Cypress）覆盖
 - 在本文件或 data-governance 里记录决策
 
 **强烈推荐的第一个小 slice（基础）** ✅ 已完成（commit `9593a11`）：
+
 - **Save/Load 最小可用版**（Phase 2 的子集）
   - 定义可序列化的 State 子集（排除 world/port 等 live 对象）。
   - 重要操作后（出港、进出建筑、买/卖后）或手动触发保存。
@@ -99,6 +99,7 @@ MVP acceptance:
   - 理由：所有后续持久系统（贸易、故事进度、投资）都依赖这个。当前只有加载没有保存。
 
 **高价值、玩家立刻能感受到的 slice** ✅ 已完成（实际文件为 `goodsData.ts` / `marketGoodsData.ts` / `Market.tsx`）：
+
 - **Market 极小 MVP**（Phase 4 的严格子集，只做 Lisbon–Seville 岩盐/瓷器回路）
   - 新建 `src/data/tradeGoodData.ts`（用 gcgx + koei wiki 数据，对齐 data-governance 的 trade-good schema，先做 5-8 个商品，双语 names）。
   - 扩展 Cargo 支持一般 goods（fleets.ts 里已有注释）。
@@ -109,11 +110,14 @@ MVP acceptance:
   - 后续再加价格波动、投资、税、更多商品。
 
 其他可考虑的小 slice：
+
 - 把 PortInfo 里的硬编码 100% Price Index + 重复 Investment 标签换成真实占位（为市场做准备）。
 - 给现有数据（ports, ships, items）加中文名（不改英文 key，符合 Phase 3）。
-- 实现每日消耗（water/food 按天扣，getDaysProvisionsWillLast 已有计算基础）。
+- ✅ 海上每日补给消耗：舰队共享、每 10 人或不足 10 人每日消耗 1 水 + 1 食物，
+  余量与警告实时显示；原作断粮惩罚仍待考证后另做。
 
 当前进行中探索/准备（AI 已完成只读部分）：
+
 - 已从 gcgx.games/dkj2/trade.html 和 Koei Trading Data 拉取真实商品列表、区域售价、商业价值要求。
 - State mutation surface 已完整映射。
 - ItemShop 的 secret/black-market 时间窗口模式可直接复用于 Market。

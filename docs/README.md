@@ -47,11 +47,12 @@
 
 ## 当前状态面板
 
-> 2026-07-09 verified against the checked-out code.
+> 2026-07-10 verified against the checked-out code.
 
 | 系统                                           | 状态                                     | 说明                                                                                                                                                                      |
 | ---------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 世界航行 / 港口行走 / 建筑                     | ✅ 已实现                                | 基础骨架                                                                                                                                                                  |
+| **海上每日补给消耗**                           | ✅ MVP 已实现                            | 舰队共享水/食物，按总船员向上取整每日扣减；≤3 天橙色、耗尽红色；[验证记录](superpowers/verification/2026-07-10-daily-provisions-consumption-verification.md)              |
 | 港口建筑（港务/酒馆/旅馆/银行/商店/教堂/船厂） | ✅ 已实现                                | UI 完成，部分逻辑待深化                                                                                                                                                   |
 | **存档 / 读档 / 重置**                         | ✅ MVP + version 2 migration implemented | [`src/state/saveLoad.ts`](../src/state/saveLoad.ts)                                                                                                                       |
 | **贸易 / 市场**                                | ✅ MVP 已实现                            | `Market.tsx` + `goodsData.ts` + `marketGoodsData.ts`（原文档曾标「最大阻塞」，已过时）                                                                                    |
