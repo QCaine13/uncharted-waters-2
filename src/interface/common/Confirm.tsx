@@ -132,8 +132,8 @@ export default function Confirm({ onYes, onNo, initialPosition }: Props) {
     document.addEventListener('mouseup', onMouseUp);
 
     return () => {
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
     };
   }, []);
 
