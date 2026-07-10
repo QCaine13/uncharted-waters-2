@@ -1,27 +1,27 @@
 # Current Data Inventory
 
 This is an audit of the current implementation data. Counts are based on the
-checked-out source as of 2026-06-01.
-
-> **Update (2026-06-13)**: Since this audit a trade/market MVP shipped
-> (`goodsData.ts`, `marketGoodsData.ts`) along with `saveLoad.ts` and
-> `portCharactersData.ts`. The counts below predate those files and should be
-> re-run before the next data expansion.
+checked-out source as of 2026-07-09.
 
 ## Summary
 
-| Dataset | File | Count | Status |
-| --- | --- | ---: | --- |
-| Regular ports | `src/data/portData.ts` | 100 | Implemented |
-| Supply ports | `src/data/portData.ts` | 30 | Implemented |
-| Buildings | `src/data/buildingData.ts` | 12 | Partial UI |
-| Regions | `src/data/portExtraData.ts` | 8 | Implemented |
-| Markets | `src/data/portExtraData.ts` | 13 | Labels only |
-| Ships | `src/data/shipData.ts` | 25 | Implemented |
-| Shipyard types | `src/data/portShipyardData.ts` | 11 | Implemented |
-| Items | `src/data/itemData.ts` | 70 | Partial effects |
-| Sailors | `src/data/sailorData.ts` | 3 | Minimal |
-| Dialog characters | `src/data/characterData.ts` | 8 | Minimal |
+| Dataset                    | File                            | Count | Status                  |
+| -------------------------- | ------------------------------- | ----: | ----------------------- |
+| Regular ports              | `src/data/portData.ts`          |   100 | Implemented             |
+| Supply ports               | `src/data/portData.ts`          |    30 | Implemented             |
+| Buildings                  | `src/data/buildingData.ts`      |    12 | Partial UI              |
+| Regions                    | `src/data/portExtraData.ts`     |     8 | Implemented             |
+| Markets                    | `src/data/portExtraData.ts`     |    13 | Labels only             |
+| Ships                      | `src/data/shipData.ts`          |    25 | Implemented             |
+| Shipyard types             | `src/data/portShipyardData.ts`  |    11 | Implemented             |
+| Items                      | `src/data/itemData.ts`          |    70 | Partial effects         |
+| Sailors                    | `src/data/sailorData.ts`        |     3 | Minimal                 |
+| Dialog characters          | `src/data/characterData.ts`     |     8 | Minimal                 |
+| Trade goods                | `src/data/goodsData.ts`         |    24 | Implemented             |
+| Market definitions         | `src/data/marketGoodsData.ts`   |    13 | Implemented             |
+| Relics / discoveries       | `src/data/relicData.ts`         |    24 | Implemented data        |
+| Legend / event definitions | `src/data/legendData.ts`        |    13 | Implemented data        |
+| Lore trade-good records    | `docs/lore/entities/trade_*.md` |    13 | Documentation data only |
 
 ## Main Findings
 
@@ -33,11 +33,14 @@ checked-out source as of 2026-06-01.
   `marketGoodsData.ts`, shipped 2026-06-13). The remaining work is depth (price
   fluctuation, tax, investment unlocks), not the missing-dataset blocker noted
   in the original audit.
+- `docs/lore/entities/` contains 50 data-only records that are not yet wired
+  into runtime progression.
 - Port data has tilemap position and gameplay economy/industry values, but not
   original-world coordinates or normalized facility metadata.
 - Building opening hours are documented in references but are not yet encoded.
-- Story data is embedded in UI-oriented quest structures; it is usable, but not
-  yet a clean event database.
+- Joao story content remains in UI-oriented quest structures, while slice 1 has
+  moved its gating resolution into data-driven quest-event rules. Wider
+  narrative and lore integration is not yet implemented.
 
 ## Recommended Governance Boundary
 

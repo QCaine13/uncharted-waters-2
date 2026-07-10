@@ -1,15 +1,15 @@
 # Uncharted Waters: New Horizons
 
-![build status](https://github.com/JohanLi/uncharted-waters-2/actions/workflows/build.yml/badge.svg?branch=master)
+[![Baseline](https://github.com/QCaine13/uncharted-waters-2/actions/workflows/baseline.yml/badge.svg)](https://github.com/QCaine13/uncharted-waters-2/actions/workflows/baseline.yml)
 
 [Uncharted Waters: New Horizons](https://en.wikipedia.org/wiki/Uncharted_Waters#Uncharted_Waters:_New_Horizons)
-(大航海時代II) is an open world RPG and simulation game from 1994, set during
-the Age of Exploration. Being the favorite game of my childhood, I’m remaking
-it using web technologies.
+(大航海時代 II) is an open world RPG and simulation game from 1994, set during
+the Age of Exploration. Johan Li began this browser-based remake as a side
+project inspired by a childhood favorite.
 
-This is not meant to be even close to a full remake. I’m a web developer
-transitioning to doing consulting work — this side project lets prospective
-employers see my code.
+This repository continues that work as an actively upgraded project. It is not
+yet close to a full remake, but its existing game systems, content, and runtime
+baseline are being strengthened incrementally.
 
 <p align="center">
   <img src="https://media.githubusercontent.com/media/JohanLi/uncharted-waters-2/readme-assets/uncharted-waters-2.png" alt="Uncharted Waters: New Horizons">
@@ -28,18 +28,25 @@ employers see my code.
   regions. Each region has local supply (cheap) and demand (expensive)
   goods, enabling the classic buy-low-sell-high trade routes.
 
-This game can be played at [https://johan.li/uncharted-waters-2/](https://johan.li/uncharted-waters-2/).
+## Development
 
-#### Next up on the roadmap
+Requirements: Node.js 22, npm, and Git LFS.
 
-- Shipyards
-  - Buy and remodel used ships.
-- Pubs
-  - Recruit crew.
+```sh
+git lfs install
+git lfs pull origin master
+npm ci
+npm start
+```
+
+`npm run verify` runs the asset preflight, Jest tests, TypeScript checks,
+ESLint, and the production build. `npm run verify:full` adds the Chrome E2E
+suite.
 
 ## Architecture
 
 The game is made up of two parts:
+
 - The **game** itself, a canvas element
 - An **interface**/GUI, handled by React
 

@@ -33,32 +33,33 @@
 
 ## 阅读地图
 
-| 顺序 | 位置 | 是什么 | 语言 |
-| --- | --- | --- | --- |
-| 0 | **本文件** + [DECISIONS.md](DECISIONS.md) + [glossary.md](glossary.md) | 导航、决策日志、三语术语 | 中文 |
-| 0 | [roadmap.md](roadmap.md) | 统一路线图（做什么、按什么节奏） | 中英 |
-| 1 | [1-baseline/](1-baseline/README.md) | 原作复刻基线：现状审计、原作系统、原作 6 路线故事、数据目标 | 英文 |
-| 2 | [2-world-design/](2-world-design/) | 世界扩展设计：地图现代化、港口扩张策略 | 英文 |
-| 3 | [3-narrative/](3-narrative/README.md) | 新剧本叙事层：方法论、世界观总览、全球档案、样例 | 中文 |
-| 4 | [4-engineering/](4-engineering/README.md) | 实现提案：数据架构、剧情引擎、存档迁移 | 英文 |
-| 5 | [5-data-governance/](5-data-governance/README.md) | 数据治理：ID 政策、数据清单、参考数据库 | 英文 |
+| 顺序 | 位置                                                                   | 是什么                                                      | 语言 |
+| ---- | ---------------------------------------------------------------------- | ----------------------------------------------------------- | ---- |
+| 0    | **本文件** + [DECISIONS.md](DECISIONS.md) + [glossary.md](glossary.md) | 导航、决策日志、三语术语                                    | 中文 |
+| 0    | [roadmap.md](roadmap.md)                                               | 统一路线图（做什么、按什么节奏）                            | 中英 |
+| 1    | [1-baseline/](1-baseline/README.md)                                    | 原作复刻基线：现状审计、原作系统、原作 6 路线故事、数据目标 | 英文 |
+| 2    | [2-world-design/](2-world-design/)                                     | 世界扩展设计：地图现代化、港口扩张策略                      | 英文 |
+| 3    | [3-narrative/](3-narrative/README.md)                                  | 新剧本叙事层：方法论、世界观总览、全球档案、样例            | 中文 |
+| 4    | [4-engineering/](4-engineering/README.md)                              | 实现提案：数据架构、剧情引擎、存档迁移                      | 英文 |
+| 5    | [5-data-governance/](5-data-governance/README.md)                      | 数据治理：ID 政策、数据清单、参考数据库                     | 英文 |
 
 ---
 
 ## 当前状态面板
 
-> 以代码实际状态为准（截至 commit `9593a11` / `18bb28e`，2026-06-13 核对）。
+> 2026-07-09 verified against the checked-out code.
 
-| 系统 | 状态 | 说明 |
-| --- | --- | --- |
-| 世界航行 / 港口行走 / 建筑 | ✅ 已实现 | 基础骨架 |
-| 港口建筑（港务/酒馆/旅馆/银行/商店/教堂/船厂） | ✅ 已实现 | UI 完成，部分逻辑待深化 |
-| **存档 / 读档 / 重置** | ✅ MVP 已实现 | `src/state/saveLoad.ts`；剩下**版本迁移**待做（见 4-engineering） |
-| **贸易 / 市场** | ✅ MVP 已实现 | `Market.tsx` + `goodsData.ts` + `marketGoodsData.ts`（原文档曾标「最大阻塞」，已过时） |
-| 名声（冒险/海盗/贸易） | ⏳ 未实现 | 剧情引擎 slice 2 引入 |
-| 数据驱动剧情引擎 | ⏳ 提案就绪 | 见 `4-engineering/quest-event-system.md`，slice 1 = 纯迁移 |
-| 多主角 / 关系网 / 5 层暗线 | ⏳ 设计中 | 见 `3-narrative/` |
-| 港口扩张（→270-320 节点）/ 地图现代化 | ⏳ 设计中 | 见 `2-world-design/` |
+| 系统                                           | 状态                                     | 说明                                                                                                                                                                      |
+| ---------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 世界航行 / 港口行走 / 建筑                     | ✅ 已实现                                | 基础骨架                                                                                                                                                                  |
+| 港口建筑（港务/酒馆/旅馆/银行/商店/教堂/船厂） | ✅ 已实现                                | UI 完成，部分逻辑待深化                                                                                                                                                   |
+| **存档 / 读档 / 重置**                         | ✅ MVP + version 2 migration implemented | [`src/state/saveLoad.ts`](../src/state/saveLoad.ts)                                                                                                                       |
+| **贸易 / 市场**                                | ✅ MVP 已实现                            | `Market.tsx` + `goodsData.ts` + `marketGoodsData.ts`（原文档曾标「最大阻塞」，已过时）                                                                                    |
+| 名声（冒险/海盗/贸易）                         | ⏳ 未实现                                | 剧情引擎 slice 2 引入                                                                                                                                                     |
+| 数据驱动剧情引擎                               | ✅ slice 1 implemented                   | [slice 1](../src/interface/quest/questEvents.ts) 已落地；更广的 narrative / lore 集成待完成                                                                               |
+| 运行时基线 / CI                                | ✅ 已实现                                | [资产预检](../scripts/verify-assets.js) + [项目 CI](../.github/workflows/baseline.yml) + [验证记录](superpowers/verification/2026-07-09-runtime-baseline-verification.md) |
+| 多主角 / 关系网 / 5 层暗线                     | ⏳ 设计中                                | 见 `3-narrative/`                                                                                                                                                         |
+| 港口扩张（→270-320 节点）/ 地图现代化          | ⏳ 设计中                                | 见 `2-world-design/`                                                                                                                                                      |
 
 ---
 

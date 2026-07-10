@@ -7,11 +7,11 @@
 
 ## 文件清单
 
-| 文件 | 解决什么 | 状态 |
-| --- | --- | --- |
-| [quest-event-system.md](quest-event-system.md) | 把硬编码的 Joao 剧情迁移成**数据驱动的剧情引擎**；一个引擎服务剧情 / 传说 / 宝物三类内容 | 决策已锁定，slice 1 = 纯迁移 |
-| [save-load-persistence.md](save-load-persistence.md) | 存档 / 读档；MVP 已 ship，剩**版本迁移**与单一序列化真相源 | MVP 已实现，迁移待做 |
-| [data-architecture.md](data-architecture.md) | 撰写数据（港口 / 商品 / 剧情）集中 vs 分文件管理策略 | 约定随 Quest slice 1 落地 |
+| 文件                                                 | 解决什么                                                                                 | 状态                                                     |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| [quest-event-system.md](quest-event-system.md)       | 把硬编码的 Joao 剧情迁移成**数据驱动的剧情引擎**；一个引擎服务剧情 / 传说 / 宝物三类内容 | slice 1 已实现；后续 slices 待完成                       |
+| [save-load-persistence.md](save-load-persistence.md) | 存档 / 读档；MVP 与 v2 迁移已实现                                                        | MVP + v2 migration implemented；未来 schema 演化仍待完成 |
+| [data-architecture.md](data-architecture.md)         | 撰写数据（港口 / 商品 / 剧情）集中 vs 分文件管理策略                                     | 约定已随 Quest slice 1 开始落地；后续整理待完成          |
 
 ## 阅读顺序
 
@@ -20,10 +20,12 @@
 
 ## 关键锁定决策（详见 DECISIONS.md）
 
-- **D3** 声明式 `Reward[]`，不用 `() => void` 回调。
-- **D4** 剧情引擎 slice 1 = Joao 里斯本流程逐字节等价的纯迁移。
-- **D5** 条件 / 奖励模型收敛到 `StoryHooks`（真相源在 `3-narrative/samples/staff-of-the-saint.md` §6）。
-- **D6** 先落地存档迁移脚手架，再 bump 版本。
+D3–D6 是历史锁定决策；其中 D4 与 D6 已落地。
+
+- **D3（历史锁定）** 声明式 `Reward[]`，不用 `() => void` 回调。
+- **D4（历史锁定，已落地）** 剧情引擎 slice 1 = Joao 里斯本流程逐字节等价的纯迁移。
+- **D5（历史锁定）** 条件 / 奖励模型收敛到 `StoryHooks`（真相源在 `3-narrative/samples/staff-of-the-saint.md` §6）。
+- **D6（历史锁定，已落地）** 先落地存档迁移脚手架，再 bump 版本。
 
 ## 治理对接
 
