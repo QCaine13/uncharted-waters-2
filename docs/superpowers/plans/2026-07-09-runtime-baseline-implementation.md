@@ -285,7 +285,7 @@ git commit -m "fix: align mislabeled audio asset"
 
 **Files:**
 
-- Modify: `package.json`, `package-lock.json`, `tests/utils.ts`
+- Modify: `package.json`, `package-lock.json`, `tests/utils.ts`, `tsconfig.json`
 - Create: `tests/e2e/smoke.cy.ts`, `.github/workflows/baseline.yml`
 - Delete: `.github/workflows/tests.yml`
 
@@ -416,6 +416,15 @@ npm run verify
 Expected: smoke and existing Cypress specs PASS; the server terminates; asset,
 Jest, TypeScript, ESLint, and Webpack stages exit 0. Diagnose any existing-spec
 failure with `superpowers:systematic-debugging` before changing behavior.
+
+#### Type-check integration resolution approved 2026-07-10
+
+Task 6's colocated `src/interface/common/Confirm.test.tsx` exposed that
+`tsconfig.json` included only `src/**/*.ts`. Add `src/**/*.tsx` alongside
+`global.d.ts` and `src/**/*.ts` so the promised TypeScript check covers React
+sources and ESLint's project-aware parser can parse colocated TSX tests. Verify
+the integration with both `npm run typecheck` and `npm run lint`; do not exclude
+colocated tests or weaken TypeScript strictness or lint rules.
 
 - [ ] **Step 8: Commit**
 
