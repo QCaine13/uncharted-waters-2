@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 
 import Assets from '../../assets';
-import { getProvisionSummary } from '../../state/provisions';
-import type { ProvisionSummary } from '../../state/provisions';
-import { getPlayerFleet } from '../../state/selectorsFleet';
 import { classNames } from '../interfaceUtils';
 import updateInterface from '../../state/updateInterface';
+import { getPlayerFleet } from '../../state/selectorsFleet';
+import { getProvisionSummary, ProvisionSummary } from '../../state/provisions';
 
 const provisionClass = 'flex items-center py-2';
 const quantityClass = 'flex-1 text-right text-xl';
@@ -13,6 +12,28 @@ const quantityClass = 'flex-1 text-right text-xl';
 interface Props {
   hidden: boolean;
 }
+
+export const getProvisionStatusText = ({
+  dailyConsumption,
+  daysRemaining,
+  status,
+}: ProvisionSummary): string | null => {
+  if (dailyConsumption === 0 || daysRemaining === null) {
+    return null;
+  }
+  if (status === 'exhausted') {
+    return 'Supplies exhausted';
+  }
+  if (daysRemaining === 0) {
+    return 'Less than 1 day remaining';
+  }
+  if (status === 'low') {
+    return `Only ${daysRemaining} day${
+      daysRemaining === 1 ? '' : 's'
+    } remaining`;
+  }
+  return `${daysRemaining} days remaining`;
+};
 
 export default function Provisions({ hidden }: Props) {
   const [summary, setSummary] = useState<ProvisionSummary>(() =>
@@ -24,11 +45,30 @@ export default function Provisions({ hidden }: Props) {
   };
 
   const { water, food, lumber, shot } = summary.provisions;
+  let warningClass = '';
+
+  if (summary.status === 'exhausted') {
+    warningClass = 'text-red-600';
+  } else if (summary.status === 'low') {
+    warningClass = 'text-orange-500';
+  }
+  const statusText = getProvisionStatusText(summary);
 
   return (
-    <div className={classNames('mt-20', hidden ? 'hidden' : '')}>
+    <div
+      className={classNames('mt-20', hidden ? 'hidden' : '')}
+      data-test="provisions"
+    >
       <div className="text-sm mb-4">Provisions</div>
-      <div className={provisionClass}>
+      {!!statusText && (
+        <div
+          className={classNames('text-sm mb-2', warningClass)}
+          data-test="provisionStatus"
+        >
+          {statusText}
+        </div>
+      )}
+      <div className={classNames(provisionClass, warningClass)}>
         <img
           src={Assets.images('worldWater').toDataURL()}
           alt="Water"
@@ -38,7 +78,7 @@ export default function Provisions({ hidden }: Props) {
           {water}
         </div>
       </div>
-      <div className={provisionClass}>
+      <div className={classNames(provisionClass, warningClass)}>
         <img
           src={Assets.images('worldFood').toDataURL()}
           alt="food"

@@ -9,6 +9,7 @@ import {
   hudClass,
 } from './interfaceUtils';
 import updateInterface from '../state/updateInterface';
+import state from '../state/state';
 import Sound from './sound/Sound';
 import Fleet from './Fleet';
 import Popover from './common/Popover';
@@ -31,7 +32,7 @@ export default function Left({
   gold,
   children = null,
 }: Props) {
-  const [dayAtSea, setDayAtSea] = useState(0);
+  const [dayAtSea, setDayAtSea] = useState(state.dayAtSea);
 
   updateInterface.dayAtSea = (d) => {
     setDayAtSea(d);
@@ -48,7 +49,7 @@ export default function Left({
         <div className="text-2xl font-bold whitespace-nowrap">
           {getDate(timePassed)}
         </div>
-        <div className="mb-20">
+        <div className="mb-20" data-test="dayAtSea">
           {inPort ? getHoursMinutes(timePassed) : `Day ${dayAtSea}`}
         </div>
         <div className="text-sm">Ingots</div>
