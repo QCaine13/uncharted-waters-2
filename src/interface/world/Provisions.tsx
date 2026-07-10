@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 
 import Assets from '../../assets';
-import type { ProvisionsType } from '../../state/state';
+import { getProvisionSummary } from '../../state/provisions';
+import type { ProvisionSummary } from '../../state/provisions';
+import { getPlayerFleet } from '../../state/selectorsFleet';
 import { classNames } from '../interfaceUtils';
 import updateInterface from '../../state/updateInterface';
 
@@ -13,18 +15,15 @@ interface Props {
 }
 
 export default function Provisions({ hidden }: Props) {
-  const [provisions, setProvisions] = useState<ProvisionsType>({
-    water: 0,
-    food: 0,
-    lumber: 0,
-    shot: 0,
-  });
+  const [summary, setSummary] = useState<ProvisionSummary>(() =>
+    getProvisionSummary(getPlayerFleet()),
+  );
 
-  updateInterface.provisions = (p) => {
-    setProvisions(p);
+  updateInterface.provisions = (nextSummary) => {
+    setSummary(nextSummary);
   };
 
-  const { water, food, lumber, shot } = provisions;
+  const { water, food, lumber, shot } = summary.provisions;
 
   return (
     <div className={classNames('mt-20', hidden ? 'hidden' : '')}>
@@ -35,7 +34,9 @@ export default function Provisions({ hidden }: Props) {
           alt="Water"
           className="w-8 h-16"
         />
-        <div className={quantityClass}>{water}</div>
+        <div className={quantityClass} data-test="provision-water">
+          {water}
+        </div>
       </div>
       <div className={provisionClass}>
         <img
@@ -43,7 +44,9 @@ export default function Provisions({ hidden }: Props) {
           alt="food"
           className="w-8 h-16"
         />
-        <div className={quantityClass}>{food}</div>
+        <div className={quantityClass} data-test="provision-food">
+          {food}
+        </div>
       </div>
       <div className={provisionClass}>
         <img

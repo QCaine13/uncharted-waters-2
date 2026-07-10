@@ -5,7 +5,7 @@ import Input from '../input';
 import updateInterface from './updateInterface';
 import { updateGeneral } from './actionsPort';
 import { save } from './saveLoad';
-import type { Provisions } from '../game/world/fleets';
+import { getProvisionSummary } from './provisions';
 import {
   getCurrent,
   getIsSummer,
@@ -50,24 +50,9 @@ export const dock = (position: Position) => {
 };
 
 const updateProvisions = () => {
-  const provisions = {
-    water: 0,
-    food: 0,
-    lumber: 0,
-    shot: 0,
-  };
-
   const playerFleet = state.fleets[1];
 
-  playerFleet.ships.forEach((ship) => {
-    ship.cargo.forEach((item) => {
-      if (item.type in provisions) {
-        provisions[item.type as Provisions] += item.quantity;
-      }
-    });
-  });
-
-  updateInterface.provisions(provisions);
+  updateInterface.provisions(getProvisionSummary(playerFleet.ships));
 };
 
 export const updateWorldStatus = () => {
