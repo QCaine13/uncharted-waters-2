@@ -88,6 +88,31 @@ describe('conditionSatisfied', () => {
     ).toBe(true);
   });
 
+  test('normalizes multi-day ordinary windows', () => {
+    expect(
+      conditionSatisfied(
+        { type: 'timeWindow', min: 60, max: 120 },
+        at(3 * 1440 + 60),
+      ),
+    ).toBe(true);
+    expect(
+      conditionSatisfied(
+        { type: 'timeWindow', min: 60, max: 120 },
+        at(3 * 1440 + 120),
+      ),
+    ).toBe(false);
+  });
+
+  test('uses inclusive min and exclusive max for nonzero wrapping windows', () => {
+    const wrapping = { type: 'timeWindow', min: 1320, max: 60 } as const;
+
+    expect(conditionSatisfied(wrapping, at(2 * 1440 + 1320))).toBe(true);
+    expect(conditionSatisfied(wrapping, at(2 * 1440))).toBe(true);
+    expect(conditionSatisfied(wrapping, at(2 * 1440 + 59))).toBe(true);
+    expect(conditionSatisfied(wrapping, at(2 * 1440 + 60))).toBe(false);
+    expect(conditionSatisfied(wrapping, at(2 * 1440 + 600))).toBe(false);
+  });
+
   test('checks inclusive elapsed-day bounds', () => {
     expect(
       conditionSatisfied({ type: 'daysElapsed', min: 3 }, at(3 * 1440)),
@@ -154,6 +179,38 @@ describe('conditionSatisfied', () => {
       expect(conditionSatisfied(candidate, richContext)).toBe(true);
     });
   });
+
+  test('returns false for unmet boolean and context membership predicates', () => {
+    const missingEvent = storyEventId('missing');
+    const missingItem = '2' as ItemId;
+    const falseConditions: StoryCondition[] = [
+      {
+        type: 'all',
+        conditions: [
+          { type: 'atPort', portId: '1' },
+          { type: 'atBuilding', buildingId: 'missing' },
+        ],
+      },
+      {
+        type: 'any',
+        conditions: [
+          { type: 'atPort', portId: 'missing' },
+          { type: 'atBuilding', buildingId: 'missing' },
+        ],
+      },
+      { type: 'not', condition: { type: 'atPort', portId: '1' } },
+      { type: 'eventCompleted', eventId: missingEvent },
+      { type: 'atPort', portId: 'missing' },
+      { type: 'atBuilding', buildingId: 'missing' },
+      { type: 'stage', stage: 'world' },
+      { type: 'hasItem', itemId: missingItem },
+      { type: 'hasCompanion', characterId: characterId('missing') },
+    ];
+
+    falseConditions.forEach((candidate) => {
+      expect(conditionSatisfied(candidate, context())).toBe(false);
+    });
+  });
 });
 
 describe('resolveStoryEvent', () => {
@@ -195,6 +252,19 @@ describe('resolveStoryEvent', () => {
 
     expect(resolveStoryEvent(context(), content, ([first]) => first)).toBe(
       earlier,
+    );
+  });
+
+  test('uses locale-independent lexical event ID ordering', () => {
+    const lowerCodeUnit = event('Z-event', 10);
+    const localePreferred = event('a-event', 10);
+    const content = compiledWith(
+      [[sceneKey('building', '1', '8'), [localePreferred, lowerCodeUnit]]],
+      [localePreferred, lowerCodeUnit],
+    );
+
+    expect(resolveStoryEvent(context(), content, ([first]) => first)).toBe(
+      lowerCodeUnit,
     );
   });
 
@@ -246,6 +316,73 @@ describe('resolveStoryEvent', () => {
 
     expect(resolveStoryEvent(context(), content, chooseRandom)).toBe(second);
     expect(chooseRandom).toHaveBeenCalledWith([first, second]);
+  });
+
+  test('collects candidates from all eight exact and wildcard scene slots', () => {
+    const keys = [
+      'building:1:8',
+      'building:1:-',
+      'building:-:8',
+      'building:-:-',
+      '-:1:8',
+      '-:1:-',
+      '-:-:8',
+      '-:-:-',
+    ];
+    const candidates = keys.map((_, index) =>
+      event(`slot-${index}`, 10, undefined, 'random-ambient', 'all-slots'),
+    );
+    const content = compiledWith(
+      keys.map((key, index) => [key, [candidates[index]]]),
+      candidates,
+    );
+    const chooseRandom = jest.fn(
+      (eligible: readonly StoryEvent[]) => eligible[0],
+    );
+
+    expect(resolveStoryEvent(context(), content, chooseRandom)).toBe(
+      candidates[0],
+    );
+    expect(chooseRandom).toHaveBeenCalledWith(candidates);
+  });
+
+  test('returns null when the random selector returns undefined', () => {
+    const ambient = event(
+      'ambient',
+      10,
+      undefined,
+      'random-ambient',
+      'greeting',
+    );
+    const content = compiledWith(
+      [[sceneKey('building', '1', '8'), [ambient]]],
+      [ambient],
+    );
+
+    expect(resolveStoryEvent(context(), content, () => undefined)).toBeNull();
+  });
+
+  test('returns an outranking deterministic event without invoking randomness', () => {
+    const deterministic = event('deterministic', 5);
+    const ambient = event(
+      'ambient',
+      10,
+      undefined,
+      'random-ambient',
+      'greeting',
+    );
+    const chooseRandom = jest.fn(
+      (eligible: readonly StoryEvent[]) => eligible[0],
+    );
+    const content = compiledWith(
+      [[sceneKey('building', '1', '8'), [ambient, deterministic]]],
+      [ambient, deterministic],
+    );
+
+    expect(resolveStoryEvent(context(), content, chooseRandom)).toBe(
+      deterministic,
+    );
+    expect(chooseRandom).not.toHaveBeenCalled();
   });
 
   test('does not mutate context, content, or indexed candidate arrays', () => {

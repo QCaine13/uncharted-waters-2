@@ -100,11 +100,13 @@ export const resolveStoryEvent = (
         (candidate.repeat !== 'once' ||
           !context.completedEvents.has(candidate.id)),
     )
-    .sort(
-      (left, right) =>
-        left.priority - right.priority ||
-        String(left.id).localeCompare(right.id),
-    );
+    .sort((left, right) => {
+      const priorityDifference = left.priority - right.priority;
+      if (priorityDifference !== 0) return priorityDifference;
+      if (left.id < right.id) return -1;
+      if (left.id > right.id) return 1;
+      return 0;
+    });
 
   const first = candidates[0];
   if (first === undefined) return null;
