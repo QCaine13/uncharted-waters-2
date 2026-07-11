@@ -58,6 +58,7 @@ describe('harbor supply transactions', () => {
 describe('legacy quest completion', () => {
   beforeEach(() => {
     state.quests = [];
+    window.localStorage.clear();
   });
 
   test('records a completion marker only once', () => {
@@ -65,5 +66,6 @@ describe('legacy quest completion', () => {
     completeLegacyQuestOnce('houseBeforeQuest');
 
     expect(state.quests).toEqual(['houseBeforeQuest']);
+    expect(window.localStorage.length).toBe(0);
   });
 });

@@ -8,22 +8,26 @@ import {
   type StoryEffect,
   type StoryEventId,
 } from './types';
-import {
-  executeStoryEffects,
-  preflightStoryEffects,
-  type StoryEffectRuntime,
-} from './effects';
+import { executeStoryEffects, type StoryEffectRuntime } from './effects';
 
 type Operation = [string, ...unknown[]];
 
 const createRuntime = (
   validate: (effect: StoryEffect) => StoryDiagnostic[] = () => [],
-): StoryEffectRuntime & { operations: Operation[] } => {
+): StoryEffectRuntime & {
+  operations: Operation[];
+  preflights: StoryEffect[];
+} => {
   const operations: Operation[] = [];
+  const preflights: StoryEffect[] = [];
 
   return {
     operations,
-    canExecute: validate,
+    preflights,
+    canExecute: (effect: StoryEffect) => {
+      preflights.push(effect);
+      return validate(effect);
+    },
     completeEvent: (eventId: StoryEventId) => {
       operations.push(['completeEvent', eventId]);
     },
@@ -95,6 +99,7 @@ describe('story effect interpreter', () => {
       { type: 'receiveGold', amount: 1000 },
       { type: 'addCompanion', characterId: missingCompanion },
       { type: 'receiveShip', shipId: 'missing-ship', name: 'Ghost' },
+      { type: 'save' },
     ];
     const runtime = createRuntime((effect) => {
       if (effect.type === 'addCompanion') {
@@ -120,16 +125,57 @@ describe('story effect interpreter', () => {
       return [];
     });
 
-    const diagnostics = preflightStoryEffects(effects, runtime);
-    expect(diagnostics.map(({ code }) => code)).toEqual([
-      'missing-companion',
-      'missing-ship',
-    ]);
-    expect(executeStoryEffects(effects, runtime)).toEqual({
+    const result = executeStoryEffects(effects, runtime);
+
+    expect(result).toEqual({
       ok: false,
       executed: 0,
-      diagnostics,
+      diagnostics: [
+        expect.objectContaining({ code: 'missing-companion' }),
+        expect.objectContaining({ code: 'missing-ship' }),
+      ],
     });
+    expect(runtime.preflights).toEqual(effects);
+    expect(runtime.operations).toEqual([]);
+  });
+
+  test('implicitly persists a mutating group without an explicit save', () => {
+    const effects: StoryEffect[] = [
+      { type: 'receiveGold', amount: 1000 },
+      { type: 'receiveItem', itemId: '4' },
+    ];
+    const runtime = createRuntime();
+
+    expect(executeStoryEffects(effects, runtime)).toEqual({
+      ok: true,
+      executed: effects.length,
+    });
+    expect(runtime.operations).toEqual([
+      ['receiveGold', 1000],
+      ['receiveItem', '4'],
+      ['save'],
+    ]);
+  });
+
+  test('persists a standalone completion without an explicit save', () => {
+    const effects: StoryEffect[] = [{ type: 'completeEvent', eventId }];
+    const runtime = createRuntime();
+
+    expect(executeStoryEffects(effects, runtime)).toEqual({
+      ok: true,
+      executed: 1,
+    });
+    expect(runtime.operations).toEqual([['completeEvent', eventId], ['save']]);
+  });
+
+  test('does not persist an empty group', () => {
+    const runtime = createRuntime();
+
+    expect(executeStoryEffects([], runtime)).toEqual({
+      ok: true,
+      executed: 0,
+    });
+    expect(runtime.preflights).toEqual([]);
     expect(runtime.operations).toEqual([]);
   });
 
