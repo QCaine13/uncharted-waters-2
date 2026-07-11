@@ -1,19 +1,22 @@
-import {
-  CharacterMessage,
-  messagePositions,
-  Message,
-  VendorMessage,
-} from './questData';
 import type { DialogueStep } from '../../story/core/types';
 import type { StoryFrame } from '../../story/core/runtime';
-import { characterId } from '../../story/core/types';
+
+const messagePositions = [0, 1, 2] as const;
+
+export type VendorMessage = { body: string; position: 0 };
+export type CharacterMessage = {
+  body: string;
+  position: 1 | 2;
+  characterId: string;
+};
+type PassiveMessage = VendorMessage | CharacterMessage;
 
 export type VendorMessageBoxType =
-  | (Pick<VendorMessage, 'body'> & MessageBoxCommonType)
+  | ({ body: string } & MessageBoxCommonType)
   | null;
 
 export type CharacterMessageBoxType =
-  | (Pick<CharacterMessage, 'body' | 'characterId'> & MessageBoxCommonType)
+  | ({ body: string; characterId: string } & MessageBoxCommonType)
   | null;
 
 type MessageBoxCommonType = {
@@ -31,9 +34,7 @@ export type MessageBoxes = [
 ];
 
 const interpolatePlayerName = (body: string) =>
-  body
-    .replace('$firstName', 'João')
-    .replace('$lastName', 'Franco');
+  body.replace('$firstName', 'João').replace('$lastName', 'Franco');
 
 export const getMessageBoxesFromFrame = (
   history: readonly DialogueStep[],
@@ -105,17 +106,19 @@ export const getMessageBoxesFromFrame = (
   }) as MessageBoxes;
 };
 
-const toDialogueStep = (message: Message): DialogueStep => ({
+const toDialogueStep = (message: PassiveMessage): DialogueStep => ({
   type: 'dialogue',
   body: message.body,
   position: message.position,
   ...('characterId' in message
-    ? { speaker: characterId(message.characterId) }
+    ? { speaker: message.characterId as DialogueStep['speaker'] }
     : {}),
-  ...(message.fadeBeforeNext ? { fadeBeforeNext: true } : {}),
 });
 
-const getMessageBoxes = (messages: Message[], step: number): MessageBoxes =>
+const getMessageBoxes = (
+  messages: readonly PassiveMessage[],
+  step: number,
+): MessageBoxes =>
   getMessageBoxesFromFrame(
     messages.slice(0, step).map(toDialogueStep),
     toDialogueStep(messages[step]),

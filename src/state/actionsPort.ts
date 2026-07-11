@@ -1,11 +1,11 @@
 import updateInterface from './updateInterface';
 import { sample } from '../utils';
-import state from './state';
+import state, { type Role } from './state';
 import { getUsedShips, isDay } from './selectors';
 import { shipData } from '../data/shipData';
 import { Provisions, Ship } from '../game/world/fleets';
 import { minutesUntilNextMorning } from '../interface/interfaceUtils';
-import type { QuestId } from '../interface/quest/questData';
+import type { LegacyQuestCompletionKey } from '../story/legacy/lisbonCompletionKeys';
 import {
   getAvailableSpace,
   getPlayerFleet,
@@ -29,7 +29,7 @@ export const enterBuilding = (buildingId: string) => {
   updateGeneral();
 };
 
-export const exitBuilding = (sleep = false) => {
+export const exitBuildingWithoutSave = (sleep = false) => {
   if (!sleep) {
     state.timePassed += sample([40, 60, 80]);
   } else {
@@ -43,7 +43,10 @@ export const exitBuilding = (sleep = false) => {
   } else {
     state.port.characters().despawnNpcs();
   }
+};
 
+export const exitBuilding = (sleep = false) => {
+  exitBuildingWithoutSave(sleep);
   updateGeneral();
   save();
 };
@@ -171,12 +174,7 @@ export const supplyShip = (
   return true;
 };
 
-export const completeQuest = (id: QuestId) => {
-  state.quests.push(id);
-  save();
-};
-
-export const completeLegacyQuestOnce = (id: QuestId) => {
+export const completeLegacyQuestOnce = (id: LegacyQuestCompletionKey) => {
   if (!state.quests.includes(id)) {
     state.quests.push(id);
   }
@@ -188,66 +186,37 @@ export const receiveGold = (amount: number) => {
   updateGeneral();
 };
 
+export const receiveStoryGold = (amount: number) => {
+  state.gold += amount;
+};
+
 export const checkIn = () => {
   updateInterface.fade(() => {
     exitBuilding(true);
   });
 };
 
-export const exitBuildingIfNotLodge = () => {
-  if (state.buildingId !== '5') {
-    exitBuilding();
-  }
-};
-
-export const receiveFirstShip = () => {
-  const id = '6';
-
+export const receiveStoryShip = (id: string, name: string) => {
   const { durability } = shipData[id];
 
   addShip({
     id,
-    name: 'Hermes II',
+    name,
     crew: 0,
     cargo: [],
     durability: Math.floor(durability * USED_SHIP_DURABILITY),
   });
-
-  updateGeneral();
-  save();
 };
 
-export const recruitRocco = () => {
-  state.mates.push({
-    sailorId: '32',
-    role: null,
-  });
-  save();
+export const addStoryCompanion = (sailorId: string) => {
+  state.mates.push({ sailorId, role: null });
 };
 
-export const recruitEnrico = () => {
-  state.mates.push({
-    sailorId: '33',
-    role: null,
-  });
-  save();
-};
-
-export const assignFirstRoles = () => {
-  if (Number.isNaN(state.mates[1].role)) {
-    state.mates[1].role = 'firstMate';
+export const assignStoryMateRole = (sailorId: string, role: Role) => {
+  const mate = state.mates.find((candidate) => candidate.sailorId === sailorId);
+  if (mate && Number.isNaN(mate.role)) {
+    mate.role = role;
   }
-
-  if (Number.isNaN(state.mates[2].role)) {
-    state.mates[2].role = 'bookKeeper';
-  }
-
-  /*
-    In the original game, no check is done before assigning Rocco and Enrico their roles.
-    If you hand them ships, they'll be assigned First Mate and Bookkeeper while still
-    remaining as captains (allowing them to captain 2 ships each).
-   */
-  save();
 };
 
 export const deposit = (amount: number) => {
@@ -312,6 +281,10 @@ export const buyItem = (id: ItemId, gift = false) => {
   save();
 
   return true;
+};
+
+export const receiveStoryItem = (id: ItemId) => {
+  state.items.push(id);
 };
 
 export const ITEM_SHOP_SELL_MULTIPLIER = 0.5;

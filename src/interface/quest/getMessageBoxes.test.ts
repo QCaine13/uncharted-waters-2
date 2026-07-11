@@ -1,5 +1,5 @@
 import getMessageBoxes, { getMessageBoxesFromFrame } from './getMessageBoxes';
-import { CharacterMessage, VendorMessage } from './questData';
+import type { CharacterMessage, VendorMessage } from './getMessageBoxes';
 import { characterId } from '../../story/core/types';
 
 const vendorMessage: VendorMessage = {

@@ -1,6 +1,6 @@
 import state, { Role } from './state';
 import generateUsedShips from '../interface/port/shipyard/generateUsedShips';
-import type { QuestId } from '../interface/quest/questData';
+import type { LegacyQuestCompletionKey } from '../story/legacy/lisbonCompletionKeys';
 import { getPortData } from '../game/port/portUtils';
 import { itemData } from '../data/itemData';
 import { getPlayerFleet } from './selectorsFleet';
@@ -40,7 +40,8 @@ export const positionAdjacentToPort = (portId: string) => {
   return positionNoCollision;
 };
 
-export const finishedQuest = (id: QuestId) => state.quests.includes(id);
+export const finishedQuest = (id: LegacyQuestCompletionKey) =>
+  state.quests.includes(id);
 
 export const canAfford = (cost: number) => state.gold >= cost;
 

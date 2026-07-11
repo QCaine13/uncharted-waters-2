@@ -1,6 +1,3 @@
-import legacyQuestData, {
-  type Message,
-} from '../../../../../interface/quest/questData';
 import { legacyLisbonSnapshot } from '../../../../__fixtures__/legacyLisbonSnapshot';
 import { storyCharacters } from '../../../characters';
 import { storyRelationships } from '../../../relationships';
@@ -97,34 +94,6 @@ const expectedMapping = {
   marketAfterQuestBeforeShip: 'joao.lisbon-opening.market-before-ship',
   pubCarlottaGreeting: 'joao.lisbon-opening.pub-carlotta-greeting',
 } as const;
-
-const legacyPassiveMessage = (message: Message) => ({
-  body: message.body,
-  position: message.position,
-  ...('characterId' in message ? { characterId: message.characterId } : {}),
-  ...(message.fadeBeforeNext ? { fadeBeforeNext: true } : {}),
-  ...(message.completeQuest ? { completeQuest: true } : {}),
-  ...(message.exitBuilding ? { exitBuilding: true } : {}),
-  ...(message.action ? { hasAction: true } : {}),
-});
-
-const snapshotPassiveMessage = (message: {
-  readonly body: string;
-  readonly position: number;
-  readonly characterId?: string;
-  readonly fadeBeforeNext?: true;
-  readonly completeQuest?: true;
-  readonly exitBuilding?: true;
-  readonly action?: string;
-}) => ({
-  body: message.body,
-  position: message.position,
-  ...(message.characterId ? { characterId: message.characterId } : {}),
-  ...(message.fadeBeforeNext ? { fadeBeforeNext: true } : {}),
-  ...(message.completeQuest ? { completeQuest: true } : {}),
-  ...(message.exitBuilding ? { exitBuilding: true } : {}),
-  ...(message.action ? { hasAction: true } : {}),
-});
 
 const normalizeTokens = (body: string): string =>
   body
@@ -410,19 +379,6 @@ const normalizedOperations = () =>
     });
     return [...actionRows, ...choiceRows];
   });
-
-describe('immutable legacy Lisbon oracle', () => {
-  test('was generated from every still-authoritative legacy transcript', () => {
-    expect(Object.keys(legacyQuestData)).toEqual(legacyKeys);
-    expect(Object.keys(legacyLisbonSnapshot.transcripts)).toEqual(legacyKeys);
-    legacyKeys.forEach((key) => {
-      expect(legacyQuestData[key].map(legacyPassiveMessage)).toEqual(
-        legacyLisbonSnapshot.transcripts[key].map(snapshotPassiveMessage),
-      );
-    });
-    expect(recursivelyContainsFunction(legacyLisbonSnapshot)).toBe(false);
-  });
-});
 
 describe('João Lisbon opening declarative content', () => {
   test('maps each of the exact 36 legacy keys once', () => {

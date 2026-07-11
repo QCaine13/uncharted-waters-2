@@ -2,7 +2,7 @@ import { START_TIME_PASSED } from '../constants';
 import { Provisions, fleets, Fleets } from '../game/world/fleets';
 import type { Port } from '../game/port/port';
 import type { World } from '../game/world/world';
-import type { QuestId } from '../interface/quest/questData';
+import type { LegacyQuestCompletionKey } from '../story/legacy/lisbonCompletionKeys';
 import { ItemId } from '../data/itemData';
 import { migrate } from './saveMigrations';
 
@@ -50,7 +50,7 @@ export interface State {
   port: Port;
   dayAtSea: number;
   gold: number;
-  quests: QuestId[];
+  quests: LegacyQuestCompletionKey[];
   usedShipsAtPort: UsedShipsAtPort;
   savings: number;
   debt: number;
@@ -84,7 +84,7 @@ const state = {
   fleets,
   dayAtSea: 0,
   gold: 0,
-  quests: [] as QuestId[],
+  quests: [] as LegacyQuestCompletionKey[],
   usedShipsAtPort: {},
   savings: 0,
   debt: 0,

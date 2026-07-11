@@ -1022,11 +1022,11 @@ export const lisbonOpeningDialogue: Record<LegacyLisbonKey, StoryStep[]> = {
     {
       type: 'effect',
       effects: [
+        { type: 'addCompanion', characterId: characterId('enrico') },
         {
           type: 'completeEvent',
           eventId: storyEventId('joao.lisbon-opening.church-recruit-enrico'),
         },
-        { type: 'addCompanion', characterId: characterId('enrico') },
       ],
     },
   ],

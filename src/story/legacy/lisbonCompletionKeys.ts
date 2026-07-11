@@ -5,6 +5,9 @@ import type {
 } from '../core/types';
 import { legacyQuestId } from '../core/types';
 
+export type LegacyQuestCompletionKey =
+  keyof typeof import('../content/arcs/joao/lisbon-opening/dialogue').legacyToSemanticEvent;
+
 export const getCompletedStoryEvents = (
   legacyKeys: readonly string[],
   content: CompiledStoryContent,
