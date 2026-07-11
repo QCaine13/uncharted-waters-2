@@ -6,7 +6,7 @@ import { legacyLisbonSnapshot } from './__fixtures__/legacyLisbonSnapshot';
 import { compiledStoryContent } from '.';
 import { resolveStoryEvent } from './core/resolver';
 import { storyEventId, type StoryContext } from './core/types';
-import { legacyToSemanticEvent } from './content/arcs/joao/lisbon-opening';
+import { legacyToSemanticEvent } from './legacy/lisbonCompletionKeys';
 
 const gatingKeys = [
   'houseBeforeQuest',

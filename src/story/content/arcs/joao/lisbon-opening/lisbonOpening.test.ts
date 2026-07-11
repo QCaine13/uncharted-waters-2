@@ -9,9 +9,9 @@ import type {
   StoryEvent,
   StoryStep,
 } from '../../../../core/types';
+import { legacyToSemanticEvent } from '../../../../legacy/lisbonCompletionKeys';
 import {
   joaoLisbonOpening,
-  legacyToSemanticEvent,
   lisbonOpeningDialogue,
   lisbonOpeningEvents,
 } from '.';

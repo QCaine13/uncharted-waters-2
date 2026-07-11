@@ -1,10 +1,8 @@
 import { legacyLisbonSnapshot } from './__fixtures__/legacyLisbonSnapshot';
 import { storyCharacters } from './content/characters';
-import {
-  legacyToSemanticEvent,
-  lisbonOpeningEvents,
-} from './content/arcs/joao/lisbon-opening';
+import { lisbonOpeningEvents } from './content/arcs/joao/lisbon-opening';
 import type { StoryEffect, StoryStep } from './core/types';
+import { legacyToSemanticEvent } from './legacy/lisbonCompletionKeys';
 
 interface NormalizedBeat {
   body?: string;

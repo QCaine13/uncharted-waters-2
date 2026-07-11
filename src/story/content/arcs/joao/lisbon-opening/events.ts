@@ -8,9 +8,9 @@ import {
 } from '../../../../core/types';
 import {
   legacyToSemanticEvent,
-  lisbonOpeningDialogue,
   type LegacyLisbonKey,
-} from './dialogue';
+} from '../../../../legacy/lisbonCompletionKeys';
+import { lisbonOpeningDialogue } from './dialogue';
 
 const deepFreeze = <T>(value: T): T => {
   if (value !== null && typeof value === 'object' && !Object.isFrozen(value)) {

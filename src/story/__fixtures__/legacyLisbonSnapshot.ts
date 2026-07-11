@@ -1,4 +1,10 @@
-export const legacyLisbonSnapshot = {
+import type { LegacyLisbonKey } from '../legacy/lisbonCompletionKeys';
+
+const defineLegacyLisbonSnapshot = <
+  T extends { transcripts: Record<LegacyLisbonKey, readonly unknown[]> },
+>(snapshot: T): T => snapshot;
+
+export const legacyLisbonSnapshot = defineLegacyLisbonSnapshot({
   transcripts: {
     houseBeforeQuest: [
       {
@@ -1354,6 +1360,6 @@ export const legacyLisbonSnapshot = {
       operations: ['appendNoTranscript'],
     },
   ],
-} as const;
+} as const);
 
 export default legacyLisbonSnapshot;

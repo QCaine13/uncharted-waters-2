@@ -1,11 +1,9 @@
 import { legacyLisbonSnapshot } from './__fixtures__/legacyLisbonSnapshot';
-import {
-  legacyToSemanticEvent,
-  lisbonOpeningEvents,
-} from './content/arcs/joao/lisbon-opening';
+import { lisbonOpeningEvents } from './content/arcs/joao/lisbon-opening';
 import { executeStoryEffects } from './core/effects';
 import { createStorySession, getStoryFrame } from './core/runtime';
 import type { StoryStep } from './core/types';
+import { legacyToSemanticEvent } from './legacy/lisbonCompletionKeys';
 import { storyRuntimeActions } from './storyRuntimeActions';
 import { advanceQuestSession } from '../interface/quest/useQuestStep';
 import { load } from '../state/saveLoad';

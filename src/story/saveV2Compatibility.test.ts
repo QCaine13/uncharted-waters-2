@@ -2,7 +2,7 @@ import { compiledStoryContent } from '.';
 import { createStoryContext, resolveStoryEvent } from './core/resolver';
 import { executeStoryEffects } from './core/effects';
 import { legacyLisbonSnapshot } from './__fixtures__/legacyLisbonSnapshot';
-import { legacyToSemanticEvent } from './content/arcs/joao/lisbon-opening';
+import { legacyToSemanticEvent } from './legacy/lisbonCompletionKeys';
 import { storyRuntimeActions } from './storyRuntimeActions';
 import state, { SAVED_STATE_KEY } from '../state/state';
 import { load, save } from '../state/saveLoad';

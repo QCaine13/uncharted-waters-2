@@ -1,7 +1,7 @@
 import { characterId, type StoryArc } from '../../../../core/types';
 import { lisbonOpeningArcId, lisbonOpeningEvents } from './events';
 
-export { legacyToSemanticEvent, lisbonOpeningDialogue } from './dialogue';
+export { lisbonOpeningDialogue } from './dialogue';
 export { lisbonOpeningArcId, lisbonOpeningEvents } from './events';
 
 export const lisbonOpeningArc: StoryArc = {
