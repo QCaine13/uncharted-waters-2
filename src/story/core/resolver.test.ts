@@ -1,0 +1,361 @@
+import type { ItemId } from '../../data/itemData';
+import type { State } from '../../state/state';
+import { compileStoryContent, sceneKey } from './registry';
+import {
+  characterId,
+  legacyQuestId,
+  storyArcId,
+  storyEventId,
+  type CompiledStoryContent,
+  type StoryCondition,
+  type StoryContentSource,
+  type StoryContext,
+  type StoryEvent,
+} from './types';
+import {
+  conditionSatisfied,
+  createStoryContext,
+  resolveStoryEvent,
+} from './resolver';
+
+const joao = characterId('joao');
+const rocco = characterId('rocco');
+const opening = storyArcId('joao.lisbon-opening');
+
+const context = (overrides: Partial<StoryContext> = {}): StoryContext => ({
+  stage: 'building',
+  portId: '1',
+  buildingId: '8',
+  timePassed: 0,
+  completedEvents: new Set(),
+  fame: { adventure: 0, pirate: 0, trade: 0 },
+  items: new Set(),
+  companions: new Set(),
+  ...overrides,
+});
+
+const at = (timePassed: number): StoryContext => context({ timePassed });
+
+const event = (
+  id: string,
+  priority: number,
+  trigger: StoryCondition = { type: 'stage', stage: 'building' },
+  repeat: StoryEvent['repeat'] = 'once',
+  randomGroup?: string,
+): StoryEvent => ({
+  id: storyEventId(id),
+  arcId: opening,
+  priority,
+  trigger,
+  repeat,
+  randomGroup,
+  steps: [{ type: 'dialogue', body: id, position: 0 }],
+});
+
+const compiledWith = (
+  entries: ReadonlyArray<readonly [string, readonly StoryEvent[]]>,
+  events: readonly StoryEvent[],
+): CompiledStoryContent => ({
+  charactersById: new Map(),
+  relationshipsByCharacter: new Map(),
+  arcsById: new Map(),
+  eventsById: new Map(events.map((candidate) => [candidate.id, candidate])),
+  candidatesByScene: new Map(entries),
+  eventByLegacyCompletionKey: new Map(),
+  legacyCompletionKeyByEvent: new Map(),
+  diagnostics: [],
+});
+
+describe('conditionSatisfied', () => {
+  test('uses inclusive min, exclusive ordinary max, and inclusive midnight', () => {
+    expect(
+      conditionSatisfied({ type: 'timeWindow', min: 1320, max: 0 }, at(1320)),
+    ).toBe(true);
+    expect(
+      conditionSatisfied({ type: 'timeWindow', min: 1320, max: 0 }, at(0)),
+    ).toBe(true);
+    expect(
+      conditionSatisfied({ type: 'timeWindow', min: 1320, max: 0 }, at(600)),
+    ).toBe(false);
+    expect(
+      conditionSatisfied({ type: 'timeWindow', min: 60, max: 120 }, at(60)),
+    ).toBe(true);
+    expect(
+      conditionSatisfied({ type: 'timeWindow', min: 60, max: 120 }, at(120)),
+    ).toBe(false);
+    expect(
+      conditionSatisfied({ type: 'timeWindow', min: 1320, max: 0 }, at(-120)),
+    ).toBe(true);
+  });
+
+  test('checks inclusive elapsed-day bounds', () => {
+    expect(
+      conditionSatisfied({ type: 'daysElapsed', min: 3 }, at(3 * 1440)),
+    ).toBe(true);
+    expect(
+      conditionSatisfied({ type: 'daysElapsed', max: 3 }, at(4 * 1440)),
+    ).toBe(false);
+  });
+
+  test('checks fame thresholds exactly', () => {
+    expect(
+      conditionSatisfied(
+        { type: 'fameAtLeast', fame: 'adventure', value: 1000 },
+        context({ fame: { adventure: 999, pirate: 0, trade: 0 } }),
+      ),
+    ).toBe(false);
+    expect(
+      conditionSatisfied(
+        { type: 'fameAtLeast', fame: 'adventure', value: 1000 },
+        context({ fame: { adventure: 1000, pirate: 0, trade: 0 } }),
+      ),
+    ).toBe(true);
+  });
+
+  test('evaluates boolean trees and every context membership predicate', () => {
+    const completed = storyEventId('completed');
+    const item = '1' as ItemId;
+    const richContext = context({
+      completedEvents: new Set([completed]),
+      items: new Set([item]),
+      companions: new Set([rocco]),
+    });
+    const conditions: StoryCondition[] = [
+      { type: 'eventCompleted', eventId: completed },
+      { type: 'atPort', portId: '1' },
+      { type: 'atBuilding', buildingId: '8' },
+      { type: 'stage', stage: 'building' },
+      { type: 'hasItem', itemId: item },
+      { type: 'hasCompanion', characterId: rocco },
+    ];
+
+    expect(conditionSatisfied({ type: 'all', conditions }, richContext)).toBe(
+      true,
+    );
+    expect(
+      conditionSatisfied(
+        {
+          type: 'any',
+          conditions: [
+            { type: 'atPort', portId: 'missing' },
+            { type: 'atBuilding', buildingId: '8' },
+          ],
+        },
+        richContext,
+      ),
+    ).toBe(true);
+    expect(
+      conditionSatisfied(
+        { type: 'not', condition: { type: 'stage', stage: 'world' } },
+        richContext,
+      ),
+    ).toBe(true);
+    conditions.forEach((candidate) => {
+      expect(conditionSatisfied(candidate, richContext)).toBe(true);
+    });
+  });
+});
+
+describe('resolveStoryEvent', () => {
+  test('returns null when no scene candidate matches', () => {
+    const candidate = event('only-world', 10, {
+      type: 'stage',
+      stage: 'world',
+    });
+    const content = compiledWith([['world:-:-', [candidate]]], [candidate]);
+
+    expect(
+      resolveStoryEvent(context(), content, ([first]) => first),
+    ).toBeNull();
+  });
+
+  test('combines exact and wildcard candidates, de-duplicates, and sorts by priority', () => {
+    const exact = event('exact', 20);
+    const wildcard = event('wildcard', 10);
+    const content = compiledWith(
+      [
+        [sceneKey('building', '1', '8'), [exact, wildcard]],
+        ['-:-:-', [wildcard]],
+      ],
+      [exact, wildcard],
+    );
+
+    expect(resolveStoryEvent(context(), content, ([first]) => first)).toBe(
+      wildcard,
+    );
+  });
+
+  test('uses event ID as the stable tie-breaker', () => {
+    const later = event('z-event', 10);
+    const earlier = event('a-event', 10);
+    const content = compiledWith(
+      [[sceneKey('building', '1', '8'), [later, earlier]]],
+      [later, earlier],
+    );
+
+    expect(resolveStoryEvent(context(), content, ([first]) => first)).toBe(
+      earlier,
+    );
+  });
+
+  test('excludes completed once events but retains repeatable events', () => {
+    const once = event('once', 10);
+    const repeatable = event('repeatable', 20, undefined, 'repeatable');
+    const content = compiledWith(
+      [[sceneKey('building', '1', '8'), [once, repeatable]]],
+      [once, repeatable],
+    );
+    const completedContext = context({
+      completedEvents: new Set([once.id, repeatable.id]),
+    });
+
+    expect(
+      resolveStoryEvent(completedContext, content, ([first]) => first),
+    ).toBe(repeatable);
+  });
+
+  test('passes a stable random-ambient group to the injected selector', () => {
+    const second = event(
+      'ambient-b',
+      10,
+      undefined,
+      'random-ambient',
+      'greeting',
+    );
+    const first = event(
+      'ambient-a',
+      10,
+      undefined,
+      'random-ambient',
+      'greeting',
+    );
+    const otherGroup = event(
+      'ambient-other',
+      10,
+      undefined,
+      'random-ambient',
+      'other',
+    );
+    const chooseRandom = jest.fn(
+      (candidates: readonly StoryEvent[]) => candidates[candidates.length - 1],
+    );
+    const content = compiledWith(
+      [[sceneKey('building', '1', '8'), [second, otherGroup, first]]],
+      [second, otherGroup, first],
+    );
+
+    expect(resolveStoryEvent(context(), content, chooseRandom)).toBe(second);
+    expect(chooseRandom).toHaveBeenCalledWith([first, second]);
+  });
+
+  test('does not mutate context, content, or indexed candidate arrays', () => {
+    const later = event('later', 20);
+    const earlier = event('earlier', 10);
+    const candidates = [later, earlier];
+    const content = compiledWith(
+      [[sceneKey('building', '1', '8'), candidates]],
+      candidates,
+    );
+    const current = context();
+    const beforeContext = JSON.stringify({
+      ...current,
+      completedEvents: [...current.completedEvents],
+      items: [...current.items],
+      companions: [...current.companions],
+    });
+    const beforeCandidates = [...candidates];
+
+    resolveStoryEvent(current, content, ([first]) => first);
+
+    expect(candidates).toEqual(beforeCandidates);
+    expect(content.candidatesByScene.get('building:1:8')).toBe(candidates);
+    expect(
+      JSON.stringify({
+        ...current,
+        completedEvents: [...current.completedEvents],
+        items: [...current.items],
+        companions: [...current.companions],
+      }),
+    ).toBe(beforeContext);
+  });
+});
+
+describe('createStoryContext', () => {
+  const source = (): StoryContentSource => {
+    const introduction = event('joao.lisbon-opening.house-introduction', 10);
+    introduction.legacyCompletionKey = legacyQuestId('houseBeforeQuest');
+    return {
+      characters: [
+        {
+          id: joao,
+          names: { en: 'João' },
+          role: 'protagonist',
+          dialogueStyle: { color: 'blue' },
+          sailorId: '1',
+        },
+        {
+          id: rocco,
+          names: { en: 'Rocco' },
+          role: 'companion',
+          dialogueStyle: { color: 'green' },
+          sailorId: '19',
+        },
+      ],
+      relationships: [],
+      arcs: [
+        {
+          id: opening,
+          protagonist: joao,
+          title: 'Opening',
+          eventIds: [introduction.id],
+        },
+      ],
+      events: [introduction],
+    };
+  };
+
+  test.each([
+    [{ portId: null, buildingId: null }, 'world'],
+    [{ portId: '1', buildingId: null }, 'port'],
+    [{ portId: '1', buildingId: '8' }, 'building'],
+  ] as const)('derives the %s application stage as %s', (location, stage) => {
+    const state = {
+      ...location,
+      timePassed: 123,
+      quests: [],
+      items: [],
+      mates: [],
+      fame: { adventure: 1, pirate: 2, trade: 3 },
+    } as unknown as State;
+
+    expect(
+      createStoryContext(state, compileStoryContent(source(), 'strict')).stage,
+    ).toBe(stage);
+  });
+
+  test('maps State completion keys, items, mates, fame, and time into pure sets', () => {
+    const content = compileStoryContent(source(), 'strict');
+    const state = {
+      portId: '1',
+      buildingId: '8',
+      timePassed: 321,
+      quests: ['houseBeforeQuest', 'unknownQuest'],
+      items: ['1'],
+      mates: [
+        { sailorId: '19', role: null },
+        { sailorId: 'unknown', role: null },
+      ],
+      fame: { adventure: 4, pirate: 5, trade: 6 },
+    } as unknown as State;
+
+    const result = createStoryContext(state, content);
+
+    expect(result.completedEvents).toEqual(
+      new Set([storyEventId('joao.lisbon-opening.house-introduction')]),
+    );
+    expect(result.items).toEqual(new Set(['1']));
+    expect(result.companions).toEqual(new Set([rocco]));
+    expect(result.fame).toEqual(state.fame);
+    expect(result.timePassed).toBe(321);
+  });
+});
