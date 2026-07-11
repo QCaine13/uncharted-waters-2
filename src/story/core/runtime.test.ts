@@ -59,6 +59,106 @@ describe('story sessions', () => {
     expect(session.stepIndex).toBe(0);
   });
 
+  test('copy-on-advance isolates step arrays and nested choice and effect data', () => {
+    const event = createEvent([
+      { type: 'dialogue', body: 'Advance me.', position: 0 },
+      { type: 'effect', effects: [{ type: 'receiveGold', amount: 500 }] },
+      {
+        type: 'choice',
+        prompt: 'Continue?',
+        options: [
+          {
+            id: 'yes',
+            label: 'Yes',
+            steps: [
+              {
+                type: 'effect',
+                effects: [{ type: 'completeEvent', eventId }],
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+    const eventEffect = event.steps[1];
+    const eventChoice = event.steps[2];
+
+    if (eventEffect.type !== 'effect' || eventChoice.type !== 'choice') {
+      throw new Error('Expected effect and choice fixtures');
+    }
+
+    Object.freeze(event.steps);
+    Object.freeze(eventEffect.effects);
+    Object.freeze(eventChoice.options);
+    Object.freeze(eventChoice.options[0].steps);
+
+    const session = createStorySession(event);
+    const sessionEffect = session.steps[1];
+    const sessionChoice = session.steps[2];
+
+    if (sessionEffect.type !== 'effect' || sessionChoice.type !== 'choice') {
+      throw new Error('Expected cloned effect and choice steps');
+    }
+
+    const sessionBranchEffect = sessionChoice.options[0].steps[0];
+
+    if (sessionBranchEffect.type !== 'effect') {
+      throw new Error('Expected a nested branch effect');
+    }
+
+    Object.freeze(session.steps);
+    Object.freeze(sessionEffect.effects);
+    Object.freeze(sessionChoice.options);
+    Object.freeze(sessionChoice.options[0].steps);
+
+    const result = advanceStorySession(session);
+
+    if (result.type !== 'advanced') {
+      throw new Error('Expected dialogue advancement');
+    }
+
+    const nextSession = result.session;
+    const nextDialogue = nextSession.steps[0];
+    const nextEffect = nextSession.steps[1];
+    const nextChoice = nextSession.steps[2];
+
+    if (
+      nextDialogue.type !== 'dialogue' ||
+      nextEffect.type !== 'effect' ||
+      nextChoice.type !== 'choice'
+    ) {
+      throw new Error('Expected copied dialogue, effect, and choice steps');
+    }
+
+    const nextBranchEffect = nextChoice.options[0].steps[0];
+
+    if (nextBranchEffect.type !== 'effect') {
+      throw new Error('Expected a copied nested branch effect');
+    }
+
+    expect(session.steps).not.toBe(event.steps);
+    expect(sessionEffect.effects).not.toBe(eventEffect.effects);
+    expect(sessionChoice.options).not.toBe(eventChoice.options);
+    expect(sessionChoice.options[0].steps).not.toBe(
+      eventChoice.options[0].steps,
+    );
+    expect(nextSession.steps).not.toBe(session.steps);
+    expect(nextEffect).not.toBe(sessionEffect);
+    expect(nextEffect.effects).not.toBe(sessionEffect.effects);
+    expect(nextChoice).not.toBe(sessionChoice);
+    expect(nextChoice.options).not.toBe(sessionChoice.options);
+    expect(nextChoice.options[0]).not.toBe(sessionChoice.options[0]);
+    expect(nextChoice.options[0].steps).not.toBe(
+      sessionChoice.options[0].steps,
+    );
+    expect(nextBranchEffect.effects).not.toBe(sessionBranchEffect.effects);
+
+    nextDialogue.body = 'Changed clone.';
+
+    expect(event.steps[0]).toMatchObject({ body: 'Advance me.' });
+    expect(session.steps[0]).toMatchObject({ body: 'Advance me.' });
+  });
+
   test('choice cannot advance without a valid option id', () => {
     const session = createStorySession(
       createEvent([
@@ -101,6 +201,7 @@ describe('story sessions', () => {
     '%s branch expands to its own immutable steps',
     (choiceId, expectedEffects) => {
       const harborFinal = createEvent([
+        { type: 'dialogue', body: 'Before choice.', position: 1 },
         {
           type: 'choice',
           prompt: 'Will Rocco be your first mate?',
@@ -134,21 +235,33 @@ describe('story sessions', () => {
             },
           ],
         },
+        { type: 'dialogue', body: 'After choice.', position: 2 },
       ]);
-      const session = createStorySession(harborFinal);
+      const initialSession = createStorySession(harborFinal);
+      const beforeChoice = advanceStorySession(initialSession);
+
+      if (beforeChoice.type !== 'advanced') {
+        throw new Error('Expected dialogue to advance to the choice');
+      }
+
+      const { session } = beforeChoice;
 
       const result = advanceStorySession(session, choiceId);
 
       expect(result).toMatchObject({
         type: 'advanced',
         session: {
-          stepIndex: 0,
-          steps: [{ type: 'effect', effects: expectedEffects }],
+          stepIndex: 1,
+          steps: [
+            { type: 'dialogue', body: 'Before choice.' },
+            { type: 'effect', effects: expectedEffects },
+            { type: 'dialogue', body: 'After choice.' },
+          ],
         },
       });
-      expect(session.steps).toHaveLength(1);
-      expect(session.steps[0]).toMatchObject({ type: 'choice' });
-      expect(harborFinal.steps[0]).toMatchObject({ type: 'choice' });
+      expect(session.steps).toHaveLength(3);
+      expect(session.steps[1]).toMatchObject({ type: 'choice' });
+      expect(harborFinal.steps[1]).toMatchObject({ type: 'choice' });
     },
   );
 
