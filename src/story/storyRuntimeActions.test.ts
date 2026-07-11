@@ -172,4 +172,46 @@ describe('production story runtime actions', () => {
     expect(state.quests).toEqual(['shipyardAfterQuest']);
     expect(updateInterface.general).toHaveBeenCalledTimes(1);
   });
+
+  test('rejects two ships competing for one sailor before any mutation', () => {
+    state.fleets = { '1': { position: undefined, ships: [] } };
+    state.mates = [{ sailorId: '1', role: null }];
+    const before = JSON.stringify({ fleets: state.fleets, mates: state.mates });
+    const setItem = jest.spyOn(Storage.prototype, 'setItem');
+
+    expect(
+      executeStoryEffects(
+        [
+          { type: 'receiveShip', shipId: '6', name: 'First' },
+          { type: 'receiveShip', shipId: '6', name: 'Second' },
+        ],
+        storyRuntimeActions,
+      ),
+    ).toEqual({
+      ok: false,
+      executed: 0,
+      diagnostics: [expect.objectContaining({ code: 'no-available-sailor' })],
+    });
+    expect(JSON.stringify({ fleets: state.fleets, mates: state.mates })).toBe(
+      before,
+    );
+    expect(setItem).not.toHaveBeenCalled();
+  });
+
+  test('preflights ordered groups that add a sailor before receiving a ship', () => {
+    state.fleets = { '1': { position: undefined, ships: [] } };
+    state.mates = [{ sailorId: '1', role: 0 }];
+
+    expect(
+      executeStoryEffects(
+        [
+          { type: 'addCompanion', characterId: characterId('rocco') },
+          { type: 'receiveShip', shipId: '6', name: "Rocco's ship" },
+        ],
+        storyRuntimeActions,
+      ),
+    ).toEqual({ ok: true, executed: 2 });
+    expect(state.fleets['1'].ships).toHaveLength(1);
+    expect(state.mates).toContainEqual({ sailorId: '32', role: 0 });
+  });
 });

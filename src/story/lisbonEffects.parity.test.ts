@@ -4,8 +4,11 @@ import {
   lisbonOpeningEvents,
 } from './content/arcs/joao/lisbon-opening';
 import { executeStoryEffects } from './core/effects';
+import { createStorySession, getStoryFrame } from './core/runtime';
 import type { StoryStep } from './core/types';
 import { storyRuntimeActions } from './storyRuntimeActions';
+import { advanceQuestSession } from '../interface/quest/useQuestStep';
+import { load } from '../state/saveLoad';
 import state from '../state/state';
 import updateInterface from '../state/updateInterface';
 
@@ -132,6 +135,18 @@ const relevantState = () => ({
   buildingId: state.buildingId,
 });
 
+const harborSessionAtChoice = () => {
+  const event = lisbonOpeningEvents.find(
+    ({ id }) => id === legacyToSemanticEvent.harborFinal,
+  );
+  if (!event) throw new Error('missing harbor final');
+  let session = createStorySession(event);
+  while (getStoryFrame(session)?.type === 'dialogue') {
+    session = advanceQuestSession(session, storyRuntimeActions);
+  }
+  return session;
+};
+
 describe('Lisbon production effect parity', () => {
   beforeEach(() => jest.spyOn(Math, 'random').mockReturnValue(0));
   afterEach(() => jest.restoreAllMocks());
@@ -176,11 +191,58 @@ describe('Lisbon production effect parity', () => {
     });
   });
 
+  test('preserves the oracle Yes/No save boundaries and mid-branch reload state', () => {
+    resetState('4');
+    const setItem = jest.spyOn(Storage.prototype, 'setItem');
+    let yesSession = advanceQuestSession(
+      harborSessionAtChoice(),
+      storyRuntimeActions,
+      'yes',
+    );
+
+    expect(setItem).toHaveBeenCalledTimes(1);
+    expect(state.mates.slice(1).map(({ role }) => role)).toEqual([
+      'firstMate',
+      'bookKeeper',
+    ]);
+    expect(state.quests).toEqual([]);
+    state.mates[1].role = Number.NaN;
+    state.mates[2].role = Number.NaN;
+    state.quests = ['harborFinal'];
+    expect(load()).toBe(true);
+    expect(state.mates.slice(1).map(({ role }) => role)).toEqual([
+      'firstMate',
+      'bookKeeper',
+    ]);
+    expect(state.quests).toEqual([]);
+
+    setItem.mockClear();
+    while (getStoryFrame(yesSession) !== null) {
+      yesSession = advanceQuestSession(yesSession, storyRuntimeActions);
+    }
+    expect(setItem).toHaveBeenCalledTimes(1);
+    expect(state.quests).toEqual(['harborFinal']);
+
+    resetState('4');
+    setItem.mockClear();
+    let noSession = advanceQuestSession(
+      harborSessionAtChoice(),
+      storyRuntimeActions,
+      'no',
+    );
+    expect(setItem).not.toHaveBeenCalled();
+    while (getStoryFrame(noSession) !== null) {
+      noSession = advanceQuestSession(noSession, storyRuntimeActions);
+    }
+    expect(setItem).toHaveBeenCalledTimes(1);
+    expect(state.quests).toEqual(['harborFinal']);
+  });
+
   test('writes storage once for every migrated nonempty effect step and branch', () => {
     const groups = lisbonOpeningEvents.flatMap((event) =>
       effectSteps(event.steps),
     );
-    expect(groups).toHaveLength(34);
+    expect(groups).toHaveLength(35);
     const setItem = jest.spyOn(Storage.prototype, 'setItem');
     groups.forEach((step) => {
       if (step.type !== 'effect') throw new Error('expected effect');

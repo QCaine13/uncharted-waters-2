@@ -9,6 +9,7 @@ import type {
 
 export interface StoryEffectRuntime {
   canExecute(effect: StoryEffect): StoryDiagnostic[];
+  preflightGroup?(effects: readonly StoryEffect[]): StoryDiagnostic[];
   completeEvent(eventId: StoryEventId): void;
   receiveGold(amount: number): void;
   receiveItem(itemId: ItemId): void;
@@ -28,10 +29,12 @@ export const preflightStoryEffects = (
   effects: readonly StoryEffect[],
   runtime: StoryEffectRuntime,
 ): StoryDiagnostic[] =>
-  effects.reduce<StoryDiagnostic[]>(
-    (diagnostics, effect) => diagnostics.concat(runtime.canExecute(effect)),
-    [],
-  );
+  effects
+    .reduce<StoryDiagnostic[]>(
+      (diagnostics, effect) => diagnostics.concat(runtime.canExecute(effect)),
+      [],
+    )
+    .concat(runtime.preflightGroup?.(effects) ?? []);
 
 const executeStoryEffect = (
   effect: Exclude<StoryEffect, { type: 'save' }>,

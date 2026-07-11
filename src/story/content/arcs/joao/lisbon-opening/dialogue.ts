@@ -1234,6 +1234,21 @@ export const lisbonOpeningDialogue: Record<LegacyLisbonKey, StoryStep[]> = {
           label: 'Yes',
           steps: [
             {
+              type: 'effect',
+              effects: [
+                {
+                  type: 'assignMate',
+                  characterId: characterId('rocco'),
+                  role: 'firstMate',
+                },
+                {
+                  type: 'assignMate',
+                  characterId: characterId('enrico'),
+                  role: 'bookKeeper',
+                },
+              ],
+            },
+            {
               type: 'dialogue',
               body: 'Not a bad idea. Welcome to the crew, Brother Enrico.',
               position: 2,
@@ -1260,16 +1275,6 @@ export const lisbonOpeningDialogue: Record<LegacyLisbonKey, StoryStep[]> = {
             {
               type: 'effect',
               effects: [
-                {
-                  type: 'assignMate',
-                  characterId: characterId('rocco'),
-                  role: 'firstMate',
-                },
-                {
-                  type: 'assignMate',
-                  characterId: characterId('enrico'),
-                  role: 'bookKeeper',
-                },
                 {
                   type: 'completeEvent',
                   eventId: storyEventId('joao.lisbon-opening.harbor-final'),

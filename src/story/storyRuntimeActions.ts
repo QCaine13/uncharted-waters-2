@@ -6,7 +6,6 @@ import {
   assignStoryMateRole,
   completeLegacyQuestOnce,
   exitBuildingWithoutSave,
-  getAvailableSailorId,
   receiveStoryGold,
   receiveStoryItem,
   receiveStoryShip,
@@ -41,21 +40,61 @@ const validPort = (portId: string): boolean => {
   );
 };
 
+const preflightStatefulGroup = (
+  effects: readonly StoryEffect[],
+): StoryDiagnostic[] => {
+  const plannedMates = state.mates.map((mate) => ({ ...mate }));
+  let plannedFleetLength = state.fleets['1']?.ships.length ?? 0;
+  const diagnostics: StoryDiagnostic[] = [];
+
+  effects.forEach((effect) => {
+    if (effect.type === 'addCompanion') {
+      const sailorId = character(effect)?.sailorId;
+      if (sailorId) plannedMates.push({ sailorId, role: null });
+      return;
+    }
+    if (effect.type === 'assignMate') {
+      const sailorId = character(effect)?.sailorId;
+      if (!sailorId) return;
+      const mate = plannedMates.find(
+        (candidate) => candidate.sailorId === sailorId,
+      );
+      if (!mate) {
+        diagnostics.push(
+          diagnostic('unknown-mate', `Unknown mate ${effect.characterId}`),
+        );
+      } else if (Number.isNaN(mate.role)) {
+        mate.role = effect.role;
+      }
+      return;
+    }
+    if (effect.type === 'receiveShip' && shipData[effect.shipId]) {
+      const mate = plannedMates.find(
+        ({ role }) => role === null || Number.isNaN(role),
+      );
+      if (!mate) {
+        diagnostics.push(
+          diagnostic('no-available-sailor', 'No sailor can captain the ship'),
+        );
+      } else {
+        mate.role = plannedFleetLength;
+        plannedFleetLength += 1;
+      }
+    }
+  });
+
+  return diagnostics;
+};
+
 export const storyRuntimeActions: StoryEffectRuntime = {
+  preflightGroup: preflightStatefulGroup,
   canExecute(effect) {
     switch (effect.type) {
       case 'receiveShip':
         if (!shipData[effect.shipId]) {
           return [diagnostic('unknown-ship', `Unknown ship ${effect.shipId}`)];
         }
-        return getAvailableSailorId()
-          ? []
-          : [
-              diagnostic(
-                'no-available-sailor',
-                'No sailor can captain the ship',
-              ),
-            ];
+        return [];
       case 'receiveItem':
         return itemData[effect.itemId]
           ? []
@@ -71,8 +110,7 @@ export const storyRuntimeActions: StoryEffectRuntime = {
             ];
       case 'assignMate': {
         const target = character(effect);
-        return target?.sailorId &&
-          state.mates.some(({ sailorId }) => sailorId === target.sailorId)
+        return target?.sailorId
           ? []
           : [diagnostic('unknown-mate', `Unknown mate ${effect.characterId}`)];
       }

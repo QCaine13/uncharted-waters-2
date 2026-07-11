@@ -68,13 +68,32 @@ export default function useQuestStep() {
   const [session, setSession] = useState<StorySession | null>(() =>
     eventRef.current ? createStorySession(eventRef.current) : null,
   );
+  const activeSessionRef = useRef<StorySession | null>(session);
+  const transitionPendingRef = useRef(false);
   if (session === null) return null;
   const frame = getStoryFrame(session);
   if (frame === null || frame.type === 'effect') return null;
 
   const proceed = (choiceId?: string) => {
-    const advance = () =>
-      setSession(advanceQuestSession(session, storyRuntimeActions, choiceId));
+    if (transitionPendingRef.current || activeSessionRef.current !== session) {
+      return;
+    }
+    transitionPendingRef.current = true;
+    const advance = () => {
+      try {
+        const next = advanceQuestSession(
+          session,
+          storyRuntimeActions,
+          choiceId,
+        );
+        activeSessionRef.current = next;
+        transitionPendingRef.current = false;
+        setSession(next);
+      } catch (error) {
+        transitionPendingRef.current = false;
+        throw error;
+      }
+    };
     if (frame.type === 'dialogue' && frame.fadeBeforeNext) {
       updateInterface.fade(advance);
     } else {

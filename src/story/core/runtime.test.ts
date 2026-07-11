@@ -3,12 +3,7 @@ import {
   createStorySession,
   getStoryFrame,
 } from './runtime';
-import {
-  characterId,
-  storyArcId,
-  storyEventId,
-  StoryEvent,
-} from './types';
+import { characterId, storyArcId, storyEventId, StoryEvent } from './types';
 
 const eventId = storyEventId('joao.lisbon-opening.harbor-final');
 const rocco = characterId('rocco');
@@ -198,6 +193,46 @@ describe('story sessions', () => {
     });
   });
 
+  test('choice expansion preserves the spoken prompt as immutable dialogue history', () => {
+    const session = createStorySession(
+      createEvent([
+        {
+          type: 'choice',
+          prompt: 'Rocco asks?',
+          position: 1,
+          speaker: rocco,
+          options: [
+            {
+              id: 'yes',
+              label: 'Yes',
+              steps: [{ type: 'dialogue', body: 'João answers.', position: 2 }],
+            },
+          ],
+        },
+      ]),
+    );
+
+    const result = advanceStorySession(session, 'yes');
+
+    expect(result).toMatchObject({
+      type: 'advanced',
+      session: {
+        stepIndex: 1,
+        steps: [
+          {
+            type: 'dialogue',
+            body: 'Rocco asks?',
+            position: 1,
+            speaker: rocco,
+          },
+          { type: 'dialogue', body: 'João answers.', position: 2 },
+        ],
+      },
+    });
+    expect(session.stepIndex).toBe(0);
+    expect(session.steps[0]).toMatchObject({ type: 'choice' });
+  });
+
   test.each([
     [
       'yes',
@@ -263,9 +298,15 @@ describe('story sessions', () => {
       expect(result).toMatchObject({
         type: 'advanced',
         session: {
-          stepIndex: 1,
+          stepIndex: 2,
           steps: [
             { type: 'dialogue', body: 'Before choice.' },
+            {
+              type: 'dialogue',
+              body: 'Will Rocco be your first mate?',
+              position: 1,
+              speaker: rocco,
+            },
             { type: 'effect', effects: expectedEffects },
             { type: 'dialogue', body: 'After choice.' },
           ],

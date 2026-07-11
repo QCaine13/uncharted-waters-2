@@ -277,7 +277,12 @@ const normalizeBranch = (choice: StoryChoice): NormalizedMessage[] => {
       });
     } else if (step.type === 'effect') {
       const terminal = messages[messages.length - 1];
-      if (!terminal) throw new Error(`Effect precedes branch ${choice.id}`);
+      if (!terminal) {
+        if (step.effects.some(({ type }) => type === 'completeEvent')) {
+          throw new Error(`Completion precedes branch ${choice.id}`);
+        }
+        return;
+      }
       if (step.effects.some(({ type }) => type === 'completeEvent')) {
         terminal.completeQuest = true;
       }

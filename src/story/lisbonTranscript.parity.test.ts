@@ -136,7 +136,7 @@ describe('Lisbon transcript parity', () => {
     });
   });
 
-  test('normalizes both harbor-final branches including exact role intents', () => {
+  test('normalizes both harbor-final branch transcripts and terminal completion', () => {
     const harbor = lisbonOpeningEvents.find(
       ({ id }) => id === legacyToSemanticEvent.harborFinal,
     );
@@ -145,7 +145,11 @@ describe('Lisbon transcript parity', () => {
       throw new Error('missing harbor choice');
 
     choice.options.forEach((option) => {
-      const actual = normalizeSteps(option.steps);
+      const branchTranscript =
+        option.steps[0]?.type === 'effect'
+          ? option.steps.slice(1)
+          : option.steps;
+      const actual = normalizeSteps(branchTranscript);
       const expected = legacyLisbonSnapshot.harborFinalBranches[
         option.id as 'yes' | 'no'
       ].map((message) => ({
@@ -158,24 +162,62 @@ describe('Lisbon transcript parity', () => {
         effects: [],
       })) as NormalizedBeat[];
       expected[expected.length - 1].effects = [
-        ...(option.id === 'yes'
-          ? [
-              {
-                type: 'assignMate',
-                payload: { characterId: 'rocco', role: 'firstMate' },
-              },
-              {
-                type: 'assignMate',
-                payload: { characterId: 'enrico', role: 'bookKeeper' },
-              },
-            ]
-          : []),
         {
           type: 'completeEvent',
           payload: { eventId: legacyToSemanticEvent.harborFinal },
         },
       ];
       expect(actual).toEqual(expected);
+    });
+  });
+
+  test('places harbor Yes role intents at the oracle choice callback boundary', () => {
+    const harbor = lisbonOpeningEvents.find(
+      ({ id }) => id === legacyToSemanticEvent.harborFinal,
+    );
+    const choice = harbor?.steps.find((step) => step.type === 'choice');
+    if (!choice || choice.type !== 'choice') throw new Error('missing choice');
+    const yes = choice.options.find(({ id }) => id === 'yes');
+    const no = choice.options.find(({ id }) => id === 'no');
+    if (!yes || !no) throw new Error('missing branches');
+
+    expect(legacyLisbonSnapshot.operations).toContainEqual({
+      key: 'harborFinal',
+      callback: 'messages[16].confirm.yes',
+      operations: ['assignFirstRoles', 'appendYesTranscript'],
+    });
+    expect(yes.steps[0]).toEqual({
+      type: 'effect',
+      effects: [
+        {
+          type: 'assignMate',
+          characterId: 'rocco',
+          role: 'firstMate',
+        },
+        {
+          type: 'assignMate',
+          characterId: 'enrico',
+          role: 'bookKeeper',
+        },
+      ],
+    });
+    expect(yes.steps[yes.steps.length - 1]).toEqual({
+      type: 'effect',
+      effects: [
+        {
+          type: 'completeEvent',
+          eventId: legacyToSemanticEvent.harborFinal,
+        },
+      ],
+    });
+    expect(no.steps[no.steps.length - 1]).toEqual({
+      type: 'effect',
+      effects: [
+        {
+          type: 'completeEvent',
+          eventId: legacyToSemanticEvent.harborFinal,
+        },
+      ],
     });
   });
 });

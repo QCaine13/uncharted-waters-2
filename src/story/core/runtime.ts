@@ -1,6 +1,7 @@
 import type {
   DialogueStep,
   EffectStep,
+  ChoiceStep,
   StoryChoice,
   StoryEvent,
   StoryEventId,
@@ -93,14 +94,22 @@ const advancePastCurrentStep = (session: StorySession): StorySession => ({
 
 const expandChoice = (
   session: StorySession,
+  choice: ChoiceStep,
   selected: StoryChoice,
 ): StorySession => ({
   ...session,
   steps: cloneStorySteps([
     ...session.steps.slice(0, session.stepIndex),
+    {
+      type: 'dialogue',
+      body: choice.prompt,
+      position: choice.position,
+      ...(choice.speaker !== undefined ? { speaker: choice.speaker } : {}),
+    },
     ...selected.steps,
     ...session.steps.slice(session.stepIndex + 1),
   ]),
+  stepIndex: session.stepIndex + 1,
 });
 
 export const advanceStorySession = (
@@ -124,7 +133,7 @@ export const advanceStorySession = (
       return { type: 'blocked', reason: 'invalid-choice', session };
     }
 
-    return { type: 'advanced', session: expandChoice(session, selected) };
+    return { type: 'advanced', session: expandChoice(session, step, selected) };
   }
 
   const nextSession = advancePastCurrentStep(session);
