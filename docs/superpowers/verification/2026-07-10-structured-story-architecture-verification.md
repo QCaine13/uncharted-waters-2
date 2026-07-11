@@ -6,7 +6,7 @@
 
 **Branch:** `codex/story-architecture`
 
-**Verified pre-evidence SHA:** `4b3b33b0c13f15488e80045747f4ce560670612a`
+**Verified pre-evidence SHA:** `f27122c54cc27da1e7e24756ddc94c170c1ac11d`
 
 This record verifies the typed structured-story runtime and the
 behavior-preserving migration of the existing João Lisbon opening through the
@@ -27,7 +27,25 @@ it does not predict or claim the SHA of the commit that contains this file.
 
 `npm run story:validate` passed its selected manifest validation test. The
 focused production-safety check, `production mode excludes an invalid event while preserving a valid event`, also passed: 1 selected test passed in 1
-suite, with the other 9 registry tests skipped by the name filter.
+suite, with the other 11 registry tests skipped by the name filter.
+
+The final validator-focused command ran `registry.test.ts`,
+`validator.contract.test.ts`, and `validator.semantics.test.ts` together: **3
+suites and 79 tests passed**. The contract matrix covers catalog references,
+structure, projection safety, value constraints, identity, completion graphs,
+and migration ownership with exact diagnostic codes, owners, and paths. The
+semantic suite additionally proves runtime-numbered supply-port IDs; the full
+numeric/`NaN`/`null` mate-role boundary; mandatory dependency semantics through
+`all`, `any`, and `not`; the independent 36-key/48-event migration inventory;
+all 12 ambient split IDs; and bidirectional legacy-key ownership.
+
+Production fallback was exercised with injected diagnostic sinks: each exact
+structured diagnostic is emitted once, invalid event owners are excluded even
+when the diagnostic path is in graph or parity metadata, unrelated valid
+events remain compiled, and compilation returns without throwing. The
+application production boundary supplies the real item, port, building, ship,
+sailor, role, and migration catalogs to that sink; development and test
+compilation remain strict.
 
 ## Focused runtime suites
 
@@ -126,7 +144,7 @@ From a removed `build/` directory, `npm run verify:full` exited 0 with:
 
 - asset verification: 38 PNG/OGG/MP3 assets;
 - story validation: PASS;
-- Jest: **38 suites, 274 tests, 0 failures, 0 snapshots**;
+- Jest: **39 suites, 297 tests, 0 failures, 0 snapshots**;
 - TypeScript (`tsc --noEmit`): PASS;
 - ESLint: PASS with no findings;
 - production Webpack: PASS, compiled with 3 warnings;
