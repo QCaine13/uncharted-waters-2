@@ -47,20 +47,20 @@
 
 ## 当前状态面板
 
-> 2026-07-10 verified against the checked-out code.
+> 2026-07-11 verified against the checked-out code.
 
-| 系统                                           | 状态                                     | 说明                                                                                                                                                                      |
-| ---------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 世界航行 / 港口行走 / 建筑                     | ✅ 已实现                                | 基础骨架                                                                                                                                                                  |
-| **海上每日补给消耗**                           | ✅ MVP 已实现                            | 舰队共享水/食物，按总船员向上取整每日扣减；≤3 天橙色、耗尽红色；[验证记录](superpowers/verification/2026-07-10-daily-provisions-consumption-verification.md)              |
-| 港口建筑（港务/酒馆/旅馆/银行/商店/教堂/船厂） | ✅ 已实现                                | UI 完成，部分逻辑待深化                                                                                                                                                   |
-| **存档 / 读档 / 重置**                         | ✅ MVP + version 2 migration implemented | [`src/state/saveLoad.ts`](../src/state/saveLoad.ts)                                                                                                                       |
-| **贸易 / 市场**                                | ✅ MVP 已实现                            | `Market.tsx` + `goodsData.ts` + `marketGoodsData.ts`（原文档曾标「最大阻塞」，已过时）                                                                                    |
-| 名声（冒险/海盗/贸易）                         | ⏳ 未实现                                | 剧情引擎 slice 2 引入                                                                                                                                                     |
-| 数据驱动剧情引擎                               | ✅ slice 1 implemented                   | [slice 1](../src/interface/quest/questEvents.ts) 已落地；更广的 narrative / lore 集成待完成                                                                               |
-| 运行时基线 / CI                                | ✅ 已实现                                | [资产预检](../scripts/verify-assets.js) + [项目 CI](../.github/workflows/baseline.yml) + [验证记录](superpowers/verification/2026-07-09-runtime-baseline-verification.md) |
-| 多主角 / 关系网 / 5 层暗线                     | ⏳ 设计中                                | 见 `3-narrative/`                                                                                                                                                         |
-| 港口扩张（→270-320 节点）/ 地图现代化          | ⏳ 设计中                                | 见 `2-world-design/`                                                                                                                                                      |
+| 系统                                           | 状态                                     | 说明                                                                                                                                                                                                                       |
+| ---------------------------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 世界航行 / 港口行走 / 建筑                     | ✅ 已实现                                | 基础骨架                                                                                                                                                                                                                   |
+| **海上每日补给消耗**                           | ✅ MVP 已实现                            | 舰队共享水/食物，按总船员向上取整每日扣减；≤3 天橙色、耗尽红色；[验证记录](superpowers/verification/2026-07-10-daily-provisions-consumption-verification.md)                                                               |
+| 港口建筑（港务/酒馆/旅馆/银行/商店/教堂/船厂） | ✅ 已实现                                | UI 完成，部分逻辑待深化                                                                                                                                                                                                    |
+| **存档 / 读档 / 重置**                         | ✅ MVP + version 2 migration implemented | [`src/state/saveLoad.ts`](../src/state/saveLoad.ts)                                                                                                                                                                        |
+| **贸易 / 市场**                                | ✅ MVP 已实现                            | `Market.tsx` + `goodsData.ts` + `marketGoodsData.ts`（原文档曾标「最大阻塞」，已过时）                                                                                                                                     |
+| 名声（冒险/海盗/贸易）                         | ⏳ 未实现                                | 剧情引擎 slice 2 引入                                                                                                                                                                                                      |
+| 结构化剧情架构 / João 里斯本迁移               | ✅ 已实现并验证                          | 类型化 registry、validator、resolver、effects 与 runtime 已运行完整的既有 João 里斯本开场；[验证记录](superpowers/verification/2026-07-10-structured-story-architecture-verification.md)。Domingo 与完整 João 路线仍待实现 |
+| 运行时基线 / CI                                | ✅ 已实现                                | [资产预检](../scripts/verify-assets.js) + [项目 CI](../.github/workflows/baseline.yml) + [验证记录](superpowers/verification/2026-07-09-runtime-baseline-verification.md)                                                  |
+| 多主角 / 关系网 / 5 层暗线                     | ⏳ 设计中                                | 见 `3-narrative/`                                                                                                                                                                                                          |
+| 港口扩张（→270-320 节点）/ 地图现代化          | ⏳ 设计中                                | 见 `2-world-design/`                                                                                                                                                                                                       |
 
 ---
 

@@ -1,11 +1,12 @@
 # 统一路线图 (Roadmap)
 
-**Status**: Living · **Date**: 2026-07-10 ·（原 `research/implementation-plan.md`，已提到 docs 顶层）
+**Status**: Living · **Date**: 2026-07-11 ·（原 `research/implementation-plan.md`，已提到 docs 顶层）
 
-> **进度快照（2026-07-10）**：Save/Load v2 migration、Market MVP、数据驱动剧情引擎
-> slice 1 与项目自有 runtime baseline 均已实现；海上每日补给消耗是最新完成的 gameplay
-> slice。完整状态见 [`README.md`](README.md) 状态面板。下方 Phase 文本保留原始规划，
-> 已完成项以 ✅ 标注。
+> **进度快照（2026-07-11）**：Save/Load v2 migration、Market MVP、结构化剧情架构、
+> 既有 João 里斯本开场的行为等价迁移与项目自有 runtime baseline 均已实现；详见
+> [验证记录](superpowers/verification/2026-07-10-structured-story-architecture-verification.md)。
+> 这没有增加 Lisbon 之后的新剧情；Domingo 与完整 João 路线仍待实现。完整状态见
+> [`README.md`](README.md) 状态面板。下方 Phase 文本保留原始规划，已完成项以 ✅ 标注。
 
 **有分寸的扩展原则（spare-time / measured expansion）**  
 这个项目是爱好者复刻 + 代码展示性质的 side project。我们采用“小而完整、可在 1-3 小时内完成一个垂直 slice、始终保持可测试和可回滚”的方式扩展。  
@@ -73,12 +74,17 @@ MVP acceptance:
 - Add discovery reporting and fame rewards.
 - Start with a small set around Europe/Africa before filling the world.
 
-## Phase 7: Story Expansion
+## Phase 7: Story Expansion (architecture + Lisbon migration ✅; new story pending)
 
 - Pick one protagonist path first.
 - Joao is the easiest fit because the existing quest data already leans that
   way.
 - Model event triggers as data, not scattered component logic.
+
+The typed, validated runtime and the behavior-preserving migration of the
+existing João Lisbon opening are implemented. This completes the architecture
+slice only: the Domingo beat and the rest of the full João route remain
+pending, along with every other post-Lisbon chapter.
 
 ## Spare-time Slice Suggestions (推荐小切片)
 

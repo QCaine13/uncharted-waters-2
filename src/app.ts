@@ -19,6 +19,11 @@ const start = async () => {
   setDockedFleetPositions();
 
   const loop = () => {
+    if (!document.getElementById('camera')) {
+      requestAnimationFrame(loop);
+      return;
+    }
+
     if (state.portId !== null) {
       if (!state.port) {
         state.port = createPort(state.portId);

@@ -6,6 +6,8 @@ import MessageBox from '../common/MessageBox';
 import { CharacterMessageBoxType } from '../quest/getMessageBoxes';
 import characterData from '../../data/characterData';
 import getSailor from '../../data/sailorData';
+import { compiledStoryContent } from '../../story';
+import { characterId as toCharacterId } from '../../story/core/types';
 
 export type Position = 1 | 2;
 
@@ -25,9 +27,13 @@ export default function CharacterMessageBox({ messageBox, position }: Props) {
   }
 
   const { body, characterId, acknowledge } = messageBox;
+  const presentationCharacterId =
+    compiledStoryContent.charactersById.get(toCharacterId(characterId))
+      ?.legacyCharacterId ?? characterId;
 
   const { name, color = 'text-black' } =
-    characterData[characterId] || getSailor(characterId);
+    characterData[presentationCharacterId] ||
+    getSailor(presentationCharacterId);
 
   return (
     <div
@@ -37,7 +43,7 @@ export default function CharacterMessageBox({ messageBox, position }: Props) {
       <MessageBox>
         <div className="flex w-[592px] h-[256px] text-2xl p-4">
           <img
-            src={Assets.characters(characterId)}
+            src={Assets.characters(presentationCharacterId)}
             className="w-32 h-40"
             alt=""
           />
