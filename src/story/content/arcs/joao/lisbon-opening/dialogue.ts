@@ -4,6 +4,14 @@ import {
   type StoryStep,
 } from '../../../../core/types';
 
+const deepFreeze = <T>(value: T): T => {
+  if (value !== null && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.values(value).forEach(deepFreeze);
+    Object.freeze(value);
+  }
+  return value;
+};
+
 export const legacyToSemanticEvent = {
   houseBeforeQuest: 'joao.lisbon-opening.house-introduction',
   houseAfterQuest: 'joao.lisbon-opening.house-guard-after-introduction',
@@ -1218,6 +1226,8 @@ export const lisbonOpeningDialogue: Record<LegacyLisbonKey, StoryStep[]> = {
       type: 'choice',
       prompt:
         'Captain, Brother Enrico seems to have a head for numbers, so why don’t ye make him the bookkeeper on our ship?',
+      position: 1,
+      speaker: characterId('rocco'),
       options: [
         {
           id: 'yes',
@@ -1349,5 +1359,7 @@ export const lisbonOpeningDialogue: Record<LegacyLisbonKey, StoryStep[]> = {
     },
   ],
 };
+
+deepFreeze(lisbonOpeningDialogue);
 
 export default lisbonOpeningDialogue;

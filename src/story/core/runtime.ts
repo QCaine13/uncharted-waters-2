@@ -18,6 +18,8 @@ export type StoryFrame =
   | {
       type: 'choice';
       prompt: string;
+      position: 0 | 1 | 2;
+      speaker?: DialogueStep['speaker'];
       options: Array<{ id: string; label: string }>;
     }
   | EffectStep;
@@ -74,6 +76,8 @@ export const getStoryFrame = (session: StorySession): StoryFrame | null => {
     return {
       type: 'choice',
       prompt: step.prompt,
+      position: step.position,
+      ...(step.speaker === undefined ? {} : { speaker: step.speaker }),
       options: step.options.map(({ id, label }) => ({ id, label })),
     };
   }

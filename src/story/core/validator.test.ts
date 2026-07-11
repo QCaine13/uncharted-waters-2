@@ -179,7 +179,7 @@ const invalidCases: InvalidCase[] = [
     path: 'events[0].steps[0].options',
     mutate: (source) => {
       source.events[0].steps = [
-        { type: 'choice', prompt: 'Choose', options: [] },
+        { type: 'choice', prompt: 'Choose', position: 0, options: [] },
       ];
     },
   },

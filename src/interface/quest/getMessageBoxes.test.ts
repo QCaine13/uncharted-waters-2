@@ -169,3 +169,38 @@ test('projects interpolated dialogue without modifying frozen source content', (
   });
   expect(frozen.body).toBe('Hello, $firstName $lastName!');
 });
+
+test('projects a spoken choice prompt and confirmation on the same frame', () => {
+  const choose = jest.fn();
+  const messageBoxes = getMessageBoxesFromFrame(
+    [],
+    {
+      type: 'choice',
+      prompt: 'Captain $firstName, appoint a bookkeeper?',
+      position: 1,
+      speaker: characterId('rocco'),
+      options: [
+        { id: 'yes', label: 'Yes' },
+        { id: 'no', label: 'No' },
+      ],
+    },
+    choose,
+  );
+
+  expect(messageBoxes).toEqual([
+    null,
+    {
+      body: 'Captain João, appoint a bookkeeper?',
+      characterId: characterId('rocco'),
+      confirm: {
+        yes: expect.any(Function),
+        no: expect.any(Function),
+      },
+    },
+    null,
+  ]);
+
+  messageBoxes[1]?.confirm?.yes();
+  messageBoxes[1]?.confirm?.no();
+  expect(choose.mock.calls).toEqual([['yes'], ['no']]);
+});

@@ -66,6 +66,7 @@ describe('story sessions', () => {
       {
         type: 'choice',
         prompt: 'Continue?',
+        position: 0,
         options: [
           {
             id: 'yes',
@@ -165,6 +166,8 @@ describe('story sessions', () => {
         {
           type: 'choice',
           prompt: 'Take Rocco?',
+          position: 1,
+          speaker: rocco,
           options: [
             {
               id: 'yes',
@@ -186,6 +189,13 @@ describe('story sessions', () => {
       reason: 'invalid-choice',
       session,
     });
+    expect(getStoryFrame(session)).toEqual({
+      type: 'choice',
+      prompt: 'Take Rocco?',
+      position: 1,
+      speaker: rocco,
+      options: [{ id: 'yes', label: 'Yes' }],
+    });
   });
 
   test.each([
@@ -205,6 +215,8 @@ describe('story sessions', () => {
         {
           type: 'choice',
           prompt: 'Will Rocco be your first mate?',
+          position: 1,
+          speaker: rocco,
           options: [
             {
               id: 'yes',

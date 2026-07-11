@@ -102,6 +102,8 @@ export interface StoryChoice {
 export interface ChoiceStep {
   type: 'choice';
   prompt: string;
+  position: 0 | 1 | 2;
+  speaker?: CharacterId;
   options: StoryChoice[];
 }
 

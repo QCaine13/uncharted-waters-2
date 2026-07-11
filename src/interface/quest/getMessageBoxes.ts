@@ -38,13 +38,37 @@ const interpolatePlayerName = (body: string) =>
 export const getMessageBoxesFromFrame = (
   history: readonly DialogueStep[],
   frame: StoryFrame,
+  chooseChoice?: (choiceId: string) => void,
 ): MessageBoxes => {
-  const message = frame.type === 'dialogue' ? frame : undefined;
+  let message: Pick<DialogueStep, 'body' | 'position' | 'speaker'> | undefined;
+  if (frame.type === 'dialogue') {
+    message = frame;
+  } else if (frame.type === 'choice') {
+    message = {
+      body: frame.prompt,
+      position: frame.position,
+      speaker: frame.speaker,
+    };
+  }
+  const yes =
+    frame.type === 'choice' && frame.options.find(({ id }) => id === 'yes');
+  const no =
+    frame.type === 'choice' && frame.options.find(({ id }) => id === 'no');
+  const confirm =
+    chooseChoice && yes && no
+      ? {
+          yes: () => chooseChoice(yes.id),
+          no: () => chooseChoice(no.id),
+        }
+      : undefined;
 
   return messagePositions.map((position) => {
     if (position === 0) {
       if (message?.position === position) {
-        return { body: interpolatePlayerName(message.body) };
+        return {
+          body: interpolatePlayerName(message.body),
+          ...(confirm === undefined ? {} : { confirm }),
+        };
       }
 
       const vendorSpoken = history.some(
@@ -62,6 +86,7 @@ export const getMessageBoxesFromFrame = (
       return {
         body: interpolatePlayerName(message.body),
         characterId: message.speaker,
+        ...(confirm === undefined ? {} : { confirm }),
       };
     }
 

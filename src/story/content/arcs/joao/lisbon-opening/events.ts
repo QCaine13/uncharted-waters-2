@@ -12,6 +12,14 @@ import {
   type LegacyLisbonKey,
 } from './dialogue';
 
+const deepFreeze = <T>(value: T): T => {
+  if (value !== null && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.values(value).forEach(deepFreeze);
+    Object.freeze(value);
+  }
+  return value;
+};
+
 export const lisbonOpeningArcId = storyArcId('joao.lisbon-opening');
 
 type Gates = {
@@ -117,7 +125,7 @@ const ambientEvents = (buildingId: AmbientBuilding): StoryEvent[] => [
   ambientEvent('lodgeBankGuildAfterQuestRandom3', buildingId, 20, 'after'),
 ];
 
-export const lisbonOpeningEvents: StoryEvent[] = [
+export const lisbonOpeningEvents: StoryEvent[] = deepFreeze([
   storyEvent('houseBeforeQuest', '8', 10, {
     blockedBy: ['houseBeforeQuest'],
   }),
@@ -211,6 +219,6 @@ export const lisbonOpeningEvents: StoryEvent[] = [
   storyEvent('harborFinal', '4', 70, {
     blockedBy: ['harborFinal'],
   }),
-];
+]);
 
 export default lisbonOpeningEvents;

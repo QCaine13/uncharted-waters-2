@@ -6,6 +6,7 @@ import { storyCharacters } from '../../../characters';
 import { storyRelationships } from '../../../relationships';
 import { compiledStoryContent, storyContentSource } from '../../../..';
 import type {
+  StoryChoice,
   StoryCondition,
   StoryEffect,
   StoryEvent,
@@ -14,6 +15,7 @@ import type {
 import {
   joaoLisbonOpening,
   legacyToSemanticEvent,
+  lisbonOpeningDialogue,
   lisbonOpeningEvents,
 } from '.';
 
@@ -124,8 +126,6 @@ const snapshotPassiveMessage = (message: {
   ...(message.action ? { hasAction: true } : {}),
 });
 
-type SnapshotMessage = Parameters<typeof snapshotPassiveMessage>[0];
-
 const normalizeTokens = (body: string): string =>
   body
     .replace(/\$firstName/g, '<firstName>')
@@ -138,6 +138,12 @@ const recursivelyContainsFunction = (value: unknown): boolean => {
     return Object.values(value).some(recursivelyContainsFunction);
   }
   return false;
+};
+
+const expectDeepFrozen = (value: unknown): void => {
+  if (!value || typeof value !== 'object') return;
+  expect(Object.isFrozen(value)).toBe(true);
+  Object.values(value).forEach(expectDeepFrozen);
 };
 
 const flattenSteps = (steps: readonly StoryStep[]): readonly StoryStep[] =>
@@ -156,129 +162,254 @@ const eventById = (id: string): StoryEvent => {
   return event;
 };
 
-const migratedBodies = (event: StoryEvent): string[] =>
-  event.steps.flatMap((step) => {
-    if (step.type === 'dialogue') return [normalizeTokens(step.body)];
-    if (step.type === 'choice') return [normalizeTokens(step.prompt)];
-    return [];
+type LegacyKey = typeof legacyKeys[number];
+type NormalizedMessage = {
+  body: string;
+  position: number;
+  characterId?: string;
+  fadeBeforeNext?: true;
+  completeQuest?: true;
+  exitBuilding?: true;
+  action?: string;
+};
+
+const semanticToLegacy = new Map<string, LegacyKey>(
+  Object.entries(legacyToSemanticEvent).map(([key, eventId]) => [
+    eventId,
+    key as LegacyKey,
+  ]),
+);
+
+const legacyKeyForEventId = (eventId: string): LegacyKey => {
+  const semanticId = [...semanticToLegacy.keys()].find(
+    (candidate) => eventId === candidate || eventId.startsWith(`${candidate}.`),
+  );
+  const key = semanticId && semanticToLegacy.get(semanticId);
+  if (!key) throw new Error(`No legacy key for semantic event ${eventId}`);
+  return key;
+};
+
+const legacyCharacterId = (speaker: string | undefined): string | undefined =>
+  speaker === undefined
+    ? undefined
+    : storyCharacters.find(({ id }) => id === speaker)?.legacyCharacterId;
+
+const callbackOperation = (effect: StoryEffect): string | null => {
+  switch (effect.type) {
+    case 'addCompanion':
+      if (effect.characterId === 'rocco') return 'recruitRocco';
+      if (effect.characterId === 'enrico') return 'recruitEnrico';
+      return null;
+    case 'receiveItem':
+      return `buyItem(${effect.itemId}, true)`;
+    case 'receiveGold':
+      return `receiveGold(${effect.amount})`;
+    case 'receiveShip':
+      return effect.shipId === '6' && effect.name === 'Hermes II'
+        ? 'receiveFirstShip'
+        : null;
+    case 'completeEvent':
+    case 'assignMate':
+    case 'exitBuilding':
+    case 'setPort':
+    case 'save':
+      return null;
+    default: {
+      const exhaustive: never = effect;
+      throw new Error(`Unhandled effect ${JSON.stringify(exhaustive)}`);
+    }
+  }
+};
+
+const splitAmbientExitExists = (key: LegacyKey): boolean => {
+  const baseId = legacyToSemanticEvent[key];
+  const variants = lisbonOpeningEvents.filter(
+    ({ id }) => id === `${baseId}.bank` || id === `${baseId}.guild`,
+  );
+  const expectedBoundary =
+    lisbonOpeningDialogue[key].filter(
+      ({ type }) => type === 'dialogue' || type === 'choice',
+    ).length - 1;
+  return (
+    variants.length === 2 &&
+    variants.every(({ steps }) => {
+      let messageIndex = -1;
+      return steps.some((step) => {
+        if (step.type === 'dialogue' || step.type === 'choice') {
+          messageIndex += 1;
+        }
+        return (
+          messageIndex === expectedBoundary &&
+          step.type === 'effect' &&
+          step.effects.some(({ type }) => type === 'exitBuilding')
+        );
+      });
+    })
+  );
+};
+
+const normalizeTranscript = (
+  key: LegacyKey,
+  steps: readonly StoryStep[],
+): NormalizedMessage[] => {
+  const messages: NormalizedMessage[] = [];
+  steps.forEach((step) => {
+    if (step.type === 'dialogue') {
+      messages.push({
+        body: step.body,
+        position: step.position,
+        ...(step.speaker === undefined
+          ? {}
+          : { characterId: legacyCharacterId(step.speaker) }),
+        ...(step.fadeBeforeNext ? { fadeBeforeNext: true } : {}),
+      });
+      return;
+    }
+    if (step.type === 'choice') {
+      messages.push({
+        body: step.prompt,
+        position: step.position,
+        ...(step.speaker === undefined
+          ? {}
+          : { characterId: legacyCharacterId(step.speaker) }),
+      });
+      return;
+    }
+    const message = messages[messages.length - 1];
+    if (!message) throw new Error(`Effect precedes transcript in ${key}`);
+    step.effects.forEach((effect) => {
+      if (effect.type === 'completeEvent') message.completeQuest = true;
+      if (effect.type === 'exitBuilding') message.exitBuilding = true;
+      const operation = callbackOperation(effect);
+      if (operation) message.action = operation;
+    });
   });
 
-const expectedEffects: Partial<
-  Record<typeof legacyKeys[number], Record<number, StoryEffect[]>>
-> = {
-  houseBeforeQuest: {
-    38: [
-      { type: 'addCompanion', characterId: 'rocco' as never },
-      {
-        type: 'completeEvent',
-        eventId: expectedMapping.houseBeforeQuest as never,
-      },
-      { type: 'exitBuilding' },
-    ],
-  },
-  houseAfterQuest: { 0: [{ type: 'exitBuilding' }] },
-  houseAfterQuestAndPub: {
-    13: [{ type: 'receiveItem', itemId: '53' }],
-    16: [
-      {
-        type: 'completeEvent',
-        eventId: expectedMapping.houseAfterQuestAndPub as never,
-      },
-      { type: 'exitBuilding' },
-    ],
-  },
-  houseAfterQuestAndPub2: { 2: [{ type: 'exitBuilding' }] },
-  pubBeforeQuest: {
-    6: [
-      {
-        type: 'completeEvent',
-        eventId: expectedMapping.pubBeforeQuest as never,
-      },
-      { type: 'exitBuilding' },
-    ],
-  },
-  pubBeforeQuest2: { 0: [{ type: 'exitBuilding' }] },
-  pubAfterQuest: {
-    13: [{ type: 'receiveGold', amount: 1000 }],
-    22: [
-      {
-        type: 'completeEvent',
-        eventId: expectedMapping.pubAfterQuest as never,
-      },
-      { type: 'exitBuilding' },
-    ],
-  },
-  pubAfterQuest2: { 0: [{ type: 'exitBuilding' }] },
-  palaceBeforeQuest: { 0: [{ type: 'exitBuilding' }] },
-  palaceAfterQuest: { 0: [{ type: 'exitBuilding' }] },
-  itemShopBeforeQuest: { 0: [{ type: 'exitBuilding' }] },
-  itemShopAfterQuest: {
-    3: [
-      { type: 'receiveItem', itemId: '4' },
-      {
-        type: 'completeEvent',
-        eventId: expectedMapping.itemShopAfterQuest as never,
-      },
-    ],
-  },
-  shipyardBeforeQuest: { 2: [{ type: 'exitBuilding' }] },
-  shipyardAfterQuest: {
-    3: [
-      { type: 'receiveShip', shipId: '6', name: 'Hermes II' },
-      {
-        type: 'completeEvent',
-        eventId: expectedMapping.shipyardAfterQuest as never,
-      },
-      { type: 'exitBuilding' },
-    ],
-  },
-  churchBeforeQuest: {
-    4: [
-      {
-        type: 'completeEvent',
-        eventId: expectedMapping.churchBeforeQuest as never,
-      },
-      { type: 'exitBuilding' },
-    ],
-  },
-  churchBeforeQuest2: { 0: [{ type: 'exitBuilding' }] },
-  churchAfterQuest: {
-    20: [
-      {
-        type: 'completeEvent',
-        eventId: expectedMapping.churchAfterQuest as never,
-      },
-      { type: 'addCompanion', characterId: 'enrico' as never },
-    ],
-  },
-  churchAfterEnrico: {
-    1: [{ type: 'receiveGold', amount: 1000 }],
-    2: [
-      {
-        type: 'completeEvent',
-        eventId: expectedMapping.churchAfterEnrico as never,
-      },
-    ],
-  },
-  harborBeforeQuest: { 1: [{ type: 'exitBuilding' }] },
-  harborBeforeShip: { 0: [{ type: 'exitBuilding' }] },
-  harborBeforeEnrico: { 1: [{ type: 'exitBuilding' }] },
-  marketBeforeQuest: { 3: [{ type: 'exitBuilding' }] },
-  marketAfterQuestBeforeShip: { 1: [{ type: 'exitBuilding' }] },
+  if (
+    key.startsWith('lodgeBankGuildBeforeQuestRandom') &&
+    splitAmbientExitExists(key)
+  ) {
+    messages[messages.length - 1].action = 'exitBuildingIfNotLodge';
+  }
+  return messages;
 };
 
-const effectsByPreviousMessage = (
-  event: StoryEvent,
-): Record<number, StoryEffect[]> => {
-  let messageIndex = -1;
-  return event.steps.reduce<Record<number, StoryEffect[]>>((effects, step) => {
-    if (step.type === 'dialogue' || step.type === 'choice') messageIndex += 1;
-    if (step.type === 'effect') {
-      return { ...effects, [messageIndex]: step.effects };
+const normalizeBranch = (choice: StoryChoice): NormalizedMessage[] => {
+  const messages: NormalizedMessage[] = [];
+  choice.steps.forEach((step) => {
+    if (step.type === 'dialogue') {
+      messages.push({
+        body: step.body,
+        position: step.position,
+        ...(step.speaker === undefined
+          ? {}
+          : { characterId: legacyCharacterId(step.speaker) }),
+        ...(step.fadeBeforeNext ? { fadeBeforeNext: true } : {}),
+      });
+    } else if (step.type === 'effect') {
+      const terminal = messages[messages.length - 1];
+      if (!terminal) throw new Error(`Effect precedes branch ${choice.id}`);
+      if (step.effects.some(({ type }) => type === 'completeEvent')) {
+        terminal.completeQuest = true;
+      }
     }
-    return effects;
-  }, {});
+  });
+  return messages;
 };
+
+const normalizeRule = (events: readonly StoryEvent[]) => {
+  const first = events[0];
+  const conditions = conditionsOf(first.trigger);
+  const building = conditions.find(({ type }) => type === 'atBuilding');
+  if (!building || building.type !== 'atBuilding') {
+    throw new Error(`Missing building condition for ${first.id}`);
+  }
+  const blockedBy = conditions.flatMap((condition): LegacyKey[] =>
+    condition.type === 'not' && condition.condition.type === 'eventCompleted'
+      ? [legacyKeyForEventId(condition.condition.eventId)]
+      : [],
+  );
+  const requires = conditions.flatMap((condition): LegacyKey[] =>
+    condition.type === 'eventCompleted'
+      ? [legacyKeyForEventId(condition.eventId)]
+      : [],
+  );
+  const time = conditions.find(({ type }) => type === 'timeWindow');
+  const result = events.map(({ id }) => legacyKeyForEventId(id));
+  return {
+    building: building.buildingId,
+    blockedBy,
+    requires,
+    timeWindow: time?.type === 'timeWindow' ? [time.min, time.max] : null,
+    result: events.length === 1 ? result[0] : result,
+  };
+};
+
+const normalizedRules = () => {
+  const rules = [];
+  for (let index = 0; index < lisbonOpeningEvents.length; index += 1) {
+    const event = lisbonOpeningEvents[index];
+    if (event.repeat !== 'random-ambient') {
+      rules.push(normalizeRule([event]));
+    } else {
+      const group = lisbonOpeningEvents
+        .slice(index)
+        .filter(({ randomGroup }) => randomGroup === event.randomGroup);
+      rules.push(normalizeRule(group));
+      index += group.length - 1;
+    }
+  }
+  return rules;
+};
+
+const normalizedOperations = () =>
+  legacyKeys.flatMap((key) => {
+    const event = eventById(legacyToSemanticEvent[key]);
+    const transcript = normalizeTranscript(key, event.steps);
+    const actionRows = transcript.flatMap((message, index) =>
+      message.action
+        ? [
+            {
+              key,
+              callback: `messages[${index}].action`,
+              operations: [message.action],
+            },
+          ]
+        : [],
+    );
+    if (key !== 'harborFinal') return actionRows;
+    const choiceIndex = event.steps.findIndex(({ type }) => type === 'choice');
+    const choice = event.steps[choiceIndex];
+    if (choice.type !== 'choice') throw new Error('Missing harbor choice');
+    const choiceRows = choice.options.map((option) => {
+      const effects = option.steps.flatMap((step) =>
+        step.type === 'effect' ? step.effects : [],
+      );
+      const hasRoleIntents =
+        option.id === 'yes' &&
+        effects.some(
+          (effect) =>
+            effect.type === 'assignMate' &&
+            effect.characterId === 'rocco' &&
+            effect.role === 'firstMate',
+        ) &&
+        effects.some(
+          (effect) =>
+            effect.type === 'assignMate' &&
+            effect.characterId === 'enrico' &&
+            effect.role === 'bookKeeper',
+        );
+      return {
+        key,
+        callback: `messages[${choiceIndex}].confirm.${option.id}`,
+        operations: [
+          ...(hasRoleIntents ? ['assignFirstRoles'] : []),
+          `append${option.id === 'yes' ? 'Yes' : 'No'}Transcript`,
+        ],
+      };
+    });
+    return [...actionRows, ...choiceRows];
+  });
 
 describe('immutable legacy Lisbon oracle', () => {
   test('was generated from every still-authoritative legacy transcript', () => {
@@ -303,33 +434,19 @@ describe('João Lisbon opening declarative content', () => {
     );
   });
 
-  test('preserves source text, positions, speakers, fades, and effect boundaries', () => {
+  test('normalizes every main transcript back to the complete legacy oracle', () => {
     legacyKeys.forEach((key) => {
       const event = eventById(expectedMapping[key]);
-      const legacyMessages = legacyLisbonSnapshot.transcripts[key];
-      expect(migratedBodies(event)).toEqual(
-        legacyMessages.map(({ body }) => normalizeTokens(body)),
-      );
-
-      const visibleSteps = event.steps.filter((step) => step.type !== 'effect');
-      visibleSteps.forEach((step, index) => {
-        const legacy = legacyMessages[index] as SnapshotMessage;
-        if (step.type === 'dialogue') {
-          expect(step.position).toBe(legacy.position);
-          expect(step.speaker).toBe(
-            legacy.characterId === undefined
-              ? undefined
-              : storyCharacters.find(
-                  (character) =>
-                    character.legacyCharacterId === legacy.characterId,
-                )?.id,
-          );
-          expect(step.fadeBeforeNext).toBe(legacy.fadeBeforeNext);
-        }
-      });
-
-      expect(effectsByPreviousMessage(event)).toEqual(
-        expectedEffects[key] ?? {},
+      expect(
+        normalizeTranscript(key, event.steps).map((message) => ({
+          ...message,
+          body: normalizeTokens(message.body),
+        })),
+      ).toEqual(
+        legacyLisbonSnapshot.transcripts[key].map((message) => ({
+          ...message,
+          body: normalizeTokens(message.body),
+        })),
       );
     });
   });
@@ -340,6 +457,8 @@ describe('João Lisbon opening declarative content', () => {
     if (!choice || choice.type !== 'choice')
       throw new Error('Missing harbor choice');
 
+    expect(choice.position).toBe(1);
+    expect(choice.speaker).toBe('rocco');
     expect(choice.options.map(({ id }) => id)).toEqual(['yes', 'no']);
     expect(choice.options.map(({ label }) => label)).toEqual(['Yes', 'No']);
     choice.options.forEach((option) => {
@@ -347,37 +466,12 @@ describe('João Lisbon opening declarative content', () => {
         throw new Error(`Unexpected harbor choice ${option.id}`);
       }
       const expected = legacyLisbonSnapshot.harborFinalBranches[option.id];
-      expect(
-        option.steps
-          .filter((step) => step.type === 'dialogue')
-          .map((step) => normalizeTokens((step as { body: string }).body)),
-      ).toEqual(expected.map(({ body }) => normalizeTokens(body)));
+      expect(normalizeBranch(option)).toEqual(expected);
     });
+  });
 
-    const yesEffects = choice.options[0].steps.filter(
-      (step) => step.type === 'effect',
-    );
-    const noEffects = choice.options[1].steps.filter(
-      (step) => step.type === 'effect',
-    );
-    expect(yesEffects).toEqual([
-      {
-        type: 'effect',
-        effects: [
-          { type: 'assignMate', characterId: 'rocco', role: 'firstMate' },
-          { type: 'assignMate', characterId: 'enrico', role: 'bookKeeper' },
-          { type: 'completeEvent', eventId: expectedMapping.harborFinal },
-        ],
-      },
-    ]);
-    expect(noEffects).toEqual([
-      {
-        type: 'effect',
-        effects: [
-          { type: 'completeEvent', eventId: expectedMapping.harborFinal },
-        ],
-      },
-    ]);
+  test('derives every callback-boundary operation from declarative steps', () => {
+    expect(normalizedOperations()).toEqual(legacyLisbonSnapshot.operations);
   });
 
   test('uses only canonical speakers and contains no callback anywhere', () => {
@@ -392,82 +486,34 @@ describe('João Lisbon opening declarative content', () => {
     expect(recursivelyContainsFunction(joaoLisbonOpening)).toBe(false);
   });
 
-  test('preserves trigger gates, rule order, and per-building random candidates', () => {
+  test('deep-freezes shared dialogue and event content against mutation', () => {
+    expectDeepFrozen(lisbonOpeningDialogue);
+    expectDeepFrozen(lisbonOpeningEvents);
+
+    const introduction = eventById(expectedMapping.houseBeforeQuest);
+    const originalFirstStep = introduction.steps[0];
+    expect(
+      Reflect.set(introduction.steps, 0, {
+        type: 'dialogue',
+        body: 'mutated',
+        position: 0,
+      }),
+    ).toBe(false);
+    expect(introduction.steps[0]).toBe(originalFirstStep);
+  });
+
+  test('normalizes 48 events back to all 36 ordered legacy rule rows', () => {
     lisbonOpeningEvents.forEach((event) => {
       const conditions = conditionsOf(event.trigger);
-      expect(conditions).toEqual(
-        expect.arrayContaining([
-          { type: 'atPort', portId: '1' },
-          { type: 'stage', stage: 'building' },
-          expect.objectContaining({ type: 'atBuilding' }),
-        ]),
-      );
-    });
-
-    const sceneEvents = (buildingId: string) =>
-      lisbonOpeningEvents.filter((event) =>
-        conditionsOf(event.trigger).some(
-          (condition) =>
-            condition.type === 'atBuilding' &&
-            condition.buildingId === buildingId,
-        ),
-      );
-
-    ['5', '7', '9'].forEach((buildingId) => {
-      const ambient = sceneEvents(buildingId).filter(
-        ({ repeat }) => repeat === 'random-ambient',
-      );
-      expect(ambient).toHaveLength(6);
-      expect(ambient.slice(0, 3).map(({ priority }) => priority)).toEqual([
-        10, 10, 10,
+      expect(conditions.filter(({ type }) => type === 'atPort')).toEqual([
+        { type: 'atPort', portId: '1' },
       ]);
-      expect(ambient.slice(3).map(({ priority }) => priority)).toEqual([
-        20, 20, 20,
+      expect(conditions.filter(({ type }) => type === 'stage')).toEqual([
+        { type: 'stage', stage: 'building' },
       ]);
-      expect(
-        new Set(ambient.slice(0, 3).map(({ randomGroup }) => randomGroup)).size,
-      ).toBe(1);
-      expect(
-        new Set(ambient.slice(3).map(({ randomGroup }) => randomGroup)).size,
-      ).toBe(1);
-      ambient.forEach((event) => {
-        const effects = flattenSteps(event.steps).filter(
-          (step) => step.type === 'effect',
-        );
-        const shouldExit =
-          buildingId !== '5' && event.id.includes('ambient-before');
-        const expectedAmbientEffects = shouldExit
-          ? [{ type: 'effect', effects: [{ type: 'exitBuilding' }] }]
-          : [];
-        expect(effects).toEqual(expectedAmbientEffects);
-      });
     });
-
-    const prioritiesByBuilding = ['8', '2', '6', '10', '3', '11', '1', '4'].map(
-      (buildingId) => [
-        buildingId,
-        sceneEvents(buildingId).map(({ priority }) => priority),
-      ],
-    );
-    expect(prioritiesByBuilding).toEqual([
-      ['8', [10, 20, 30, 40]],
-      ['2', [10, 20, 30, 40, 50]],
-      ['6', [10, 20]],
-      ['10', [10, 20, 30]],
-      ['3', [10, 20]],
-      ['11', [10, 20, 30, 40, 50]],
-      ['1', [10, 20]],
-      ['4', [10, 20, 30, 40, 50, 60, 70]],
-    ]);
-
-    const farewellConditions = conditionsOf(
-      eventById(expectedMapping.houseAfterQuestAndPub).trigger,
-    );
-    expect(farewellConditions).toContainEqual({
-      type: 'timeWindow',
-      min: 1320,
-      max: 0,
-    });
+    expect(normalizedRules()).toHaveLength(36);
+    expect(normalizedRules()).toEqual(legacyLisbonSnapshot.rules);
   });
 
   test('gives every once-only event exactly one legacy completion key', () => {
