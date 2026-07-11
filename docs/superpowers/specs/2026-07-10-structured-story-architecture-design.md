@@ -2,7 +2,7 @@
 
 **Design date:** 2026-07-10
 
-**Status:** Approved in conversation; awaiting written-spec review
+**Status:** Approved
 
 **Scope:** Runnable story architecture plus a behavior-preserving migration of the existing João Lisbon opening
 
@@ -521,7 +521,7 @@ The architecture phase is accepted only when:
 - Characters, relationships, arcs, events, conditions, dialogue, and effects are typed and independently testable.
 - Content contains no arbitrary executable callbacks.
 - Invalid references fail development and CI validation, while production excludes invalid events safely.
-- A new empty arc module can be registered without changing the resolver, effect interpreter, or UI.
+- A new minimal valid arc module with at least one event can be registered without changing the resolver, effect interpreter, or UI; an arc with no events remains a validation error.
 - The legacy runtime rule table and giant dialogue/action data file no longer own live behavior.
 - Story authoring and reporting commands are documented and included in verification.
 - All repository gates pass with durable verification evidence.
