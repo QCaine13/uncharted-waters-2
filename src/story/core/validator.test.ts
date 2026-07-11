@@ -349,4 +349,62 @@ describe('validateStoryContent', () => {
       ]),
     );
   });
+
+  test('rejects equal-priority candidates whose wildcard and exact scene patterns overlap', () => {
+    const source = sourceFixture();
+    const secondId = storyEventId('joao.opening.building-event');
+    source.events[0].trigger = { type: 'atPort', portId: 'lisbon' };
+    source.events.push({
+      ...source.events[0],
+      id: secondId,
+      trigger: {
+        type: 'all',
+        conditions: [
+          { type: 'stage', stage: 'building' },
+          { type: 'atPort', portId: 'lisbon' },
+        ],
+      },
+      legacyCompletionKey: legacyQuestId('buildingEvent'),
+    });
+    source.arcs[0].eventIds.push(secondId);
+
+    expect(validateStoryContent(source)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'priority-conflict',
+          path: 'events[1].priority',
+        }),
+      ]),
+    );
+  });
+
+  test('requires one random group to share priority across overlapping scene patterns', () => {
+    const source = sourceFixture();
+    const secondId = storyEventId('joao.opening.building-ambient');
+    source.events[0].trigger = { type: 'atPort', portId: 'lisbon' };
+    source.events[0].randomGroup = 'lisbon-greeting';
+    source.events.push({
+      ...source.events[0],
+      id: secondId,
+      priority: 20,
+      trigger: {
+        type: 'all',
+        conditions: [
+          { type: 'stage', stage: 'building' },
+          { type: 'atPort', portId: 'lisbon' },
+        ],
+      },
+      legacyCompletionKey: legacyQuestId('buildingAmbient'),
+    });
+    source.arcs[0].eventIds.push(secondId);
+
+    expect(validateStoryContent(source)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'priority-conflict',
+          path: 'events[1].priority',
+        }),
+      ]),
+    );
+  });
 });

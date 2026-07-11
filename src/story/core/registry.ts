@@ -117,12 +117,10 @@ export const compileStoryContent = (
 
   const invalidEventIds = new Set(
     errors
-      .filter(({ owner }) =>
-        owner === undefined
-          ? false
-          : source.events.some(({ id }) => id === owner),
-      )
-      .map(({ owner }) => owner as string),
+      .map(({ path }) => /^events\[(\d+)\]/.exec(path))
+      .filter((match): match is RegExpExecArray => match !== null)
+      .map((match) => source.events[Number(match[1])]?.id)
+      .filter((id): id is StoryEventId => id !== undefined),
   );
   const validEvents = source.events.filter(
     ({ id }) => !invalidEventIds.has(id),

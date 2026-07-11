@@ -279,7 +279,13 @@ const visitSteps = (
   });
 };
 
-const sceneSignatures = (condition: StoryCondition): readonly string[] => {
+type ScenePattern = {
+  stage: string;
+  port: string;
+  building: string;
+};
+
+const scenePatterns = (condition: StoryCondition): readonly ScenePattern[] => {
   const stages = new Set<string>();
   const ports = new Set<string>();
   const buildings = new Set<string>();
@@ -300,12 +306,25 @@ const sceneSignatures = (condition: StoryCondition): readonly string[] => {
   const stageSlots = stages.size > 0 ? [...stages] : ['-'];
   const portSlots = ports.size > 0 ? [...ports] : ['-'];
   const buildingSlots = buildings.size > 0 ? [...buildings] : ['-'];
-  return stageSlots.flatMap((stage) =>
+  return stageSlots.flatMap((stage): ScenePattern[] =>
     portSlots.flatMap((port) =>
-      buildingSlots.map((building) => `${stage}:${port}:${building}`),
+      buildingSlots.map((building) => ({ stage, port, building })),
     ),
   );
 };
+
+const scenePatternsOverlap = (
+  left: ScenePattern,
+  right: ScenePattern,
+): boolean =>
+  (left.stage === right.stage || left.stage === '-' || right.stage === '-') &&
+  (left.port === right.port || left.port === '-' || right.port === '-') &&
+  (left.building === right.building ||
+    left.building === '-' ||
+    right.building === '-');
+
+const formatScenePattern = ({ stage, port, building }: ScenePattern): string =>
+  `${stage}:${port}:${building}`;
 
 const validateRelationships = (
   source: StoryContentSource,
@@ -353,45 +372,38 @@ const validatePriorityConflicts = (
   events: readonly StoryEvent[],
   add: AddDiagnostic,
 ): void => {
-  const candidatesBySceneAndPriority = new Map<string, StoryEvent>();
-  const candidatesBySceneAndRandomGroup = new Map<string, StoryEvent>();
+  const patternsByEvent = events.map(({ trigger }) => scenePatterns(trigger));
   events.forEach((event, index) => {
-    sceneSignatures(event.trigger).forEach((signature) => {
-      if (event.randomGroup !== undefined && event.randomGroup.length > 0) {
-        const randomGroupKey = `${signature}:${event.randomGroup}`;
-        const previousGroupMember =
-          candidatesBySceneAndRandomGroup.get(randomGroupKey);
-        if (previousGroupMember === undefined) {
-          candidatesBySceneAndRandomGroup.set(randomGroupKey, event);
-        } else if (previousGroupMember.priority !== event.priority) {
+    for (let previousIndex = 0; previousIndex < index; previousIndex += 1) {
+      const previous = events[previousIndex];
+      const overlap = patternsByEvent[index].find((pattern) =>
+        patternsByEvent[previousIndex].some((previousPattern) =>
+          scenePatternsOverlap(pattern, previousPattern),
+        ),
+      );
+      if (overlap !== undefined) {
+        const sameRandomGroup =
+          event.randomGroup !== undefined &&
+          event.randomGroup.length > 0 &&
+          event.randomGroup === previous.randomGroup;
+        const conflictsAtEqualPriority =
+          event.priority === previous.priority && !sameRandomGroup;
+        const randomGroupPriorityMismatch =
+          event.priority !== previous.priority && sameRandomGroup;
+        if (conflictsAtEqualPriority || randomGroupPriorityMismatch) {
           add(
             'priority-conflict',
             `events[${index}].priority`,
-            `Random group "${event.randomGroup}" in scene "${signature}" uses priorities ${previousGroupMember.priority} and ${event.priority}.`,
+            `Events "${previous.id}" and "${
+              event.id
+            }" have incompatible priorities across overlapping scene pattern "${formatScenePattern(
+              overlap,
+            )}".`,
             String(event.id),
           );
         }
       }
-
-      const key = `${signature}:${event.priority}`;
-      const previous = candidatesBySceneAndPriority.get(key);
-      if (previous === undefined) {
-        candidatesBySceneAndPriority.set(key, event);
-        return;
-      }
-      const sameRandomGroup =
-        event.randomGroup !== undefined &&
-        event.randomGroup.length > 0 &&
-        event.randomGroup === previous.randomGroup;
-      if (!sameRandomGroup) {
-        add(
-          'priority-conflict',
-          `events[${index}].priority`,
-          `Events "${previous.id}" and "${event.id}" share scene "${signature}" and priority ${event.priority}.`,
-          String(event.id),
-        );
-      }
-    });
+    }
   });
 };
 

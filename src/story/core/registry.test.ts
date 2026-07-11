@@ -75,6 +75,8 @@ const validSource = (): StoryContentSource => ({
 describe('compileStoryContent', () => {
   test('builds identity, reciprocal relationship, event, scene, and legacy indexes', () => {
     const source = validSource();
+    const sourceSnapshot = JSON.stringify(source);
+    const relationship = source.relationships[0];
 
     const compiled = compileStoryContent(source, 'strict');
 
@@ -105,7 +107,45 @@ describe('compileStoryContent', () => {
     expect(
       Object.isFrozen(compiled.candidatesByScene.get('building:lisbon:house')),
     ).toBe(true);
-    expect(source.relationships).toHaveLength(1);
+    expect(Object.isFrozen(compiled.relationshipsByCharacter.get(rocco))).toBe(
+      true,
+    );
+    expect(Object.isFrozen(compiled.relationshipsByCharacter.get(joao))).toBe(
+      true,
+    );
+    expect(compiled.relationshipsByCharacter.get(rocco)?.[0]).toBe(
+      relationship,
+    );
+    expect(JSON.stringify(source)).toBe(sourceSnapshot);
+  });
+
+  test('uses an explicit matching reverse relationship without synthesizing duplicates', () => {
+    const source = validSource();
+    source.relationships.push({
+      id: relationshipId('joao.rocco.student'),
+      from: joao,
+      to: rocco,
+      type: 'student',
+    });
+
+    const compiled = compileStoryContent(source, 'strict');
+
+    expect(compiled.relationshipsByCharacter.get(rocco)).toHaveLength(1);
+    expect(compiled.relationshipsByCharacter.get(joao)).toHaveLength(1);
+  });
+
+  test('rejects an explicit reverse relationship that conflicts with the reciprocal type', () => {
+    const source = validSource();
+    source.relationships.push({
+      id: relationshipId('joao.rocco.friend'),
+      from: joao,
+      to: rocco,
+      type: 'friend',
+    });
+
+    expect(() => compileStoryContent(source, 'strict')).toThrow(
+      /conflicting-reciprocal/,
+    );
   });
 
   test('production mode excludes an invalid event while preserving a valid event', () => {
@@ -123,8 +163,59 @@ describe('compileStoryContent', () => {
 
     expect(compiled.eventsById.has(introduction)).toBe(true);
     expect(compiled.eventsById.has(invalidId)).toBe(false);
+    expect([...compiled.candidatesByScene.values()].flat()).not.toContainEqual(
+      expect.objectContaining({ id: invalidId }),
+    );
+    expect(
+      compiled.eventByLegacyCompletionKey.has(legacyQuestId('invalidQuest')),
+    ).toBe(false);
+    expect(compiled.legacyCompletionKeyByEvent.has(invalidId)).toBe(false);
     expect(compiled.diagnostics.map(({ code }) => code)).toContain(
       'empty-dialogue',
+    );
+  });
+
+  test('does not remove a valid event when relationship, arc, and event ids share one string', () => {
+    const source = validSource();
+    const sharedRelationshipId = relationshipId('shared');
+    const sharedArcId = storyArcId('shared');
+    const sharedEventId = storyEventId('shared');
+    const sharedLegacyKey = legacyQuestId('sharedQuest');
+    source.relationships[0] = {
+      ...source.relationships[0],
+      id: sharedRelationshipId,
+      to: characterId('missing'),
+    };
+    source.arcs[0] = {
+      ...source.arcs[0],
+      id: sharedArcId,
+      protagonist: characterId('missing-protagonist'),
+      eventIds: [sharedEventId],
+    };
+    source.events[0] = {
+      ...source.events[0],
+      id: sharedEventId,
+      arcId: sharedArcId,
+      legacyCompletionKey: sharedLegacyKey,
+    };
+
+    const compiled = compileStoryContent(source, 'production');
+
+    expect(compiled.diagnostics.map(({ code }) => code)).toContain(
+      'missing-relationship-character',
+    );
+    expect(compiled.diagnostics.map(({ code }) => code)).toContain(
+      'missing-arc-protagonist',
+    );
+    expect(compiled.eventsById.get(sharedEventId)).toBe(source.events[0]);
+    expect(compiled.candidatesByScene.get('building:lisbon:house')).toContain(
+      source.events[0],
+    );
+    expect(compiled.eventByLegacyCompletionKey.get(sharedLegacyKey)).toBe(
+      sharedEventId,
+    );
+    expect(compiled.legacyCompletionKeyByEvent.get(sharedEventId)).toBe(
+      sharedLegacyKey,
     );
   });
 
@@ -162,5 +253,69 @@ describe('compileStoryContent', () => {
     expect(compiled.candidatesByScene.get('port:lisbon:-')).toEqual([
       source.events[0],
     ]);
+  });
+
+  test('indexes an event with no scene predicates in the all-wildcard slot', () => {
+    const source = validSource();
+    source.events[0].trigger = { type: 'timeWindow', min: 0, max: 60 };
+
+    const compiled = compileStoryContent(source, 'strict');
+
+    expect(compiled.candidatesByScene.get('-:-:-')).toEqual([source.events[0]]);
+  });
+
+  test('indexes the cross product of every scene value collected through all trees', () => {
+    const source = validSource();
+    source.events[0].trigger = {
+      type: 'all',
+      conditions: [
+        { type: 'stage', stage: 'port' },
+        { type: 'stage', stage: 'building' },
+        { type: 'atPort', portId: 'lisbon' },
+        { type: 'atPort', portId: 'seville' },
+        { type: 'atBuilding', buildingId: 'house' },
+        { type: 'atBuilding', buildingId: 'guild' },
+      ],
+    };
+
+    const compiled = compileStoryContent(source, 'strict');
+
+    expect([...compiled.candidatesByScene.keys()].sort()).toEqual(
+      [
+        'building:lisbon:guild',
+        'building:lisbon:house',
+        'building:seville:guild',
+        'building:seville:house',
+        'port:lisbon:guild',
+        'port:lisbon:house',
+        'port:seville:guild',
+        'port:seville:house',
+      ].sort(),
+    );
+  });
+
+  test('does not use scene predicates nested under any or not for indexing', () => {
+    const source = validSource();
+    source.events[0].trigger = {
+      type: 'all',
+      conditions: [
+        { type: 'stage', stage: 'world' },
+        {
+          type: 'any',
+          conditions: [
+            { type: 'atPort', portId: 'lisbon' },
+            { type: 'atPort', portId: 'seville' },
+          ],
+        },
+        {
+          type: 'not',
+          condition: { type: 'atBuilding', buildingId: 'house' },
+        },
+      ],
+    };
+
+    const compiled = compileStoryContent(source, 'strict');
+
+    expect([...compiled.candidatesByScene.keys()]).toEqual(['world:-:-']);
   });
 });
