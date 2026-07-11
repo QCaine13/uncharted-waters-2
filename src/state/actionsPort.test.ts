@@ -1,6 +1,10 @@
 import state from './state';
 import updateInterface from './updateInterface';
-import { getSupplyLimit, supplyShip } from './actionsPort';
+import {
+  completeLegacyQuestOnce,
+  getSupplyLimit,
+  supplyShip,
+} from './actionsPort';
 
 const ship = () => ({
   id: '6',
@@ -48,5 +52,18 @@ describe('harbor supply transactions', () => {
     ]);
     expect(state.gold).toBe(0);
     expect(window.localStorage.length).toBe(1);
+  });
+});
+
+describe('legacy quest completion', () => {
+  beforeEach(() => {
+    state.quests = [];
+  });
+
+  test('records a completion marker only once', () => {
+    completeLegacyQuestOnce('houseBeforeQuest');
+    completeLegacyQuestOnce('houseBeforeQuest');
+
+    expect(state.quests).toEqual(['houseBeforeQuest']);
   });
 });

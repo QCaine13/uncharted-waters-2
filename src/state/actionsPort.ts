@@ -176,6 +176,12 @@ export const completeQuest = (id: QuestId) => {
   save();
 };
 
+export const completeLegacyQuestOnce = (id: QuestId) => {
+  if (!state.quests.includes(id)) {
+    state.quests.push(id);
+  }
+};
+
 export const receiveGold = (amount: number) => {
   state.gold += amount;
 
