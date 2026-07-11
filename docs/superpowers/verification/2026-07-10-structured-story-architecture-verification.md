@@ -6,7 +6,7 @@
 
 **Branch:** `codex/story-architecture`
 
-**Verified pre-evidence SHA:** `45322d43408e75e60391d7eab84adf385f48d6ab`
+**Verified pre-evidence SHA:** `4b3b33b0c13f15488e80045747f4ce560670612a`
 
 This record verifies the typed structured-story runtime and the
 behavior-preserving migration of the existing João Lisbon opening through the
@@ -52,19 +52,29 @@ including every migrated nonempty effect group.
 
 The required focused command rebuilt production assets and ran Chrome against
 `tests/e2e/storyArchitecture.cy.ts`. Cypress 10.10.0 used headless Chrome 150;
-the focused result was **1 spec, 4 tests, 4 passing, 0 failing**.
+the focused result was **1 spec, 5 tests, 5 passing, 0 failing**.
 
-The four isolated tests prove observable behavior only, without fixed waits:
+The five tests prove observable behavior only, without fixed waits:
 
-1. A new Save v2 at Lisbon house (`portId: '1'`, `buildingId: '8'`) reaches the
+1. A real new game starts from the reset UI, traverses Lisbon with keyboard
+   input, and completes the full opening in production order: harbor time
+   advance, pub and church introductions, Rocco's recruitment, the pub
+   farewell, the mother's farewell, rapier purchase, Hermes II purchase,
+   Enrico's recruitment and gift, and the final harbor Yes branch. The test
+   reloads at the midpoint and proves exact Save v2 state before continuing.
+   It then exits the harbor, hires 10 crew, buys 10 water and 10 food, sails
+   through the real departure UI, and verifies the final world, ship, cargo,
+   crew, gold, inventory, mate, and quest state. All movement, building entry,
+   dialogue, commerce, and departure actions use the production UI.
+2. A new Save v2 at Lisbon house (`portId: '1'`, `buildingId: '8'`) reaches the
    exact opening line `Father, did you send for me?`.
-2. A partial Save v2 with the legacy `houseBeforeQuest` and `pubAfterQuest`
+3. A partial Save v2 with the legacy `houseBeforeQuest` and `pubAfterQuest`
    keys resolves the exact item-shop rapier event, receives item `4`, writes
    `itemShopAfterQuest`, reloads, and resolves the non-repeating follow-up line.
-3. A fixture immediately before `harborFinal` selects Yes and verifies the
+4. A fixture immediately before `harborFinal` selects Yes and verifies the
    branch transcript, persistence boundary, legacy mate-role behavior, and
    terminal completion.
-4. An isolated copy of that fixture selects No and verifies its distinct
+5. An isolated copy of that fixture selects No and verifies its distinct
    transcript, the same legacy mate-role behavior, and terminal completion.
 
 The serialized fixture represents real Save v2 data: João has captain role
@@ -96,7 +106,19 @@ passed 1 spec / 1 test.
 
 The first run of the new spec also produced a test-harness RED (4 failures)
 because a Jest-only `toBeNull` matcher was used under Cypress/Chai. Replacing it
-with the Chai null assertion yielded the focused 4/4 GREEN result above.
+with the Chai null assertion yielded the initial focused 4/4 GREEN result.
+
+The end-to-end journey then supplied a sequence of useful harness REDs while
+its production-only observations were tightened: a center-only canvas sample
+missed camera movement, animation frames could be mistaken for movement before
+collision resolution, camera clamping changed the player's screen position,
+building entry stopped the canvas loop, church exit requires its blessing
+step, daylight respawned collidable NPCs, and a substring selector for `0`
+matched `10` in the supply form. The final journey observes stable canvas
+regions plus building DOM state, advances time through the harbor UI, handles
+the church's real two-step exit, and uses exact numeric selectors. It passed
+without production changes or fixed waits; the complete focused spec then
+passed 5/5.
 
 ## Clean full gate
 
@@ -104,12 +126,13 @@ From a removed `build/` directory, `npm run verify:full` exited 0 with:
 
 - asset verification: 38 PNG/OGG/MP3 assets;
 - story validation: PASS;
-- Jest: **36 suites, 227 tests, 0 failures, 0 snapshots**;
+- Jest: **38 suites, 274 tests, 0 failures, 0 snapshots**;
 - TypeScript (`tsc --noEmit`): PASS;
 - ESLint: PASS with no findings;
 - production Webpack: PASS, compiled with 3 warnings;
-- Cypress: **11 specs, 50 tests, 50 passing, 0 failing, 0 pending, 0
-  skipped**, including the 4 new structured-story tests.
+- Cypress: **11 specs, 51 tests, 51 passing, 0 failing, 0 pending, 0
+  skipped**, including the 5 structured-story tests and the complete real-UI
+  Lisbon journey.
 
 The non-fatal notices were the existing outdated `caniuse-lite` Browserslist
 notice; Webpack's asset-size, entrypoint-size, and performance-recommendation

@@ -1,13 +1,25 @@
 import { SAVED_STATE_KEY, type State } from '../../src/state/state';
 import {
   characterMessageIncludes,
+  clickMenu,
   setState,
   vendorMessageIncludes,
 } from '../utils';
 
 type SavedState = Pick<State, 'items' | 'mates' | 'quests'> & {
   version: number;
+  buildingId?: State['buildingId'];
+  fleets?: State['fleets'];
+  gold?: State['gold'];
+  portId?: State['portId'];
+  timePassed?: State['timePassed'];
 };
+
+type DirectionKey = 'w' | 'a' | 's' | 'd';
+type Route = readonly (readonly [DirectionKey, number])[];
+type MapPosition = { x: number; y: number };
+
+let modeledPosition: MapPosition = { x: 54, y: 68 };
 
 const readSavedState = () =>
   cy.window().then((window) => {
@@ -25,6 +37,317 @@ const clickCharacterLine = (body: string, position: 1 | 2) => {
   characterMessageIncludes(body, position);
   cy.get('[data-test=building]').click();
 };
+
+const pixelChecksum = (regions: Uint8ClampedArray[]) => {
+  let checksum = 0;
+  regions.forEach((pixels) => {
+    for (let i = 0; i < pixels.length; i += 17)
+      checksum = (checksum * 31 + pixels[i]) >>> 0;
+  });
+  return checksum;
+};
+
+const screenPosition = ({ x, y }: MapPosition) => {
+  const cameraX = Math.max(0, Math.min(x + 1 - 20, 56));
+  const cameraY = Math.max(0, Math.min(y + 1 - 12.5, 71));
+  return {
+    x: Math.floor((x - cameraX) * 32),
+    y: Math.floor((y - cameraY) * 32),
+  };
+};
+
+const playerFrame = (canvas: HTMLCanvasElement, position: MapPosition) => {
+  const context = canvas.getContext('2d')!;
+  const screen = screenPosition(position);
+  return pixelChecksum([context.getImageData(screen.x, screen.y, 64, 64).data]);
+};
+
+const movementFrame = (
+  canvas: HTMLCanvasElement,
+  from: MapPosition,
+  to: MapPosition,
+) => {
+  const context = canvas.getContext('2d')!;
+  const fromScreen = screenPosition(from);
+  const toScreen = screenPosition(to);
+  const x = Math.min(fromScreen.x, toScreen.x);
+  const y = Math.min(fromScreen.y, toScreen.y);
+  const width = Math.abs(fromScreen.x - toScreen.x) + 64;
+  const height = Math.abs(fromScreen.y - toScreen.y) + 64;
+  return pixelChecksum([context.getImageData(x, y, width, height).data]);
+};
+
+const nextPosition = (
+  { x, y }: MapPosition,
+  key: DirectionKey,
+): MapPosition => ({
+  x: x + (key === 'd' ? 1 : key === 'a' ? -1 : 0),
+  y: y + (key === 's' ? 1 : key === 'w' ? -1 : 0),
+});
+
+const moveOneTile = (key: DirectionKey, context: string) =>
+  cy.window().then(
+    (window) =>
+      new Cypress.Promise<void>((resolve, reject) => {
+        const canvas = window.document.getElementById(
+          'camera',
+        ) as HTMLCanvasElement;
+        const from = { ...modeledPosition };
+        const to = nextPosition(from, key);
+        const startingPlayerFrame = playerFrame(canvas, from);
+        const startingMovementFrame = movementFrame(canvas, from, to);
+        window.document.dispatchEvent(
+          new window.KeyboardEvent('keydown', { key, bubbles: true }),
+        );
+
+        const waitUntilSettled = (
+          previousMovementFrame: number,
+          stableFrames: number,
+        ) => {
+          window.requestAnimationFrame(() => {
+            const currentMovementFrame = movementFrame(canvas, from, to);
+            const nextStableFrames =
+              currentMovementFrame === previousMovementFrame
+                ? stableFrames + 1
+                : 0;
+            if (nextStableFrames >= 2) {
+              if (currentMovementFrame === startingMovementFrame) {
+                reject(new Error(`Movement ${key} was blocked at ${context}`));
+              } else {
+                modeledPosition = to;
+                resolve();
+              }
+              return;
+            }
+            waitUntilSettled(currentMovementFrame, nextStableFrames);
+          });
+        };
+
+        const waitUntilHandled = () => {
+          window.requestAnimationFrame(() => {
+            if (
+              window.document.querySelector('[data-test=building]') !== null
+            ) {
+              reject(new Error(`Entered a building during ${context}`));
+              return;
+            }
+            if (playerFrame(canvas, from) === startingPlayerFrame) {
+              waitUntilHandled();
+              return;
+            }
+            window.document.dispatchEvent(
+              new window.KeyboardEvent('keyup', { key, bubbles: true }),
+            );
+            waitUntilSettled(movementFrame(canvas, from, to), 0);
+          });
+        };
+
+        waitUntilHandled();
+      }),
+  );
+
+const followRoute = (route: Route, label = 'adjacent') => {
+  route.forEach(([key, count], segment) => {
+    for (let step = 0; step < count; step += 1)
+      moveOneTile(key, `${label} segment ${segment} tile ${step}`);
+  });
+};
+
+const enterAdjacentBuilding = (key: DirectionKey) => {
+  cy.document().trigger('keydown', { key });
+  cy.get('[data-test=building]')
+    .should('exist')
+    .then(() => {
+      modeledPosition = nextPosition(modeledPosition, key);
+    });
+  cy.document().trigger('keyup', { key });
+};
+
+const enterBuilding = (route: Route, openingLine?: string) => {
+  const steps = route.flatMap(([key, count]) => Array(count).fill(key));
+  const doorKey = steps.pop();
+  steps.forEach((key, step) =>
+    moveOneTile(key, `${openingLine ?? 'building'} approach tile ${step}`),
+  );
+  if (!doorKey)
+    throw new Error(`Route for ${openingLine ?? 'building'} is empty`);
+  enterAdjacentBuilding(doorKey);
+  if (openingLine)
+    cy.get('[data-test=building]').should('include.text', openingLine);
+};
+
+const currentStoryText = (document: Document) =>
+  Array.from(
+    document.querySelectorAll(
+      '[data-test=vendorMessageBox], [data-test=characterMessageBox1], [data-test=characterMessageBox2]',
+    ),
+  )
+    .map(({ textContent }) => textContent ?? '')
+    .join('|');
+
+const advanceStoryUntil = (
+  settled: (document: Document) => boolean,
+  remaining = 90,
+): Cypress.Chainable<void> => {
+  if (remaining === 0) throw new Error('Story did not settle within 90 frames');
+  return cy.document().then((document) => {
+    if (settled(document)) return;
+    const before = currentStoryText(document);
+    cy.get('[data-test=building]').click();
+    cy.document().should((nextDocument) => {
+      expect(
+        settled(nextDocument) || currentStoryText(nextDocument) !== before,
+      ).to.equal(true);
+    });
+    return advanceStoryUntil(settled, remaining - 1);
+  });
+};
+
+const finishExitingStoryEvent = (legacyKey?: string) => {
+  advanceStoryUntil(
+    (document) => document.querySelector('[data-test=building]') === null,
+  );
+  cy.get('[data-test=building]')
+    .should('not.exist')
+    .then(() => {
+      modeledPosition = nextPosition(modeledPosition, 's');
+    });
+  if (legacyKey)
+    readSavedState().then((saved) =>
+      expect(saved.quests).to.include(legacyKey),
+    );
+};
+
+const exitCurrentBuilding = (exitMessage?: string) => {
+  cy.get('[data-test=building]').rightclick();
+  if (exitMessage) {
+    vendorMessageIncludes(exitMessage);
+    cy.get('[data-test=building]').click();
+  }
+  cy.get('[data-test=building]')
+    .should('not.exist')
+    .then(() => {
+      modeledPosition = nextPosition(modeledPosition, 's');
+    });
+};
+
+const ensureNightOutsideAdjacentBuilding = (
+  exitMessage?: string,
+  remaining = 30,
+): Cypress.Chainable<void> => {
+  if (remaining === 0)
+    throw new Error('Adjacent-building loop did not reach nighttime');
+  return readSavedState().then((saved) => {
+    const minute = (saved.timePassed ?? 0) % 1440;
+    if (minute < 240 || minute >= 1200) return;
+    enterAdjacentBuilding('w');
+    finishStoryEventToMenu();
+    exitCurrentBuilding(exitMessage);
+    return ensureNightOutsideAdjacentBuilding(exitMessage, remaining - 1);
+  });
+};
+
+const finishStoryEventToMenu = (legacyKey?: string) => {
+  advanceStoryUntil(
+    (document) => document.querySelector('[data-test=menu]') !== null,
+  );
+  if (legacyKey)
+    readSavedState().then((saved) =>
+      expect(saved.quests).to.include(legacyKey),
+    );
+};
+
+const spawnToPub: Route = [
+  ['a', 3],
+  ['w', 2],
+  ['a', 2],
+  ['w', 31],
+  ['d', 5],
+  ['w', 1],
+];
+const pubToChurch: Route = [
+  ['s', 26],
+  ['a', 3],
+  ['s', 2],
+  ['a', 39],
+  ['w', 1],
+];
+const churchToHouse: Route = [
+  ['d', 6],
+  ['w', 3],
+  ['d', 28],
+  ['w', 9],
+  ['d', 11],
+  ['w', 1],
+  ['d', 12],
+  ['w', 1],
+];
+const houseToPub: Route = [
+  ['a', 11],
+  ['w', 11],
+  ['a', 4],
+  ['w', 5],
+];
+const spawnToHouse: Route = [
+  ['a', 3],
+  ['w', 2],
+  ['a', 2],
+  ['w', 15],
+  ['d', 8],
+  ['w', 1],
+  ['d', 12],
+  ['w', 1],
+];
+const houseToItemShop: Route = [
+  ['a', 11],
+  ['w', 1],
+  ['a', 4],
+  ['w', 1],
+  ['a', 40],
+  ['w', 1],
+];
+const itemShopToShipyard: Route = [
+  ['d', 40],
+  ['s', 1],
+  ['d', 4],
+  ['s', 1],
+  ['d', 14],
+  ['s', 6],
+  ['d', 4],
+  ['s', 10],
+  ['d', 2],
+  ['w', 1],
+  ['d', 1],
+  ['w', 1],
+];
+const shipyardToChurch: Route = [
+  ['s', 1],
+  ['a', 3],
+  ['w', 5],
+  ['a', 25],
+  ['s', 2],
+  ['a', 39],
+  ['w', 1],
+];
+const churchToHarbor: Route = [
+  ['d', 37],
+  ['s', 3],
+  ['d', 2],
+  ['s', 2],
+  ['d', 3],
+  ['w', 1],
+];
+const pubToHarbor: Route = [
+  ['s', 26],
+  ['a', 3],
+  ['s', 2],
+  ['a', 2],
+  ['s', 3],
+  ['d', 2],
+  ['s', 2],
+  ['d', 3],
+  ['w', 1],
+];
 
 const harborPrelude = [
   ['So what’s the plan of action?', 1],
@@ -100,7 +423,206 @@ const expectSerializedNullMateRoles = (saved: SavedState) => {
   ]);
 };
 
+const advanceAtHarborUntilNight = (remaining = 20): Cypress.Chainable<void> => {
+  if (remaining === 0) throw new Error('Harbor loop did not reach nighttime');
+  finishExitingStoryEvent();
+  return readSavedState().then((saved) => {
+    const minute = (saved.timePassed ?? 0) % 1440;
+    if (minute >= 1200) return;
+    enterAdjacentBuilding('w');
+    return advanceAtHarborUntilNight(remaining - 1);
+  });
+};
+
+const finishHouseFarewellAtNight = (remaining = 40): Cypress.Chainable<void> =>
+  cy.get('[data-test=building]').then(($building) => {
+    const text = $building.text();
+    if (text.includes('Oh João, I just can’t understand')) {
+      finishExitingStoryEvent('houseAfterQuestAndPub');
+      return;
+    }
+    if (remaining === 0)
+      throw new Error(
+        'House farewell did not become available before midnight',
+      );
+    expect(text).to.include('the Duke’s orders were quite specific');
+    cy.wrap($building).click();
+    cy.get('[data-test=building]')
+      .should('not.exist')
+      .then(() => {
+        modeledPosition = nextPosition(modeledPosition, 's');
+      });
+    readSavedState().then((saved) => {
+      expect((saved.timePassed ?? 0) % 1440).to.be.lessThan(1440);
+    });
+    enterAdjacentBuilding('w');
+    finishHouseFarewellAtNight(remaining - 1);
+  });
+
 describe('Structured story architecture through production assets', () => {
+  it('plays a real new game through the complete Lisbon tutorial and departs', () => {
+    cy.visit('');
+    cy.contains('System').click();
+    cy.contains('button', 'Reset').click();
+    cy.contains('button', 'Confirm Reset?').click();
+    cy.contains('Game is loading...').should('not.exist');
+    cy.contains('Lisbon').should('exist');
+    cy.then(() => {
+      modeledPosition = { x: 54, y: 68 };
+    });
+
+    enterAdjacentBuilding('w');
+    cy.get('[data-test=building]').should(
+      'include.text',
+      'whenever you have a problem, just go on over to the pub',
+    );
+    advanceAtHarborUntilNight();
+
+    enterBuilding(spawnToPub, 'Well isn’t this a rare treat, Master João.');
+    finishExitingStoryEvent('pubBeforeQuest');
+    enterBuilding(
+      pubToChurch,
+      'Master João, is there anyone in the Duke Franco’s household',
+    );
+    finishExitingStoryEvent('churchBeforeQuest');
+    enterBuilding(churchToHouse, 'Father, did you send for me?');
+    finishExitingStoryEvent('houseBeforeQuest');
+    enterBuilding(houseToPub, 'Master João, what’s going on?');
+    finishExitingStoryEvent('pubAfterQuest');
+
+    readSavedState().then((saved) => {
+      expectSaveV2LegacyOnly(saved);
+      expect(saved.gold).to.equal(1000);
+      expect(saved.quests).to.deep.equal([
+        'pubBeforeQuest',
+        'churchBeforeQuest',
+        'houseBeforeQuest',
+        'pubAfterQuest',
+      ]);
+      expect(saved.mates).to.deep.equal([
+        { sailorId: '1', role: null },
+        { sailorId: '32', role: null },
+      ]);
+    });
+
+    cy.reload();
+    cy.contains('Lisbon').should('exist');
+    cy.then(() => {
+      modeledPosition = { x: 54, y: 68 };
+    });
+    enterBuilding(spawnToHouse);
+    finishHouseFarewellAtNight();
+    enterBuilding(houseToItemShop, 'Welcome Master João. I have something');
+    finishStoryEventToMenu('itemShopAfterQuest');
+    exitCurrentBuilding();
+    enterBuilding(itemShopToShipyard, 'Ahoy there, is our ship finished yet?');
+    finishExitingStoryEvent('shipyardAfterQuest');
+    enterBuilding(shipyardToChurch, 'I’m glad you could make it, Master João.');
+    finishStoryEventToMenu('churchAfterQuest');
+    exitCurrentBuilding('May God bless you in your travels!');
+    enterAdjacentBuilding('w');
+    cy.get('[data-test=building]').should(
+      'include.text',
+      'Thank you so much for agreeing to take Brother Enrico',
+    );
+    finishStoryEventToMenu('churchAfterEnrico');
+    exitCurrentBuilding('May God bless you in your travels!');
+    ensureNightOutsideAdjacentBuilding('May God bless you in your travels!');
+    enterBuilding(churchToHarbor, 'So what’s the plan of action?');
+    advanceStoryUntil(
+      (document) => document.querySelector('[data-test=confirmYes]') !== null,
+    );
+    cy.get('[data-test=confirmYes]').click();
+    finishStoryEventToMenu('harborFinal');
+
+    readSavedState().then((saved) => {
+      expectSaveV2LegacyOnly(saved);
+      expect(saved.gold).to.equal(2000);
+      expect(saved.items).to.deep.equal(['53', '4']);
+      expect(saved.mates).to.deep.equal([
+        { sailorId: '1', role: 0 },
+        { sailorId: '32', role: null },
+        { sailorId: '33', role: null },
+      ]);
+      expect(saved.fleets?.['1'].ships).to.deep.equal([
+        {
+          id: '6',
+          name: 'Hermes II',
+          crew: 0,
+          cargo: [],
+          durability: 25,
+        },
+      ]);
+      expect(saved.quests).to.deep.equal([
+        'pubBeforeQuest',
+        'churchBeforeQuest',
+        'houseBeforeQuest',
+        'pubAfterQuest',
+        'houseAfterQuestAndPub',
+        'itemShopAfterQuest',
+        'shipyardAfterQuest',
+        'churchAfterQuest',
+        'churchAfterEnrico',
+        'harborFinal',
+      ]);
+    });
+
+    exitCurrentBuilding();
+    enterBuilding(spawnToPub, 'Hello João');
+    finishStoryEventToMenu();
+    clickMenu('Recruit Crew');
+    characterMessageIncludes('Shall we recruit some men for our crew?', 2);
+    cy.get('[data-test=confirmYes]').click();
+    clickCharacterLine('Hey! Do any of you tough sailors want to join', 2);
+    clickCharacterLine('We rounded up 10 men, at the cost of 400 gold', 2);
+    cy.get('[data-test=menu]').should('exist');
+    exitCurrentBuilding();
+    ensureNightOutsideAdjacentBuilding();
+    enterBuilding(pubToHarbor, 'Ahoy there, matey, will ye be shoving off?');
+    clickMenu('Supply');
+    cy.get('[data-test=harborSupply]').contains(/^0$/).first().click();
+    cy.get('[data-test=inputNumberInput]').type('10{enter}');
+    cy.get('[data-test=harborSupply]').contains(/^0$/).first().click();
+    cy.get('[data-test=inputNumberInput]').type('10{enter}');
+    readSavedState().then((saved) => {
+      expect(saved.gold).to.equal(1400);
+      expect(saved.fleets?.['1'].ships[0].cargo).to.deep.equal([
+        { type: 'water', quantity: 10 },
+        { type: 'food', quantity: 10 },
+      ]);
+    });
+    cy.get('[data-test=building]').rightclick();
+    clickMenu('Sail');
+    characterMessageIncludes('We can sail for 10 days. Shall we cast off?', 2);
+    cy.get('[data-test=confirmYes]').click();
+    cy.get('[data-test=building]').should('not.exist');
+    cy.contains('Lisbon').should('not.exist');
+
+    readSavedState().then((saved) => {
+      expectSaveV2LegacyOnly(saved);
+      expect(saved.portId).to.be.null;
+      expect(saved.buildingId).to.be.null;
+      expect(saved.gold).to.equal(1400);
+      expect(saved.items).to.deep.equal(['53', '4']);
+      expect(saved.mates).to.deep.equal([
+        { sailorId: '1', role: 0 },
+        { sailorId: '32', role: null },
+        { sailorId: '33', role: null },
+      ]);
+      expect(saved.fleets?.['1'].ships[0]).to.deep.include({
+        id: '6',
+        name: 'Hermes II',
+        crew: 10,
+        cargo: [
+          { type: 'water', quantity: 10 },
+          { type: 'food', quantity: 10 },
+        ],
+        durability: 25,
+      });
+      expect(saved.quests).to.have.length(10);
+    });
+  });
+
   it('starts a new Save v2 at the exact João opening line', () => {
     setState({ portId: '1', buildingId: '8' });
     cy.visit('');
