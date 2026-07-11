@@ -4,6 +4,9 @@ import {
   Message,
   VendorMessage,
 } from './questData';
+import type { DialogueStep } from '../../story/core/types';
+import type { StoryFrame } from '../../story/core/runtime';
+import { characterId } from '../../story/core/types';
 
 export type VendorMessageBoxType =
   | (Pick<VendorMessage, 'body'> & MessageBoxCommonType)
@@ -27,26 +30,26 @@ export type MessageBoxes = [
   CharacterMessageBoxType,
 ];
 
-const getMessageBoxes = (messages: Message[], step: number) => {
-  const message = messages[step];
-  message.body = message.body
+const interpolatePlayerName = (body: string) =>
+  body
     .replace('$firstName', 'João')
     .replace('$lastName', 'Franco');
 
+export const getMessageBoxesFromFrame = (
+  history: readonly DialogueStep[],
+  frame: StoryFrame,
+): MessageBoxes => {
+  const message = frame.type === 'dialogue' ? frame : undefined;
+
   return messagePositions.map((position) => {
     if (position === 0) {
-      if (message.position === position) {
-        return { body: message.body };
+      if (message?.position === position) {
+        return { body: interpolatePlayerName(message.body) };
       }
 
-      let vendorSpoken = false;
-
-      for (let i = step - 1; i >= 0; i -= 1) {
-        if (messages[i].position === position) {
-          vendorSpoken = true;
-          break;
-        }
-      }
+      const vendorSpoken = history.some(
+        (earlierMessage) => earlierMessage.position === position,
+      );
 
       if (vendorSpoken) {
         return { body: '' };
@@ -55,20 +58,16 @@ const getMessageBoxes = (messages: Message[], step: number) => {
       return null;
     }
 
-    if (message.position === position) {
-      return { body: message.body, characterId: message.characterId };
+    if (message?.position === position) {
+      return {
+        body: interpolatePlayerName(message.body),
+        characterId: message.speaker,
+      };
     }
 
-    let latestCharacterId;
-
-    for (let i = step - 1; i >= 0; i -= 1) {
-      const earlierMessage = messages[i];
-
-      if (earlierMessage.position === position) {
-        latestCharacterId = earlierMessage.characterId;
-        break;
-      }
-    }
+    const latestCharacterId = [...history]
+      .reverse()
+      .find((earlierMessage) => earlierMessage.position === position)?.speaker;
 
     if (latestCharacterId) {
       return {
@@ -80,5 +79,21 @@ const getMessageBoxes = (messages: Message[], step: number) => {
     return null;
   }) as MessageBoxes;
 };
+
+const toDialogueStep = (message: Message): DialogueStep => ({
+  type: 'dialogue',
+  body: message.body,
+  position: message.position,
+  ...('characterId' in message
+    ? { speaker: characterId(message.characterId) }
+    : {}),
+  ...(message.fadeBeforeNext ? { fadeBeforeNext: true } : {}),
+});
+
+const getMessageBoxes = (messages: Message[], step: number): MessageBoxes =>
+  getMessageBoxesFromFrame(
+    messages.slice(0, step).map(toDialogueStep),
+    toDialogueStep(messages[step]),
+  );
 
 export default getMessageBoxes;

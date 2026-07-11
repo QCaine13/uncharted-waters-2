@@ -1,5 +1,6 @@
-import getMessageBoxes from './getMessageBoxes';
+import getMessageBoxes, { getMessageBoxesFromFrame } from './getMessageBoxes';
 import { CharacterMessage, VendorMessage } from './questData';
+import { characterId } from '../../story/core/types';
 
 const vendorMessage: VendorMessage = {
   body: 'Hello, World!',
@@ -153,4 +154,18 @@ test('Substitutes $lastName', () => {
   expect(
     getMessageBoxes([{ body: 'Hello, $lastName!', position: 0 }], 0)[0],
   ).toMatchObject({ body: 'Hello, Franco!' });
+});
+
+test('projects interpolated dialogue without modifying frozen source content', () => {
+  const frozen = Object.freeze({
+    type: 'dialogue' as const,
+    body: 'Hello, $firstName $lastName!',
+    position: 2 as const,
+    speaker: characterId('joao'),
+  });
+
+  expect(getMessageBoxesFromFrame([], frozen)[2]).toMatchObject({
+    body: 'Hello, João Franco!',
+  });
+  expect(frozen.body).toBe('Hello, $firstName $lastName!');
 });
