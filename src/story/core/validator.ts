@@ -7,6 +7,16 @@ import type {
   StoryStep,
 } from './types';
 
+export interface StoryValidationCatalogs {
+  itemIds: ReadonlySet<string>;
+  portIds: ReadonlySet<string>;
+  buildingIds: ReadonlySet<string>;
+  shipIds: ReadonlySet<string>;
+  sailorIds: ReadonlySet<string>;
+  mateRoles: ReadonlySet<string | number | null>;
+  parityManifest: ReadonlyMap<string, string>;
+}
+
 type AddDiagnostic = (
   code: string,
   path: string,
@@ -42,6 +52,7 @@ const visitCondition = (
   event: StoryEvent,
   characterIds: ReadonlySet<string>,
   eventIds: ReadonlySet<string>,
+  catalogs: StoryValidationCatalogs | undefined,
   add: AddDiagnostic,
 ): void => {
   const owner = String(event.id);
@@ -63,6 +74,7 @@ const visitCondition = (
           event,
           characterIds,
           eventIds,
+          catalogs,
           add,
         ),
       );
@@ -74,6 +86,7 @@ const visitCondition = (
         event,
         characterIds,
         eventIds,
+        catalogs,
         add,
       );
       break;
@@ -143,9 +156,39 @@ const visitCondition = (
       }
       break;
     case 'atPort':
+      if (catalogs !== undefined && !catalogs.portIds.has(condition.portId)) {
+        add(
+          'unknown-port',
+          `${path}.portId`,
+          `Condition references unknown port "${condition.portId}".`,
+          owner,
+        );
+      }
+      break;
     case 'atBuilding':
-    case 'stage':
+      if (
+        catalogs !== undefined &&
+        !catalogs.buildingIds.has(condition.buildingId)
+      ) {
+        add(
+          'unknown-building',
+          `${path}.buildingId`,
+          `Condition references unknown building "${condition.buildingId}".`,
+          owner,
+        );
+      }
+      break;
     case 'hasItem':
+      if (catalogs !== undefined && !catalogs.itemIds.has(condition.itemId)) {
+        add(
+          'unknown-item',
+          `${path}.itemId`,
+          `Condition references unknown item "${condition.itemId}".`,
+          owner,
+        );
+      }
+      break;
+    case 'stage':
       break;
     default: {
       const exhaustive: never = condition;
@@ -162,6 +205,7 @@ const visitEffect = (
   event: StoryEvent,
   characterIds: ReadonlySet<string>,
   eventIds: ReadonlySet<string>,
+  catalogs: StoryValidationCatalogs | undefined,
   add: AddDiagnostic,
 ): void => {
   const owner = String(event.id);
@@ -177,7 +221,6 @@ const visitEffect = (
       }
       break;
     case 'addCompanion':
-    case 'assignMate':
       if (!characterIds.has(effect.characterId)) {
         add(
           'missing-effect-character',
@@ -187,11 +230,77 @@ const visitEffect = (
         );
       }
       break;
+    case 'assignMate':
+      if (!characterIds.has(effect.characterId)) {
+        add(
+          'missing-effect-character',
+          `${path}.characterId`,
+          `Effect references missing character "${effect.characterId}".`,
+          owner,
+        );
+      }
+      if (catalogs !== undefined && !catalogs.mateRoles.has(effect.role)) {
+        add(
+          'invalid-mate-role',
+          `${path}.role`,
+          `Effect uses invalid mate role "${String(effect.role)}".`,
+          owner,
+        );
+      }
+      break;
     case 'receiveGold':
+      if (!Number.isFinite(effect.amount) || effect.amount < 0) {
+        add(
+          'invalid-gold',
+          `${path}.amount`,
+          'Gold amount must be a non-negative finite number.',
+          owner,
+        );
+      }
+      break;
     case 'receiveItem':
+      if (catalogs !== undefined && !catalogs.itemIds.has(effect.itemId)) {
+        add(
+          'unknown-item',
+          `${path}.itemId`,
+          `Effect references unknown item "${effect.itemId}".`,
+          owner,
+        );
+      }
+      break;
     case 'receiveShip':
-    case 'exitBuilding':
+      if (catalogs !== undefined && !catalogs.shipIds.has(effect.shipId)) {
+        add(
+          'unknown-ship',
+          `${path}.shipId`,
+          `Effect references unknown ship "${effect.shipId}".`,
+          owner,
+        );
+      }
+      if (typeof effect.name !== 'string' || effect.name.trim().length === 0) {
+        add(
+          'invalid-ship-name',
+          `${path}.name`,
+          'Received ship name must not be empty.',
+          owner,
+        );
+      }
+      break;
     case 'setPort':
+      if (
+        effect.portId !== null &&
+        catalogs !== undefined &&
+        !catalogs.portIds.has(effect.portId)
+      ) {
+        add(
+          'unknown-port',
+          `${path}.portId`,
+          `Effect references unknown port "${effect.portId}".`,
+          owner,
+        );
+      }
+      break;
+    case 'exitBuilding':
     case 'save':
       break;
     default: {
@@ -207,6 +316,7 @@ const visitSteps = (
   event: StoryEvent,
   characterIds: ReadonlySet<string>,
   eventIds: ReadonlySet<string>,
+  catalogs: StoryValidationCatalogs | undefined,
   add: AddDiagnostic,
 ): void => {
   const owner = String(event.id);
@@ -230,8 +340,32 @@ const visitSteps = (
             owner,
           );
         }
+        if (step.position !== 0 && step.speaker === undefined) {
+          add(
+            'missing-position-speaker',
+            `${stepPath}.speaker`,
+            'Dialogue in a character position requires a speaker.',
+            owner,
+          );
+        }
         break;
       case 'choice':
+        if (step.speaker !== undefined && !characterIds.has(step.speaker)) {
+          add(
+            'missing-dialogue-speaker',
+            `${stepPath}.speaker`,
+            `Choice references missing speaker "${step.speaker}".`,
+            owner,
+          );
+        }
+        if (step.position !== 0 && step.speaker === undefined) {
+          add(
+            'missing-position-speaker',
+            `${stepPath}.speaker`,
+            'Choice in a character position requires a speaker.',
+            owner,
+          );
+        }
         if (step.options.length === 0) {
           add(
             'empty-choice',
@@ -240,16 +374,26 @@ const visitSteps = (
             owner,
           );
         }
-        step.options.forEach((option, optionIndex) =>
+        step.options.forEach((option, optionIndex) => {
+          const optionPath = `${stepPath}.options[${optionIndex}].steps`;
+          if (option.steps.length === 0) {
+            add(
+              'empty-option-steps',
+              optionPath,
+              'Choice option must contain at least one step.',
+              owner,
+            );
+          }
           visitSteps(
             option.steps,
-            `${stepPath}.options[${optionIndex}].steps`,
+            optionPath,
             event,
             characterIds,
             eventIds,
+            catalogs,
             add,
-          ),
-        );
+          );
+        });
         break;
       case 'effect':
         if (step.effects.length === 0) {
@@ -267,6 +411,7 @@ const visitSteps = (
             event,
             characterIds,
             eventIds,
+            catalogs,
             add,
           ),
         );
@@ -275,6 +420,78 @@ const visitSteps = (
         const exhaustive: never = step;
         throw new Error(`Unhandled story step: ${JSON.stringify(exhaustive)}`);
       }
+    }
+  });
+};
+
+const eventDependencies = (condition: StoryCondition): Set<string> => {
+  const dependencies = new Set<string>();
+  const visit = (candidate: StoryCondition, positive = true): void => {
+    if (candidate.type === 'all' || candidate.type === 'any') {
+      candidate.conditions.forEach((child) => visit(child, positive));
+    } else if (candidate.type === 'not') {
+      visit(candidate.condition, !positive);
+    } else if (candidate.type === 'eventCompleted' && positive) {
+      dependencies.add(String(candidate.eventId));
+    }
+  };
+  visit(condition);
+  return dependencies;
+};
+
+const hasDirectContradiction = (condition: StoryCondition): boolean => {
+  if (condition.type !== 'all') return false;
+  const positiveEvents = new Set<string>();
+  const negativeEvents = new Set<string>();
+  condition.conditions.forEach((candidate) => {
+    if (candidate.type === 'eventCompleted') {
+      positiveEvents.add(String(candidate.eventId));
+    } else if (
+      candidate.type === 'not' &&
+      candidate.condition.type === 'eventCompleted'
+    ) {
+      negativeEvents.add(String(candidate.condition.eventId));
+    }
+  });
+  return (
+    [...positiveEvents].some((id) => negativeEvents.has(id)) ||
+    condition.conditions.some(hasDirectContradiction)
+  );
+};
+
+const validateDependencyGraph = (
+  events: readonly StoryEvent[],
+  add: AddDiagnostic,
+): void => {
+  const eventIndex = new Map(
+    events.map((event, index) => [String(event.id), index]),
+  );
+  const graph = new Map(
+    events.map((event) => [String(event.id), eventDependencies(event.trigger)]),
+  );
+  const reaches = (
+    start: string,
+    current: string,
+    visited: Set<string>,
+  ): boolean => {
+    if (visited.has(current)) return false;
+    visited.add(current);
+    return [...(graph.get(current) ?? [])].some(
+      (dependency) =>
+        dependency === start ||
+        (graph.has(dependency) && reaches(start, dependency, visited)),
+    );
+  };
+  events.forEach((event) => {
+    const id = String(event.id);
+    if (reaches(id, id, new Set())) {
+      const index = eventIndex.get(String(event.id));
+      add(
+        'dependency-cycle',
+        `events[${index}].trigger`,
+        `Event "${event.id}" participates in a completion dependency cycle.`,
+        String(event.id),
+      );
     }
   });
 };
@@ -409,11 +626,23 @@ const validatePriorityConflicts = (
 
 export const validateStoryContent = (
   source: StoryContentSource,
+  catalogs?: StoryValidationCatalogs,
 ): StoryDiagnostic[] => {
   const diagnostics: StoryDiagnostic[] = [];
   const add: AddDiagnostic = (code, path, message, owner) => {
     diagnostics.push({ severity: 'error', code, owner, path, message });
   };
+
+  if (catalogs !== undefined && source.arcs.length === 0) {
+    add('empty-arcs', 'arcs', 'Story content must contain at least one arc.');
+  }
+  if (catalogs !== undefined && source.events.length === 0) {
+    add(
+      'empty-events',
+      'events',
+      'Story content must contain at least one event.',
+    );
+  }
 
   duplicateDiagnostics(
     source.characters,
@@ -446,11 +675,56 @@ export const validateStoryContent = (
 
   const characterIds = new Set(source.characters.map(({ id }) => String(id)));
   const eventIds = new Set(source.events.map(({ id }) => String(id)));
+  const sailorLinks = new Set<string>();
+  const legacyCharacterLinks = new Set<string>();
+  source.characters.forEach((character, index) => {
+    if (character.sailorId !== undefined) {
+      if (sailorLinks.has(character.sailorId)) {
+        add(
+          'duplicate-sailor-link',
+          `characters[${index}].sailorId`,
+          `Sailor "${character.sailorId}" is linked to multiple characters.`,
+          String(character.id),
+        );
+      }
+      if (
+        catalogs !== undefined &&
+        !catalogs.sailorIds.has(character.sailorId)
+      ) {
+        add(
+          'unknown-sailor',
+          `characters[${index}].sailorId`,
+          `Character references unknown sailor "${character.sailorId}".`,
+          String(character.id),
+        );
+      }
+      sailorLinks.add(character.sailorId);
+    }
+    if (character.legacyCharacterId !== undefined) {
+      if (legacyCharacterLinks.has(character.legacyCharacterId)) {
+        add(
+          'duplicate-legacy-character-link',
+          `characters[${index}].legacyCharacterId`,
+          `Legacy character "${character.legacyCharacterId}" is linked more than once.`,
+          String(character.id),
+        );
+      }
+      legacyCharacterLinks.add(character.legacyCharacterId);
+    }
+  });
   validateRelationships(source, characterIds, add);
 
   const eventsById = new Map(source.events.map((event) => [event.id, event]));
   const arcIds = new Set(source.arcs.map(({ id }) => String(id)));
   source.arcs.forEach((arc, arcIndex) => {
+    if (arc.eventIds.length === 0) {
+      add(
+        'empty-arc-events',
+        `arcs[${arcIndex}].eventIds`,
+        'Story arc must contain at least one event.',
+        String(arc.id),
+      );
+    }
     if (!characterIds.has(arc.protagonist)) {
       add(
         'missing-arc-protagonist',
@@ -482,6 +756,30 @@ export const validateStoryContent = (
   const legacyKeys = new Set<string>();
   source.events.forEach((event, eventIndex) => {
     const eventPath = `events[${eventIndex}]`;
+    if (!Number.isFinite(event.priority) || event.priority < 0) {
+      add(
+        'invalid-priority',
+        `${eventPath}.priority`,
+        'Event priority must be a non-negative finite number.',
+        String(event.id),
+      );
+    }
+    if (event.steps.length === 0) {
+      add(
+        'empty-event-steps',
+        `${eventPath}.steps`,
+        'Story event must contain at least one step.',
+        String(event.id),
+      );
+    }
+    if (hasDirectContradiction(event.trigger)) {
+      add(
+        'contradictory-condition',
+        `${eventPath}.trigger`,
+        'Event trigger contains directly contradictory conditions.',
+        String(event.id),
+      );
+    }
     const declaringArc = source.arcs.find(({ id }) => id === event.arcId);
     if (
       !arcIds.has(event.arcId) ||
@@ -508,6 +806,7 @@ export const validateStoryContent = (
       event,
       characterIds,
       eventIds,
+      catalogs,
       add,
     );
     visitSteps(
@@ -516,6 +815,7 @@ export const validateStoryContent = (
       event,
       characterIds,
       eventIds,
+      catalogs,
       add,
     );
 
@@ -537,9 +837,43 @@ export const validateStoryContent = (
         );
       }
       legacyKeys.add(event.legacyCompletionKey);
+      if (
+        catalogs !== undefined &&
+        !catalogs.parityManifest.has(String(event.legacyCompletionKey))
+      ) {
+        add(
+          'parity-manifest-omission',
+          `${eventPath}.legacyCompletionKey`,
+          `Legacy completion key "${event.legacyCompletionKey}" is absent from the parity manifest.`,
+          String(event.id),
+        );
+      }
     }
   });
 
+  catalogs?.parityManifest.forEach((eventId, legacyKey) => {
+    const event = source.events.find(({ id }) => String(id) === eventId);
+    if (event === undefined) {
+      add(
+        'parity-event-missing',
+        `parityManifest[${legacyKey}]`,
+        `Parity manifest references missing event "${eventId}".`,
+        eventId,
+      );
+    } else if (
+      event.legacyCompletionKey !== undefined &&
+      String(event.legacyCompletionKey) !== legacyKey
+    ) {
+      add(
+        'parity-event-mismatch',
+        `parityManifest[${legacyKey}]`,
+        `Parity key "${legacyKey}" does not match event "${eventId}".`,
+        eventId,
+      );
+    }
+  });
+
+  validateDependencyGraph(source.events, add);
   validatePriorityConflicts(source.events, add);
   return diagnostics;
 };
@@ -554,8 +888,11 @@ export const formatStoryDiagnostics = (
     ),
   ].join('\n');
 
-export const assertValidStoryContent = (source: StoryContentSource): void => {
-  const diagnostics = validateStoryContent(source).filter(
+export const assertValidStoryContent = (
+  source: StoryContentSource,
+  catalogs?: StoryValidationCatalogs,
+): void => {
+  const diagnostics = validateStoryContent(source, catalogs).filter(
     ({ severity }) => severity === 'error',
   );
   if (diagnostics.length > 0) {

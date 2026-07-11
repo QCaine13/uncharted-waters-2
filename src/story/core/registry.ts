@@ -1,5 +1,9 @@
 import type { Stage } from '../../state/state';
-import { formatStoryDiagnostics, validateStoryContent } from './validator';
+import {
+  formatStoryDiagnostics,
+  validateStoryContent,
+  type StoryValidationCatalogs,
+} from './validator';
 import type {
   CharacterId,
   CharacterRelationship,
@@ -7,6 +11,7 @@ import type {
   LegacyQuestId,
   StoryCondition,
   StoryContentSource,
+  StoryDiagnostic,
   StoryEvent,
   StoryEventId,
 } from './types';
@@ -108,8 +113,9 @@ const indexCandidates = (
 export const compileStoryContent = (
   source: StoryContentSource,
   mode: 'strict' | 'production',
+  catalogs?: StoryValidationCatalogs,
 ): CompiledStoryContent => {
-  const diagnostics = validateStoryContent(source);
+  const diagnostics = validateStoryContent(source, catalogs);
   const errors = diagnostics.filter(({ severity }) => severity === 'error');
   if (mode === 'strict' && errors.length > 0) {
     throw new Error(formatStoryDiagnostics(errors));
@@ -117,9 +123,12 @@ export const compileStoryContent = (
 
   const invalidEventIds = new Set(
     errors
-      .map(({ path }) => /^events\[(\d+)\]/.exec(path))
-      .filter((match): match is RegExpExecArray => match !== null)
-      .map((match) => source.events[Number(match[1])]?.id)
+      .map(({ owner, path }) => {
+        const match = /^events\[(\d+)\]/.exec(path);
+        if (match !== null) return source.events[Number(match[1])]?.id;
+        if (!path.startsWith('parityManifest[')) return undefined;
+        return source.events.find(({ id }) => String(id) === owner)?.id;
+      })
       .filter((id): id is StoryEventId => id !== undefined),
   );
   const validEvents = source.events.filter(
@@ -147,4 +156,16 @@ export const compileStoryContent = (
     legacyCompletionKeyByEvent,
     diagnostics: Object.freeze([...diagnostics]),
   };
+};
+
+export type StoryDiagnosticSink = (diagnostic: StoryDiagnostic) => void;
+
+export const compileProductionStoryContent = (
+  source: StoryContentSource,
+  catalogs: StoryValidationCatalogs | undefined,
+  sink: StoryDiagnosticSink,
+): CompiledStoryContent => {
+  const compiled = compileStoryContent(source, 'production', catalogs);
+  compiled.diagnostics.forEach((diagnostic) => sink(diagnostic));
+  return compiled;
 };

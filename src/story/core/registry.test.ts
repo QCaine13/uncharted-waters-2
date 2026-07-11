@@ -1,4 +1,8 @@
-import { compileStoryContent, sceneKey } from './registry';
+import {
+  compileProductionStoryContent,
+  compileStoryContent,
+  sceneKey,
+} from './registry';
 import {
   characterId,
   legacyQuestId,
@@ -172,6 +176,63 @@ describe('compileStoryContent', () => {
     expect(compiled.legacyCompletionKeyByEvent.has(invalidId)).toBe(false);
     expect(compiled.diagnostics.map(({ code }) => code)).toContain(
       'empty-dialogue',
+    );
+  });
+
+  test('production boundary emits each structured diagnostic once without throwing', () => {
+    const source = validSource();
+    const invalidId = storyEventId('joao.opening.invalid');
+    source.events.push({
+      ...source.events[0],
+      id: invalidId,
+      priority: Number.NaN,
+      steps: [{ type: 'dialogue', body: ' ', position: 0 }],
+      legacyCompletionKey: legacyQuestId('invalidQuest'),
+    });
+    source.arcs[0].eventIds.push(invalidId);
+    const sink = jest.fn();
+
+    const compiled = compileProductionStoryContent(source, undefined, sink);
+
+    expect(compiled.eventsById.has(introduction)).toBe(true);
+    expect(compiled.eventsById.has(invalidId)).toBe(false);
+    expect(sink.mock.calls.map(([diagnostic]) => diagnostic)).toEqual(
+      compiled.diagnostics,
+    );
+    expect(sink).toHaveBeenCalledTimes(compiled.diagnostics.length);
+    expect(sink).toHaveBeenCalledWith(
+      expect.objectContaining({
+        severity: 'error',
+        code: 'invalid-priority',
+        owner: String(invalidId),
+        path: 'events[1].priority',
+      }),
+    );
+  });
+
+  test('production exclusion uses event ownership for non-event diagnostic paths', () => {
+    const source = validSource();
+    const sink = jest.fn();
+    const catalogs = {
+      itemIds: new Set<string>(),
+      portIds: new Set(['lisbon']),
+      buildingIds: new Set(['house']),
+      shipIds: new Set<string>(),
+      sailorIds: new Set<string>(),
+      mateRoles: new Set<string | number | null>(),
+      parityManifest: new Map([
+        ['wrongKey', String(introduction)],
+      ]),
+    };
+
+    const compiled = compileProductionStoryContent(source, catalogs, sink);
+
+    expect(compiled.eventsById.has(introduction)).toBe(false);
+    expect(sink).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: 'parity-event-mismatch',
+        path: 'parityManifest[wrongKey]',
+      }),
     );
   });
 

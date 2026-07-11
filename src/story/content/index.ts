@@ -6,6 +6,7 @@ import { storyRelationships } from './relationships';
 export { joaoLisbonOpening } from './arcs/joao/lisbon-opening';
 export { storyCharacters } from './characters';
 export { storyRelationships } from './relationships';
+export { storyValidationCatalogs } from './catalogs';
 
 export const storyContentSource: StoryContentSource = {
   characters: storyCharacters,

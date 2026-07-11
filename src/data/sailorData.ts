@@ -25,7 +25,7 @@ export type Sailor = {
   skills: SailorSkills[];
 };
 
-const sailorData: { [key: string]: Sailor } = {
+export const sailorData: { [key: string]: Sailor } = {
   '1': {
     name: 'João Franco',
     age: 18,

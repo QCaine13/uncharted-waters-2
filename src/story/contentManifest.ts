@@ -1,4 +1,4 @@
-import { storyContentSource } from './content';
+import { storyContentSource, storyValidationCatalogs } from './content';
 import { compileStoryContent } from './core/registry';
 import type {
   CharacterId,
@@ -119,9 +119,13 @@ const dependenciesFor = (event: StoryEvent): Set<StoryEventId> => {
 export const getStoryValidationReport = (
   source: StoryContentSource = storyContentSource,
 ): StoryValidationReport => {
-  const diagnostics = validateStoryContent(source).map((diagnostic) => ({
-    ...diagnostic,
-  }));
+  const catalogs =
+    source === storyContentSource ? storyValidationCatalogs : undefined;
+  const diagnostics = validateStoryContent(source, catalogs).map(
+    (diagnostic) => ({
+      ...diagnostic,
+    }),
+  );
   const errorCount = diagnostics.filter(
     ({ severity }) => severity === 'error',
   ).length;
@@ -139,7 +143,9 @@ export const getStoryValidationReport = (
 export const getStoryContentReport = (
   source: StoryContentSource = storyContentSource,
 ): StoryContentReport => {
-  const compiled = compileStoryContent(source, 'production');
+  const catalogs =
+    source === storyContentSource ? storyValidationCatalogs : undefined;
+  const compiled = compileStoryContent(source, 'production', catalogs);
   const validEvents = [...compiled.eventsById.values()];
   const eventArc = new Map(
     validEvents.map((event) => [event.id, String(event.arcId)]),
