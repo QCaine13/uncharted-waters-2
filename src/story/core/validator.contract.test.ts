@@ -83,7 +83,10 @@ const catalogs = {
   shipIds: new Set(['6']),
   sailorIds: new Set(['1', '32']),
   mateRoles: new Set(['firstMate', 'bookKeeper', 'chiefNavigator']),
-  parityManifest: new Map([['houseBeforeQuest', String(introduction)]]),
+  parityManifest: {
+    legacyKeyToEvent: new Map([['houseBeforeQuest', String(introduction)]]),
+    migratedEventIds: new Set([String(introduction)]),
+  },
 };
 
 const validate = validateStoryContent as unknown as (
@@ -134,8 +137,8 @@ const cases: Case[] = [
   { code: 'duplicate-sailor-link', path: 'characters[1].sailorId', mutate: (source) => { source.characters[1].sailorId = '1'; } },
   { code: 'duplicate-legacy-character-link', path: 'characters[1].legacyCharacterId', mutate: (source) => { source.characters[1].legacyCharacterId = 'legacy-joao'; } },
   { code: 'unknown-sailor', path: 'characters[1].sailorId', mutate: (source) => { source.characters[1].sailorId = 'missing'; } },
-  { code: 'parity-event-missing', path: 'parityManifest[houseBeforeQuest]', mutate: (_source, local) => { local.parityManifest.set('houseBeforeQuest', 'missing-event'); } },
-  { code: 'parity-manifest-omission', path: 'events[0].legacyCompletionKey', mutate: (_source, local) => { local.parityManifest.delete('houseBeforeQuest'); } },
+  { code: 'parity-event-missing', path: 'parityManifest.legacyKeyToEvent[houseBeforeQuest]', mutate: (_source, local) => { local.parityManifest.legacyKeyToEvent.set('houseBeforeQuest', 'missing-event'); } },
+  { code: 'parity-manifest-omission', path: 'events[0].legacyCompletionKey', mutate: (_source, local) => { local.parityManifest.legacyKeyToEvent.delete('houseBeforeQuest'); } },
 ];
 
 describe('complete story content validation contract', () => {
@@ -149,7 +152,10 @@ describe('complete story content validation contract', () => {
       shipIds: new Set(catalogs.shipIds),
       sailorIds: new Set(catalogs.sailorIds),
       mateRoles: new Set(catalogs.mateRoles),
-      parityManifest: new Map(catalogs.parityManifest),
+      parityManifest: {
+        legacyKeyToEvent: new Map(catalogs.parityManifest.legacyKeyToEvent),
+        migratedEventIds: new Set(catalogs.parityManifest.migratedEventIds),
+      },
     };
     mutate(source, localCatalogs);
     expect(validate(source, localCatalogs)).toEqual(
@@ -175,7 +181,16 @@ describe('complete story content validation contract', () => {
       },
     });
     source.arcs[0].eventIds.push(second);
-    const localCatalogs = { ...catalogs, parityManifest: new Map([['houseBeforeQuest', String(introduction)], ['second', String(second)]]) };
+    const localCatalogs = {
+      ...catalogs,
+      parityManifest: {
+        legacyKeyToEvent: new Map([
+          ['houseBeforeQuest', String(introduction)],
+          ['second', String(second)],
+        ]),
+        migratedEventIds: new Set([String(introduction), String(second)]),
+      },
+    };
 
     expect(validate(source, localCatalogs)).toEqual(expect.arrayContaining([
       expect.objectContaining({ code: 'dependency-cycle', path: 'events[1].trigger' }),
@@ -231,8 +246,12 @@ describe('complete story content validation contract', () => {
       shipIds: new Set(catalogs.shipIds),
       sailorIds: new Set(catalogs.sailorIds),
       mateRoles: new Set(catalogs.mateRoles),
-      parityManifest: new Map(catalogs.parityManifest),
+      parityManifest: {
+        legacyKeyToEvent: new Map(catalogs.parityManifest.legacyKeyToEvent),
+        migratedEventIds: new Set(catalogs.parityManifest.migratedEventIds),
+      },
     };
+    localCatalogs.parityManifest.migratedEventIds.add(String(validId));
     mutate(source, localCatalogs);
 
     const compiled = compileProductionStoryContent(
@@ -279,10 +298,17 @@ describe('complete story content validation contract', () => {
     source.arcs[0].eventIds.push(second, validId);
     const localCatalogs = {
       ...catalogs,
-      parityManifest: new Map([
-        ['houseBeforeQuest', String(introduction)],
-        ['second', String(second)],
-      ]),
+      parityManifest: {
+        legacyKeyToEvent: new Map([
+          ['houseBeforeQuest', String(introduction)],
+          ['second', String(second)],
+        ]),
+        migratedEventIds: new Set([
+          String(introduction),
+          String(second),
+          String(validId),
+        ]),
+      },
     };
 
     const compiled = compileProductionStoryContent(

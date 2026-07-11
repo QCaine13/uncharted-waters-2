@@ -126,7 +126,7 @@ export const compileStoryContent = (
       .map(({ owner, path }) => {
         const match = /^events\[(\d+)\]/.exec(path);
         if (match !== null) return source.events[Number(match[1])]?.id;
-        if (!path.startsWith('parityManifest[')) return undefined;
+        if (!path.startsWith('parityManifest.')) return undefined;
         return source.events.find(({ id }) => String(id) === owner)?.id;
       })
       .filter((id): id is StoryEventId => id !== undefined),

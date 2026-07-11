@@ -220,9 +220,10 @@ describe('compileStoryContent', () => {
       shipIds: new Set<string>(),
       sailorIds: new Set<string>(),
       mateRoles: new Set<string | number | null>(),
-      parityManifest: new Map([
-        ['wrongKey', String(introduction)],
-      ]),
+      parityManifest: {
+        legacyKeyToEvent: new Map([['wrongKey', String(introduction)]]),
+        migratedEventIds: new Set([String(introduction)]),
+      },
     };
 
     const compiled = compileProductionStoryContent(source, catalogs, sink);
@@ -231,7 +232,7 @@ describe('compileStoryContent', () => {
     expect(sink).toHaveBeenCalledWith(
       expect.objectContaining({
         code: 'parity-event-mismatch',
-        path: 'parityManifest[wrongKey]',
+        path: 'parityManifest.legacyKeyToEvent[wrongKey]',
       }),
     );
   });

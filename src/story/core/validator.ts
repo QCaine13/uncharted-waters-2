@@ -7,6 +7,11 @@ import type {
   StoryStep,
 } from './types';
 
+export interface StoryParityManifest {
+  legacyKeyToEvent: ReadonlyMap<string, string>;
+  migratedEventIds: ReadonlySet<string>;
+}
+
 export interface StoryValidationCatalogs {
   itemIds: ReadonlySet<string>;
   portIds: ReadonlySet<string>;
@@ -14,7 +19,7 @@ export interface StoryValidationCatalogs {
   shipIds: ReadonlySet<string>;
   sailorIds: ReadonlySet<string>;
   mateRoles: ReadonlySet<string | number | null>;
-  parityManifest: ReadonlyMap<string, string>;
+  parityManifest: StoryParityManifest;
 }
 
 type AddDiagnostic = (
@@ -230,7 +235,7 @@ const visitEffect = (
         );
       }
       break;
-    case 'assignMate':
+    case 'assignMate': {
       if (!characterIds.has(effect.characterId)) {
         add(
           'missing-effect-character',
@@ -239,7 +244,11 @@ const visitEffect = (
           owner,
         );
       }
-      if (catalogs !== undefined && !catalogs.mateRoles.has(effect.role)) {
+      const isPublicRole =
+        effect.role === null ||
+        typeof effect.role === 'number' ||
+        catalogs?.mateRoles.has(effect.role) === true;
+      if (catalogs !== undefined && !isPublicRole) {
         add(
           'invalid-mate-role',
           `${path}.role`,
@@ -248,6 +257,7 @@ const visitEffect = (
         );
       }
       break;
+    }
     case 'receiveGold':
       if (!Number.isFinite(effect.amount) || effect.amount < 0) {
         add(
@@ -424,19 +434,38 @@ const visitSteps = (
   });
 };
 
-const eventDependencies = (condition: StoryCondition): Set<string> => {
-  const dependencies = new Set<string>();
-  const visit = (candidate: StoryCondition, positive = true): void => {
-    if (candidate.type === 'all' || candidate.type === 'any') {
-      candidate.conditions.forEach((child) => visit(child, positive));
-    } else if (candidate.type === 'not') {
-      visit(candidate.condition, !positive);
-    } else if (candidate.type === 'eventCompleted' && positive) {
-      dependencies.add(String(candidate.eventId));
+const union = (sets: readonly ReadonlySet<string>[]): Set<string> =>
+  new Set(sets.flatMap((entries) => [...entries]));
+
+const intersection = (sets: readonly ReadonlySet<string>[]): Set<string> => {
+  if (sets.length === 0) return new Set();
+  return new Set([...sets[0]].filter((id) => sets.every((set) => set.has(id))));
+};
+
+const eventDependencies = (
+  condition: StoryCondition,
+  positive = true,
+): Set<string> => {
+  switch (condition.type) {
+    case 'eventCompleted':
+      return positive ? new Set([String(condition.eventId)]) : new Set();
+    case 'not':
+      return eventDependencies(condition.condition, !positive);
+    case 'all': {
+      const children = condition.conditions.map((child) =>
+        eventDependencies(child, positive),
+      );
+      return positive ? union(children) : intersection(children);
     }
-  };
-  visit(condition);
-  return dependencies;
+    case 'any': {
+      const children = condition.conditions.map((child) =>
+        eventDependencies(child, positive),
+      );
+      return positive ? intersection(children) : union(children);
+    }
+    default:
+      return new Set();
+  }
 };
 
 const hasDirectContradiction = (condition: StoryCondition): boolean => {
@@ -839,7 +868,9 @@ export const validateStoryContent = (
       legacyKeys.add(event.legacyCompletionKey);
       if (
         catalogs !== undefined &&
-        !catalogs.parityManifest.has(String(event.legacyCompletionKey))
+        !catalogs.parityManifest.legacyKeyToEvent.has(
+          String(event.legacyCompletionKey),
+        )
       ) {
         add(
           'parity-manifest-omission',
@@ -847,16 +878,39 @@ export const validateStoryContent = (
           `Legacy completion key "${event.legacyCompletionKey}" is absent from the parity manifest.`,
           String(event.id),
         );
+      } else if (
+        catalogs !== undefined &&
+        catalogs.parityManifest.legacyKeyToEvent.get(
+          String(event.legacyCompletionKey),
+        ) !== String(event.id)
+      ) {
+        const mappedEventId = catalogs.parityManifest.legacyKeyToEvent.get(
+          String(event.legacyCompletionKey),
+        );
+        add(
+          'parity-event-mismatch',
+          `${eventPath}.legacyCompletionKey`,
+          `Legacy completion key "${event.legacyCompletionKey}" maps to a different event.`,
+          String(event.id),
+        );
+        if (mappedEventId !== undefined && eventIds.has(mappedEventId)) {
+          add(
+            'parity-event-mismatch',
+            `parityManifest.legacyKeyToEvent[${event.legacyCompletionKey}]`,
+            `Legacy completion key "${event.legacyCompletionKey}" is owned by event "${event.id}", not "${mappedEventId}".`,
+            mappedEventId,
+          );
+        }
       }
     }
   });
 
-  catalogs?.parityManifest.forEach((eventId, legacyKey) => {
+  catalogs?.parityManifest.legacyKeyToEvent.forEach((eventId, legacyKey) => {
     const event = source.events.find(({ id }) => String(id) === eventId);
     if (event === undefined) {
       add(
         'parity-event-missing',
-        `parityManifest[${legacyKey}]`,
+        `parityManifest.legacyKeyToEvent[${legacyKey}]`,
         `Parity manifest references missing event "${eventId}".`,
         eventId,
       );
@@ -866,12 +920,46 @@ export const validateStoryContent = (
     ) {
       add(
         'parity-event-mismatch',
-        `parityManifest[${legacyKey}]`,
+        `parityManifest.legacyKeyToEvent[${legacyKey}]`,
         `Parity key "${legacyKey}" does not match event "${eventId}".`,
         eventId,
       );
     }
   });
+
+  catalogs?.parityManifest.migratedEventIds.forEach((eventId) => {
+    if (!eventIds.has(eventId)) {
+      add(
+        'parity-event-missing',
+        `parityManifest.migratedEventIds[${eventId}]`,
+        `Migrated event manifest references missing event "${eventId}".`,
+        eventId,
+      );
+    }
+  });
+
+  if (catalogs !== undefined) {
+    const migratedArcIds = new Set(
+      source.events
+        .filter(({ id }) =>
+          catalogs.parityManifest.migratedEventIds.has(String(id)),
+        )
+        .map(({ arcId }) => String(arcId)),
+    );
+    source.events.forEach((event, eventIndex) => {
+      if (
+        migratedArcIds.has(String(event.arcId)) &&
+        !catalogs.parityManifest.migratedEventIds.has(String(event.id))
+      ) {
+        add(
+          'parity-manifest-omission',
+          `events[${eventIndex}].id`,
+          `Migrated event "${event.id}" is absent from the event manifest.`,
+          String(event.id),
+        );
+      }
+    });
+  }
 
   validateDependencyGraph(source.events, add);
   validatePriorityConflicts(source.events, add);
