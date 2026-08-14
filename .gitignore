@@ -7,3 +7,4 @@ build/
 .worktrees/
 tests/screenshots/
 cypress/downloads/
+.claude/settings.local.json
