@@ -9,4 +9,9 @@ module.exports = {
   },
   testEnvironment: 'jsdom',
   testMatch: ['**/*.test.{ts,tsx}'],
+  // Agent worktrees live under .claude/worktrees/ — inside the repo root, so
+  // testMatch walks into them and runs a second full copy of the suite. That
+  // doubles the run and reports another checkout's results as if they were
+  // this one's.
+  testPathIgnorePatterns: ['/node_modules/', '/\\.claude/', '/\\.worktrees/'],
 };
