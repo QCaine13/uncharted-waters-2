@@ -7,5 +7,9 @@ interface Props {
 }
 
 export default function Right({ children }: Props) {
-  return <div className={hudClass}>{children}</div>;
+  return (
+    <div className={hudClass} data-test="right">
+      {children}
+    </div>
+  );
 }

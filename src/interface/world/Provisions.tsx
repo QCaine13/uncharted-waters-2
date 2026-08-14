@@ -6,7 +6,15 @@ import updateInterface from '../../state/updateInterface';
 import { getPlayerFleet } from '../../state/selectorsFleet';
 import { getProvisionSummary, ProvisionSummary } from '../../state/provisions';
 
-const provisionClass = 'flex items-center py-2';
+/*
+  The icons are 16x32 pixel art drawn at their native size. At the 2x they used
+  to be drawn at, four rows came to 320px — over a third of the 800px the whole
+  HUD column has — and pushed the bottom of the column out past the game frame.
+  Halving is the only step down that keeps whole source pixels; 1.5x would
+  double some columns of a 16px-wide sprite and not others.
+ */
+const iconClass = 'w-4 h-8';
+const provisionClass = 'flex items-center py-1';
 const quantityClass = 'flex-1 text-right text-xl';
 
 interface Props {
@@ -48,7 +56,9 @@ export const getStarvationReportText = ({
     return null;
   }
 
-  const lost = `Lost ${deaths} crew member${deaths === 1 ? '' : 's'} to starvation`;
+  const lost = `Lost ${deaths} crew member${
+    deaths === 1 ? '' : 's'
+  } to starvation`;
 
   return adrift ? `${lost} — the fleet drifted into port` : lost;
 };
@@ -75,7 +85,7 @@ export default function Provisions({ hidden }: Props) {
 
   return (
     <div
-      className={classNames('mt-20', hidden ? 'hidden' : '')}
+      className={classNames('mt-8', hidden ? 'hidden' : '')}
       data-test="provisions"
     >
       <div className="text-sm mb-4">Provisions</div>
@@ -99,7 +109,7 @@ export default function Provisions({ hidden }: Props) {
         <img
           src={Assets.images('worldWater').toDataURL()}
           alt="Water"
-          className="w-8 h-16"
+          className={iconClass}
         />
         <div className={quantityClass} data-test="provision-water">
           {water}
@@ -109,7 +119,7 @@ export default function Provisions({ hidden }: Props) {
         <img
           src={Assets.images('worldFood').toDataURL()}
           alt="food"
-          className="w-8 h-16"
+          className={iconClass}
         />
         <div className={quantityClass} data-test="provision-food">
           {food}
@@ -119,7 +129,7 @@ export default function Provisions({ hidden }: Props) {
         <img
           src={Assets.images('worldLumber').toDataURL()}
           alt="Lumber"
-          className="w-8 h-16"
+          className={iconClass}
         />
         <div className={quantityClass}>{lumber}</div>
       </div>
@@ -127,7 +137,7 @@ export default function Provisions({ hidden }: Props) {
         <img
           src={Assets.images('worldShot').toDataURL()}
           alt="Shot"
-          className="w-8 h-16"
+          className={iconClass}
         />
         <div className={quantityClass}>{shot}</div>
       </div>

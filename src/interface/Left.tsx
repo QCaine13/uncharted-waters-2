@@ -8,6 +8,7 @@ import {
   getIngots,
   hudClass,
 } from './interfaceUtils';
+import HudReadout from './HudReadout';
 import updateInterface from '../state/updateInterface';
 import state from '../state/state';
 import Sound from './sound/Sound';
@@ -47,22 +48,29 @@ export default function Left({
       className={classNames(hudClass, 'flex flex-col justify-between')}
       data-test="left"
     >
-      <div className="p-5">
+      {/*
+        The readouts are the only part of the column allowed to shrink. A
+        starving fleet shows two provision warnings at once, each wrapping to
+        two or three lines in a 180px column, and in that state the readouts
+        no longer fit. Scrolling them keeps the menu below anchored, and keeps
+        the warnings themselves in view — it is the rows underneath that go.
+       */}
+      <div className="p-5 min-h-0 overflow-y-auto" data-test="hudReadouts">
         <div className="text-2xl font-bold whitespace-nowrap">
           {getDate(timePassed)}
         </div>
-        <div className="mb-20" data-test="dayAtSea">
+        <div className="mb-8" data-test="dayAtSea">
           {inPort ? getHoursMinutes(timePassed) : `Day ${dayAtSea}`}
         </div>
-        <div className="text-sm">Ingots</div>
-        <div className="mb-4 text-right text-xl">{getIngots(gold)}</div>
-        <div className="text-sm">Coins</div>
-        <div className="mb-4 text-right text-xl">{getCoins(gold)}</div>
+        <div className="mb-4">
+          <HudReadout label="Ingots" value={getIngots(gold)} />
+          <HudReadout label="Coins" value={getCoins(gold)} />
+        </div>
         <FameReadout />
         {Boolean(children) && <div>{children}</div>}
       </div>
       {inPort && (
-        <div className="select-none">
+        <div className="select-none shrink-0">
           <Popover label="Mates">
             <Mates />
           </Popover>
@@ -79,17 +87,17 @@ export default function Left({
         something the player can check underway, and the discovery e2e
         specs load straight into a sea save and expect it reachable there.
       */}
-      <div className="select-none">
+      <div className="select-none shrink-0">
         <Popover label="Discoveries">
           <Discoveries />
         </Popover>
       </div>
-      <div className="select-none">
+      <div className="select-none shrink-0">
         <Popover label="System">
           <System />
         </Popover>
       </div>
-      <div className="p-5 text-right">
+      <div className="p-5 text-right shrink-0">
         <Sound portId={portId} buildingId={buildingId} />
       </div>
     </div>

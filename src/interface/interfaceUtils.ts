@@ -3,7 +3,13 @@ import { START_DATE } from '../constants';
 export const classNames = (...classes: string[]): string =>
   classes.filter(Boolean).join(' ');
 
-export const hudClass = 'w-[180px] text-[#aaaaaa] text-lg';
+/*
+  The 800px matches the game view between the two HUD columns (see Interface)
+  and the frame in homepage/index.html. Stating it here rather than letting the
+  columns size to their content is what stops a column from growing past the
+  frame and spilling onto the page below — the readouts inside scroll instead.
+ */
+export const hudClass = 'w-[180px] h-[800px] text-[#aaaaaa] text-lg';
 
 export const getDate = (timePassed: number) => {
   const date = new Date(START_DATE);
