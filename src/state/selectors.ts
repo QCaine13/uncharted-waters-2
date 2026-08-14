@@ -7,6 +7,7 @@ import { getPlayerFleet } from './selectorsFleet';
 import createMap from '../map';
 import { applyPositionDelta } from '../utils';
 import getSailor from '../data/sailorData';
+import { Landmark, landmarks } from '../data/discoveryData';
 
 export const getTimeOfDay = () => state.timePassed % 1440;
 
@@ -107,6 +108,14 @@ export const getPlayerItems = () =>
     id: itemId,
     name: itemData[itemId].name,
   }));
+
+// state.discoveries stores ids in discovery order (design spec section 5) —
+// mapping over it, rather than filtering `landmarks`, is what keeps that
+// order intact here.
+export const getDiscoveries = (): Landmark[] =>
+  state.discoveries.map(
+    (id) => landmarks.find((landmark) => landmark.id === id)!,
+  );
 
 export const getPlayerItem = (i: number) => itemData[state.items[i]];
 

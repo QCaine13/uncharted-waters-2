@@ -16,6 +16,8 @@ import Popover from './common/Popover';
 import Items from './Items';
 import Mates from './Mates';
 import System from './System';
+import Discoveries from './Discoveries';
+import FameReadout from './FameReadout';
 
 interface Props {
   portId: string | null;
@@ -56,6 +58,7 @@ export default function Left({
         <div className="mb-4 text-right text-xl">{getIngots(gold)}</div>
         <div className="text-sm">Coins</div>
         <div className="mb-4 text-right text-xl">{getCoins(gold)}</div>
+        <FameReadout />
         {Boolean(children) && <div>{children}</div>}
       </div>
       {inPort && (
@@ -71,6 +74,16 @@ export default function Left({
           </Popover>
         </div>
       )}
+      {/*
+        Not gated on inPort like the group above — a discovery log is
+        something the player can check underway, and the discovery e2e
+        specs load straight into a sea save and expect it reachable there.
+      */}
+      <div className="select-none">
+        <Popover label="Discoveries">
+          <Discoveries />
+        </Popover>
+      </div>
       <div className="select-none">
         <Popover label="System">
           <System />

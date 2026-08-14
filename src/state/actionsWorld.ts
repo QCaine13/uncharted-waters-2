@@ -47,6 +47,10 @@ export const dock = (position: Position) => {
   state.dayAtSea = 0;
   updateInterface.dayAtSea(state.dayAtSea);
 
+  // The banner is sea-only (design spec section 3) — clear it on arrival so
+  // it can never reappear stale at the start of the next voyage.
+  updateInterface.discovery([]);
+
   save();
 
   return true;
@@ -112,6 +116,12 @@ export const worldTimeTick = (minutes = 20) => {
       });
 
       updateGeneral();
+      updateInterface.discovery(discovered);
+      // A fresh copy — the fame readout keys its React state off this
+      // reference, and worldTimeTick can fire again before the next render,
+      // mutating state.fame in place. Handing back the same object would
+      // make that second update indistinguishable from the first.
+      updateInterface.fame({ ...state.fame });
       save();
     }
   }

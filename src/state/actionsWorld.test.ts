@@ -133,6 +133,11 @@ describe('world provision settlement', () => {
       state.gold = 0;
       state.fame = { adventure: 0, pirate: 0, trade: 0 };
       state.discoveries = [];
+      // Real values under test — worldTimeTick now pushes discoveries onto
+      // these two channels, and nothing else in this describe block mounts
+      // the interface components that normally assign them.
+      updateInterface.discovery = jest.fn();
+      updateInterface.fame = jest.fn();
     });
 
     test('sailing into a landmark adds its fame and gold once and saves', () => {
@@ -144,6 +149,14 @@ describe('world provision settlement', () => {
       expect(state.fame.adventure).toBe(gibraltar.fame);
       expect(state.gold).toBe(gibraltar.gold);
       expect(mockedSave).toHaveBeenCalledTimes(1);
+      expect(updateInterface.discovery).toHaveBeenCalledTimes(1);
+      expect(updateInterface.discovery).toHaveBeenCalledWith([gibraltar]);
+      expect(updateInterface.fame).toHaveBeenCalledTimes(1);
+      expect(updateInterface.fame).toHaveBeenCalledWith({
+        adventure: gibraltar.fame,
+        pirate: 0,
+        trade: 0,
+      });
     });
 
     test('a second tick at the same position discovers nothing further', () => {
@@ -151,6 +164,8 @@ describe('world provision settlement', () => {
 
       worldTimeTick();
       mockedSave.mockClear();
+      (updateInterface.discovery as jest.Mock).mockClear();
+      (updateInterface.fame as jest.Mock).mockClear();
 
       worldTimeTick(1);
 
@@ -158,6 +173,8 @@ describe('world provision settlement', () => {
       expect(state.fame.adventure).toBe(gibraltar.fame);
       expect(state.gold).toBe(gibraltar.gold);
       expect(mockedSave).not.toHaveBeenCalled();
+      expect(updateInterface.discovery).not.toHaveBeenCalled();
+      expect(updateInterface.fame).not.toHaveBeenCalled();
     });
 
     test('does not detect discoveries while docked', () => {
@@ -168,6 +185,8 @@ describe('world provision settlement', () => {
 
       expect(state.discoveries).toEqual([]);
       expect(mockedSave).not.toHaveBeenCalled();
+      expect(updateInterface.discovery).not.toHaveBeenCalled();
+      expect(updateInterface.fame).not.toHaveBeenCalled();
     });
   });
 });

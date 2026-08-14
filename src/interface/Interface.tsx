@@ -6,6 +6,7 @@ import Left from './Left';
 import PortInfo from './port/PortInfo';
 import Provisions from './world/Provisions';
 import Indicators from './world/Indicators';
+import DiscoveryBanner from './world/DiscoveryBanner';
 import Camera from './Camera';
 import updateInterface from '../state/updateInterface';
 import Building from './port/Building';
@@ -70,6 +71,7 @@ function Interface({ resolve }: Props) {
           <div className={buildingId ? 'hidden' : ''}>
             <Camera />
           </div>
+          <DiscoveryBanner hidden={inPort} />
         </div>
         <Right>
           {inPort && <PortInfo portId={portId} />}
