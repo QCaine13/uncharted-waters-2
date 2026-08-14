@@ -43,7 +43,7 @@ progress.
 Why this comes early: the current project has English text embedded directly in
 React components and quest data.
 
-## Phase 4: Market MVP ✅ (shipped — depth: fluctuation/tax/investment still TODO)
+## Phase 4: Market MVP ✅ (shipped) + price dynamics ✅ (tax/investment still TODO)
 
 - Add `tradeGoodData`.
 - Add market building UI.
