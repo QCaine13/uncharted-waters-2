@@ -120,7 +120,9 @@ pending, along with every other post-Lisbon chapter.
 - 把 PortInfo 里的硬编码 100% Price Index + 重复 Investment 标签换成真实占位（为市场做准备）。
 - 给现有数据（ports, ships, items）加中文名（不改英文 key，符合 Phase 3）。
 - ✅ 海上每日补给消耗：舰队共享、每 10 人或不足 10 人每日消耗 1 水 + 1 食物，
-  余量与警告实时显示；原作断粮惩罚仍待考证后另做。
+  余量与警告实时显示。
+- ✅ 断粮惩罚（slice A）：逐日结算，缺水或缺粮当日按 10% 减员（两者皆缺翻倍），
+  船员归零则拖回最近港口。见 [D11](DECISIONS.md)。
 
 当前进行中探索/准备（AI 已完成只读部分）：
 
