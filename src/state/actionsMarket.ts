@@ -3,8 +3,16 @@ import { goodData, GoodId } from '../data/goodsData';
 import {
   getMarketBuyPrice,
   getMarketSellPrice,
+  getMarketReferencePrice,
   marketGoodsData,
 } from '../data/marketGoodsData';
+import {
+  getCurrentIndex,
+  settleBuy,
+  settleSell,
+  DEFAULT_INDEX,
+} from '../data/marketPricing';
+import { MarketId } from '../data/portExtraData';
 import { getPortData } from '../game/port/portUtils';
 import { getPlayerFleet } from './selectorsFleet';
 import { shipData } from '../data/shipData';
@@ -18,6 +26,22 @@ const getMarketId = () => {
   return port.marketId;
 };
 
+const getCurrentDay = () => Math.floor(state.timePassed / 1440);
+
+const getPriceIndex = (marketId: MarketId, goodId: GoodId): number =>
+  getCurrentIndex(state.marketPrices[marketId]?.[goodId], getCurrentDay());
+
+const setPriceIndex = (
+  marketId: MarketId,
+  goodId: GoodId,
+  index: number,
+): void => {
+  if (!state.marketPrices[marketId]) {
+    state.marketPrices[marketId] = {};
+  }
+  state.marketPrices[marketId][goodId] = { index, updatedDay: getCurrentDay() };
+};
+
 export const getMarketGoods = () => {
   const marketId = getMarketId();
   if (!marketId) return [];
@@ -27,7 +51,8 @@ export const getMarketGoods = () => {
 
   return allGoods.map((goodId) => {
     const good = goodData[goodId];
-    const buyPrice = getMarketBuyPrice(marketId, goodId, good.basePrice);
+    const index = getPriceIndex(marketId, goodId);
+    const buyPrice = getMarketBuyPrice(marketId, goodId, good.basePrice, index);
     const isSupply = market.supplies.includes(goodId);
     const isDemand = market.demands.includes(goodId);
 
@@ -38,6 +63,7 @@ export const getMarketGoods = () => {
       buyPrice,
       isSupply,
       isDemand,
+      index,
     };
   });
 };
@@ -52,6 +78,7 @@ export const getCargoGoods = () => {
     name: string;
     quantity: number;
     sellPrice: number;
+    index: number;
   }[] = [];
 
   fleet.forEach((ship, shipNumber) => {
@@ -65,8 +92,11 @@ export const getCargoGoods = () => {
       const good = goodData[goodId];
       if (!good) return;
 
+      // Supply ports have no dynamic pricing at all (flat 0.8 fallback), so
+      // there's no index to report there beyond the neutral default.
+      const index = marketId ? getPriceIndex(marketId, goodId) : DEFAULT_INDEX;
       const sellPrice = marketId
-        ? getMarketSellPrice(marketId, goodId, good.basePrice)
+        ? getMarketSellPrice(marketId, goodId, good.basePrice, index)
         : Math.floor(good.basePrice * 0.8);
 
       result.push({
@@ -76,11 +106,30 @@ export const getCargoGoods = () => {
         name: good.name,
         quantity: cargoItem.quantity,
         sellPrice,
+        index,
       });
     });
   });
 
   return result;
+};
+
+// For PortInfo, which can be asked about any port — not necessarily the one
+// the player is currently docked at — so this takes portId explicitly
+// instead of going through getMarketId()'s reliance on state.portId.
+export const getPortPriceIndex = (portId: string): number | null => {
+  const port = getPortData(portId);
+  if (port.isSupplyPort) return null;
+
+  const { marketId } = port;
+  const currentDay = getCurrentDay();
+  const indexes = (Object.keys(goodData) as GoodId[]).map((goodId) =>
+    getCurrentIndex(state.marketPrices[marketId]?.[goodId], currentDay),
+  );
+
+  return Math.round(
+    indexes.reduce((sum, index) => sum + index, 0) / indexes.length,
+  );
 };
 
 export const getAvailableCargoSpace = () => {
@@ -98,8 +147,13 @@ export const buyGood = (goodId: GoodId, quantity: number): boolean => {
   if (!marketId) return false;
 
   const good = goodData[goodId];
-  const unitPrice = getMarketBuyPrice(marketId, goodId, good.basePrice);
-  const totalCost = unitPrice * quantity;
+  const referencePrice = getMarketReferencePrice(
+    marketId,
+    goodId,
+    good.basePrice,
+  );
+  const index = getPriceIndex(marketId, goodId);
+  const totalCost = settleBuy(referencePrice, index, quantity).totalPrice;
 
   if (totalCost > state.gold) return false;
 
@@ -107,7 +161,11 @@ export const buyGood = (goodId: GoodId, quantity: number): boolean => {
   if (availableSpace <= 0) return false;
 
   const actualQuantity = Math.min(quantity, availableSpace);
-  const actualCost = unitPrice * actualQuantity;
+  const { totalPrice: actualCost, nextIndex } = settleBuy(
+    referencePrice,
+    index,
+    actualQuantity,
+  );
 
   let remaining = actualQuantity;
   const fleet = getPlayerFleet();
@@ -133,6 +191,9 @@ export const buyGood = (goodId: GoodId, quantity: number): boolean => {
   }
 
   state.gold -= actualCost;
+  if (actualQuantity > 0) {
+    setPriceIndex(marketId, goodId, nextIndex);
+  }
 
   updateInterface.general({
     portId: state.portId,
@@ -164,10 +225,25 @@ export const sellGood = (
   if (!good) return false;
 
   const actualQuantity = Math.min(quantity, cargoItem.quantity);
-  const unitPrice = marketId
-    ? getMarketSellPrice(marketId, goodId, good.basePrice)
-    : Math.floor(good.basePrice * 0.8);
-  const totalRevenue = unitPrice * actualQuantity;
+
+  let totalRevenue: number;
+
+  if (marketId) {
+    const referencePrice = getMarketReferencePrice(
+      marketId,
+      goodId,
+      good.basePrice,
+    );
+    const index = getPriceIndex(marketId, goodId);
+    const settlement = settleSell(referencePrice, index, actualQuantity);
+    totalRevenue = settlement.totalPrice;
+
+    if (actualQuantity > 0) {
+      setPriceIndex(marketId, goodId, settlement.nextIndex);
+    }
+  } else {
+    totalRevenue = Math.floor(good.basePrice * 0.8) * actualQuantity;
+  }
 
   state.gold += totalRevenue;
 

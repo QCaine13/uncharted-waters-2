@@ -1,10 +1,13 @@
 import { GoodId } from './goodsData';
 import { MarketId } from './portExtraData';
+import { getBuyPrice, getSellPrice } from './marketPricing';
 
-export const SUPPLY_BUY_MULTIPLIER = 0.6;
-export const DEMAND_SELL_MULTIPLIER = 1.8;
-export const NEUTRAL_BUY_MULTIPLIER = 1.0;
-export const NEUTRAL_SELL_MULTIPLIER = 0.8;
+// Region multipliers for the single-reference-price model (design spec
+// section 2.1): a fixed markdown/markup off base price, before the dynamic
+// index and buy/sell spread are applied.
+export const SUPPLY_MULTIPLIER = 0.6;
+export const DEMAND_MULTIPLIER = 1.8;
+export const NEUTRAL_MULTIPLIER = 1.0;
 
 interface MarketGoodsEntry {
   supplies: GoodId[];
@@ -79,26 +82,31 @@ export const marketGoodsData: Record<MarketId, MarketGoodsEntry> = {
   },
 };
 
+const getRegionMultiplier = (marketId: MarketId, goodId: GoodId): number => {
+  const market = marketGoodsData[marketId];
+  if (market.supplies.includes(goodId)) return SUPPLY_MULTIPLIER;
+  if (market.demands.includes(goodId)) return DEMAND_MULTIPLIER;
+  return NEUTRAL_MULTIPLIER;
+};
+
+export const getMarketReferencePrice = (
+  marketId: MarketId,
+  goodId: GoodId,
+  basePrice: number,
+): number => basePrice * getRegionMultiplier(marketId, goodId);
+
 export const getMarketBuyPrice = (
   marketId: MarketId,
   goodId: GoodId,
   basePrice: number,
-): number => {
-  const market = marketGoodsData[marketId];
-  if (market.supplies.includes(goodId)) {
-    return Math.floor(basePrice * SUPPLY_BUY_MULTIPLIER);
-  }
-  return Math.floor(basePrice * NEUTRAL_BUY_MULTIPLIER);
-};
+  index: number,
+): number =>
+  getBuyPrice(getMarketReferencePrice(marketId, goodId, basePrice), index);
 
 export const getMarketSellPrice = (
   marketId: MarketId,
   goodId: GoodId,
   basePrice: number,
-): number => {
-  const market = marketGoodsData[marketId];
-  if (market.demands.includes(goodId)) {
-    return Math.floor(basePrice * DEMAND_SELL_MULTIPLIER);
-  }
-  return Math.floor(basePrice * NEUTRAL_SELL_MULTIPLIER);
-};
+  index: number,
+): number =>
+  getSellPrice(getMarketReferencePrice(marketId, goodId, basePrice), index);

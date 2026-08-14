@@ -18,6 +18,7 @@ interface SaveData {
   items: State['items'];
   mates: State['mates'];
   fame: State['fame'];
+  marketPrices: State['marketPrices'];
 }
 
 export const save = (): void => {
@@ -36,6 +37,7 @@ export const save = (): void => {
     items: [...state.items],
     mates: JSON.parse(JSON.stringify(state.mates)),
     fame: { ...state.fame },
+    marketPrices: JSON.parse(JSON.stringify(state.marketPrices)),
   };
 
   window.localStorage.setItem(SAVED_STATE_KEY, JSON.stringify(saveData));
@@ -76,6 +78,7 @@ export const load = (): boolean => {
   state.items = saveData.items;
   state.mates = saveData.mates;
   state.fame = saveData.fame;
+  state.marketPrices = saveData.marketPrices;
 
   // Clear non-serializable objects so game loop recreates them
   state.world = undefined as unknown as State['world'];

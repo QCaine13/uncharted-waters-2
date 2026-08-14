@@ -6,6 +6,7 @@ import { legacyToSemanticEvent } from './legacy/lisbonCompletionKeys';
 import { storyRuntimeActions } from './storyRuntimeActions';
 import state, { SAVED_STATE_KEY } from '../state/state';
 import { load, save } from '../state/saveLoad';
+import { SAVE_VERSION } from '../state/saveMigrations';
 import updateInterface from '../state/updateInterface';
 
 const completedKeys = [
@@ -107,7 +108,7 @@ describe('Save v2 Lisbon compatibility', () => {
       const saved = JSON.parse(
         window.localStorage.getItem(SAVED_STATE_KEY) ?? '{}',
       );
-      expect(saved.version).toBe(2);
+      expect(saved.version).toBe(SAVE_VERSION);
       expect(saved.quests.slice(0, originalQuests.length)).toEqual(
         originalQuests,
       );

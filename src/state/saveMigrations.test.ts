@@ -15,6 +15,23 @@ describe('save migrations (D6)', () => {
     expect(migrated?.quests).toEqual(['houseBeforeQuest']);
   });
 
+  it('upgrades a v2 save to v3, adds marketPrices, and preserves quests and fame', () => {
+    const v2 = {
+      version: 2,
+      gold: 250,
+      quests: ['houseBeforeQuest'],
+      fame: { adventure: 3, pirate: 0, trade: 1 },
+    };
+
+    const migrated = migrate(v2);
+
+    expect(migrated).not.toBeNull();
+    expect(migrated?.version).toBe(SAVE_VERSION);
+    expect(migrated?.marketPrices).toEqual({});
+    expect(migrated?.quests).toEqual(['houseBeforeQuest']);
+    expect(migrated?.fame).toEqual({ adventure: 3, pirate: 0, trade: 1 });
+  });
+
   it('leaves a current-version save unchanged', () => {
     const current = {
       version: SAVE_VERSION,

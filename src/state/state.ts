@@ -4,6 +4,7 @@ import type { Port } from '../game/port/port';
 import type { World } from '../game/world/world';
 import type { LegacyQuestCompletionKey } from '../story/legacy/lisbonCompletionKeys';
 import { ItemId } from '../data/itemData';
+import type { MarketPriceEntry } from '../data/marketPricing';
 import { migrate } from './saveMigrations';
 
 export type Stage = 'world' | 'port' | 'building';
@@ -37,6 +38,12 @@ type Mate = {
 export type FameType = 'adventure' | 'pirate' | 'trade';
 export type Fame = { [key in FameType]: number };
 
+// Sparse: a missing [marketId][goodId] entry means index 100 (design spec
+// section 3).
+export type MarketPriceState = {
+  [marketId: string]: { [goodId: string]: MarketPriceEntry };
+};
+
 export interface State {
   portId: string | null;
   buildingId: string | null;
@@ -57,6 +64,7 @@ export interface State {
   items: ItemId[];
   mates: Mate[];
   fame: Fame;
+  marketPrices: MarketPriceState;
 }
 
 export const SAVED_STATE_KEY = 'savedState';
@@ -96,6 +104,7 @@ const state = {
     },
   ] as Mate[],
   fame: { adventure: 0, pirate: 0, trade: 0 },
+  marketPrices: {},
   ...savedState,
 } as State;
 

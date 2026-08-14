@@ -11,7 +11,7 @@
  which callers treat the same as "no save" — so this is strictly safer than before.
 */
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export type AnySave = Record<string, unknown> & { version?: unknown };
 
@@ -21,6 +21,13 @@ const migrations: Record<number, (save: AnySave) => AnySave> = {
     ...save,
     version: 2,
     fame: { adventure: 0, pirate: 0, trade: 0 },
+  }),
+  // 2 -> 3: introduce dynamic market prices (market price dynamics design).
+  // Old saves have no price history, so every good starts at the default index.
+  2: (save) => ({
+    ...save,
+    version: 3,
+    marketPrices: {},
   }),
 };
 

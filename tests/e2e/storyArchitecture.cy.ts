@@ -1,4 +1,5 @@
 import { SAVED_STATE_KEY, type State } from '../../src/state/state';
+import { SAVE_VERSION } from '../../src/state/saveLoad';
 import {
   characterMessageIncludes,
   clickMenu,
@@ -29,7 +30,7 @@ const readSavedState = () =>
   });
 
 const expectSaveV2LegacyOnly = (saved: SavedState) => {
-  expect(saved.version).to.equal(2);
+  expect(saved.version).to.equal(SAVE_VERSION);
   expect(JSON.stringify(saved)).not.to.include('joao.lisbon-opening.');
 };
 
