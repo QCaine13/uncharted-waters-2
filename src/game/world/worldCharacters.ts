@@ -48,6 +48,19 @@ const createWorldCharacters = (map: Map) => {
     update: () => {
       player.update();
 
+      /*
+        createWorldPlayer captures the fleet's starting position and then
+        REASSIGNS its own local each tick, so state.fleets never saw the
+        fleet move — it stayed frozen at wherever the last dock or load put
+        it, for the whole voyage. Everything reading the fleet's position off
+        state was therefore reading the departure port: updateWorldStatus's
+        sea area (so wind and current never changed at sea) and landmark
+        discovery (which could only ever fire from a docked position).
+        Publishing the committed tile position here is the sync that was
+        missing; dock() still owns writing the final position on arrival.
+       */
+      playerFleet.position = player.position();
+
       if (Input.getPressedE() && dock(player.position())) {
         player.setHeading('');
         return;
