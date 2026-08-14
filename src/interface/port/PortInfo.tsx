@@ -4,6 +4,7 @@ import {
   getRegionOrIfSupplyPort,
   getPortData,
 } from '../../game/port/portUtils';
+import { getPortPriceIndex } from '../../state/actionsMarket';
 
 interface Props {
   portId: string;
@@ -21,6 +22,7 @@ export default function PortInfo({ portId }: Props) {
   }
 
   const { name } = port;
+  const priceIndex = getPortPriceIndex(portId);
 
   return (
     <div className="p-5">
@@ -35,7 +37,9 @@ export default function PortInfo({ portId }: Props) {
       <div className="text-sm">Investment</div>
       <div className="mb-4 text-right text-xl">{industry}</div>
       <div className="text-sm">Price Index</div>
-      <div className="mb-4 text-right text-xl">100%</div>
+      <div className="mb-4 text-right text-xl">
+        {priceIndex === null ? '—' : `${priceIndex}%`}
+      </div>
     </div>
   );
 }

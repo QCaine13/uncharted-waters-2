@@ -26,6 +26,14 @@ const getQuantityOptions = (max: number) => {
   return [...new Set(presets)];
 };
 
+// Direction marker instead of colour, since BuildingMenu options render as
+// plain strings.
+const formatPriceIndex = (index: number) => {
+  if (index > 100) return `▲${index}%`;
+  if (index < 100) return `▼${index}%`;
+  return '100%';
+};
+
 export default function Market() {
   const { selectOption, next, back, reset, state } =
     useBuilding<MarketOption>();
@@ -89,9 +97,9 @@ export default function Market() {
         <BuildingMenu
           title="Buy"
           options={goods.map((good) => ({
-            label: `${good.name} (${good.buyPrice}g)${
-              good.isSupply ? ' *' : ''
-            }`,
+            label: `${good.name} (${good.buyPrice}g) ${formatPriceIndex(
+              good.index,
+            )}${good.isSupply ? ' *' : ''}`,
             value: good.id,
           }))}
           onSelect={(goodId) => {
@@ -190,7 +198,9 @@ export default function Market() {
         <BuildingMenu
           title="Sell"
           options={cargoGoods.map((good) => ({
-            label: `${good.name} x${good.quantity} (${good.sellPrice}g)`,
+            label: `${good.name} x${good.quantity} (${
+              good.sellPrice
+            }g) ${formatPriceIndex(good.index)}`,
             value: cargoGoods.indexOf(good),
           }))}
           onSelect={(idx) => {
