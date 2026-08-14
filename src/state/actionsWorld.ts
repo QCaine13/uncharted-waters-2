@@ -21,6 +21,7 @@ import {
   shouldUpdateWorldStatus,
 } from './selectors';
 import { Position } from '../types';
+import { getNewlyDiscoveredLandmarks } from '../data/discoveryData';
 
 export const dock = (position: Position) => {
   const portId = portAdjacentAt(position);
@@ -89,6 +90,30 @@ export const worldTimeTick = (minutes = 20) => {
     state.dayAtSea += daysCrossed;
     updateInterface.dayAtSea(state.dayAtSea);
     settleDailyProvisions(daysCrossed);
+  }
+
+  // Landmarks are only reachable while sailing — state.portId is null at
+  // sea (see dock()/setSail()) — and detection needs a real fleet
+  // position, which is unset only in the two edge cases documented on
+  // setDockedFleetPositions below.
+  const { position } = state.fleets['1'];
+
+  if (state.portId === null && position) {
+    const discovered = getNewlyDiscoveredLandmarks(
+      position,
+      state.discoveries,
+    );
+
+    if (discovered.length > 0) {
+      discovered.forEach((landmark) => {
+        state.discoveries.push(landmark.id);
+        state.fame.adventure += landmark.fame;
+        state.gold += landmark.gold;
+      });
+
+      updateGeneral();
+      save();
+    }
   }
 };
 

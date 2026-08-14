@@ -65,6 +65,8 @@ export interface State {
   mates: Mate[];
   fame: Fame;
   marketPrices: MarketPriceState;
+  // Discovered landmark ids (src/data/discoveryData.ts), insertion order.
+  discoveries: string[];
 }
 
 export const SAVED_STATE_KEY = 'savedState';
@@ -105,6 +107,7 @@ const state = {
   ] as Mate[],
   fame: { adventure: 0, pirate: 0, trade: 0 },
   marketPrices: {},
+  discoveries: [] as string[],
   ...savedState,
 } as State;
 

@@ -5,3 +5,5 @@ public/app.bundle.js
 public/styles.css
 build/
 .worktrees/
+tests/screenshots/
+cypress/downloads/

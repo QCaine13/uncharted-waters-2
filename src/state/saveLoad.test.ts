@@ -31,4 +31,14 @@ describe('save/load round trip', () => {
     expect(load()).toBe(true);
     expect(state.marketPrices).toEqual({});
   });
+
+  test('preserves discoveries', () => {
+    state.discoveries = ['strait-of-gibraltar', 'azores'];
+
+    save();
+    state.discoveries = [];
+
+    expect(load()).toBe(true);
+    expect(state.discoveries).toEqual(['strait-of-gibraltar', 'azores']);
+  });
 });

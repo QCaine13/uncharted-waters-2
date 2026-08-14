@@ -11,7 +11,7 @@
  which callers treat the same as "no save" — so this is strictly safer than before.
 */
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 export type AnySave = Record<string, unknown> & { version?: unknown };
 
@@ -28,6 +28,13 @@ const migrations: Record<number, (save: AnySave) => AnySave> = {
     ...save,
     version: 3,
     marketPrices: {},
+  }),
+  // 3 -> 4: introduce geographic discoveries (discovery MVP design). Old
+  // saves haven't sighted any landmark yet.
+  3: (save) => ({
+    ...save,
+    version: 4,
+    discoveries: [],
   }),
 };
 

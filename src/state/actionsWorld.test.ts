@@ -9,6 +9,7 @@ import {
 } from './actionsProvisions';
 import { save } from './saveLoad';
 import { setSail, worldTimeTick } from './actionsWorld';
+import { landmarks } from '../data/discoveryData';
 
 jest.mock('../input', () => ({
   __esModule: true,
@@ -121,5 +122,52 @@ describe('world provision settlement', () => {
     expect(mockedRefresh).toHaveBeenCalledTimes(1);
     expect(mockedSave).toHaveBeenCalledTimes(1);
     expect(Input.reset).toHaveBeenCalledTimes(1);
+  });
+
+  describe('landmark discovery', () => {
+    const gibraltar = landmarks.find(
+      (landmark) => landmark.id === 'strait-of-gibraltar',
+    )!;
+
+    beforeEach(() => {
+      state.gold = 0;
+      state.fame = { adventure: 0, pirate: 0, trade: 0 };
+      state.discoveries = [];
+    });
+
+    test('sailing into a landmark adds its fame and gold once and saves', () => {
+      state.fleets['1'].position = { ...gibraltar.position };
+
+      worldTimeTick();
+
+      expect(state.discoveries).toEqual([gibraltar.id]);
+      expect(state.fame.adventure).toBe(gibraltar.fame);
+      expect(state.gold).toBe(gibraltar.gold);
+      expect(mockedSave).toHaveBeenCalledTimes(1);
+    });
+
+    test('a second tick at the same position discovers nothing further', () => {
+      state.fleets['1'].position = { ...gibraltar.position };
+
+      worldTimeTick();
+      mockedSave.mockClear();
+
+      worldTimeTick(1);
+
+      expect(state.discoveries).toEqual([gibraltar.id]);
+      expect(state.fame.adventure).toBe(gibraltar.fame);
+      expect(state.gold).toBe(gibraltar.gold);
+      expect(mockedSave).not.toHaveBeenCalled();
+    });
+
+    test('does not detect discoveries while docked', () => {
+      state.portId = '1';
+      state.fleets['1'].position = { ...gibraltar.position };
+
+      worldTimeTick();
+
+      expect(state.discoveries).toEqual([]);
+      expect(mockedSave).not.toHaveBeenCalled();
+    });
   });
 });
