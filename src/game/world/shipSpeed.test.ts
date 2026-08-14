@@ -85,6 +85,19 @@ describe('getShipSpeed', () => {
     expect(byCrew(2)).toBeGreaterThan(byCrew(1));
   });
 
+  // A starved fleet can hit zero crew (see state/provisions.ts) — speed
+  // must resolve to a real number, not NaN/Infinity from a division that
+  // forgot crew can be zero, so the caller can safely treat it as “stopped”
+  // rather than choke on it.
+  test('produces a finite speed at zero crew', () => {
+    const speed = getShipSpeed({ id: '1', cargo: [], crew: 0 }, sailor, 0, {
+      direction: 0,
+      speed: 3,
+    });
+
+    expect(Number.isFinite(speed)).toBe(true);
+  });
+
   test('exceeding minimum navigation crew provides no boost', () => {
     const byCrew = (crew: number) =>
       getShipSpeed({ id: '1', cargo: [], crew }, sailor, 0, {

@@ -35,6 +35,24 @@ export const getProvisionStatusText = ({
   return `${daysRemaining} days remaining`;
 };
 
+export const getStarvationReportText = ({
+  crewLosses,
+  adrift,
+}: ProvisionSummary): string | null => {
+  const deaths = (crewLosses ?? []).reduce(
+    (total, loss) => total + loss.deaths,
+    0,
+  );
+
+  if (deaths === 0) {
+    return null;
+  }
+
+  const lost = `Lost ${deaths} crew member${deaths === 1 ? '' : 's'} to starvation`;
+
+  return adrift ? `${lost} — the fleet drifted into port` : lost;
+};
+
 export default function Provisions({ hidden }: Props) {
   const [summary, setSummary] = useState<ProvisionSummary>(() =>
     getProvisionSummary(getPlayerFleet()),
@@ -53,6 +71,7 @@ export default function Provisions({ hidden }: Props) {
     warningClass = 'text-orange-500';
   }
   const statusText = getProvisionStatusText(summary);
+  const starvationText = getStarvationReportText(summary);
 
   return (
     <div
@@ -66,6 +85,14 @@ export default function Provisions({ hidden }: Props) {
           data-test="provisionStatus"
         >
           {statusText}
+        </div>
+      )}
+      {!!starvationText && (
+        <div
+          className="text-sm mb-2 text-red-600"
+          data-test="provisionStarvation"
+        >
+          {starvationText}
         </div>
       )}
       <div className={classNames(provisionClass, warningClass)}>

@@ -3,8 +3,21 @@ import {
   getDailyProvisionConsumption,
   getProvisionSummary,
   getProvisionTotals,
-  planProvisionConsumption,
+  nearestPortId,
+  planDailyProvisionSettlement,
 } from './provisions';
+
+// A small, fully-controlled port list so nearest-port tests don’t depend on
+// the real atlas’s coordinates or need to prove no other real port happens
+// to be closer.
+jest.mock('../data/portData', () => ({
+  regularPorts: [
+    { position: { x: 0, y: 0 } },
+    { position: { x: 100, y: 0 } },
+    { position: { x: 50, y: 0 } },
+  ],
+  supplyPorts: [{ position: { x: 100, y: 0 } }],
+}));
 
 const ship = (
   crew: number,
@@ -93,45 +106,158 @@ describe('fleet provision rules', () => {
     });
   });
 
-  test('plans flagship-first deductions and continues to later ships', () => {
-    const ships = [
-      ship(6, [
-        { type: 'water', quantity: 1 },
-        { type: 'food', quantity: 4 },
-        { type: 'lumber', quantity: 3 },
-      ]),
-      ship(5, [
-        { type: 'water', quantity: 5 },
-        { type: 'food', quantity: 5 },
-        { type: 'shot', quantity: 2 },
-      ]),
-    ];
+  test('produces finite values at zero crew', () => {
+    const summary = getProvisionSummary([ship(0)]);
 
-    expect(planProvisionConsumption(ships, 1)).toEqual([
-      { shipNumber: 0, provision: 'water', quantity: 1 },
-      { shipNumber: 1, provision: 'water', quantity: 1 },
-      { shipNumber: 0, provision: 'food', quantity: 2 },
-    ]);
-
-    expect(planProvisionConsumption(ships, 3)).toEqual([
-      { shipNumber: 0, provision: 'water', quantity: 1 },
-      { shipNumber: 1, provision: 'water', quantity: 5 },
-      { shipNumber: 0, provision: 'food', quantity: 4 },
-      { shipNumber: 1, provision: 'food', quantity: 2 },
-    ]);
+    expect(Number.isFinite(summary.dailyConsumption)).toBe(true);
+    expect(
+      summary.daysRemaining === null || Number.isFinite(summary.daysRemaining),
+    ).toBe(true);
   });
 
-  test('does not mutate ships while planning', () => {
-    const ships = [
-      ship(10, [
-        { type: 'water', quantity: 2 },
-        { type: 'food', quantity: 2 },
-      ]),
-    ];
-    const before = JSON.stringify(ships);
+  describe('planDailyProvisionSettlement', () => {
+    test('a fully provisioned fleet loses no crew, matching the pre-existing whole-span totals', () => {
+      const ships = [
+        ship(6, [
+          { type: 'water', quantity: 1 },
+          { type: 'food', quantity: 4 },
+          { type: 'lumber', quantity: 3 },
+        ]),
+        ship(5, [
+          { type: 'water', quantity: 5 },
+          { type: 'food', quantity: 5 },
+          { type: 'shot', quantity: 2 },
+        ]),
+      ];
 
-    planProvisionConsumption(ships, 1);
+      const oneDay = planDailyProvisionSettlement(ships, 1);
 
-    expect(JSON.stringify(ships)).toBe(before);
+      expect(oneDay.deductions).toEqual([
+        { shipNumber: 0, provision: 'water', quantity: 1 },
+        { shipNumber: 1, provision: 'water', quantity: 1 },
+        { shipNumber: 0, provision: 'food', quantity: 2 },
+      ]);
+      expect(oneDay).toMatchObject({
+        starvationDays: 0,
+        crewLosses: [],
+        adrift: false,
+      });
+
+      const threeDays = planDailyProvisionSettlement(ships, 3);
+
+      expect(threeDays.deductions).toEqual([
+        { shipNumber: 0, provision: 'water', quantity: 1 },
+        { shipNumber: 1, provision: 'water', quantity: 5 },
+        { shipNumber: 0, provision: 'food', quantity: 4 },
+        { shipNumber: 1, provision: 'food', quantity: 2 },
+      ]);
+      expect(threeDays).toMatchObject({
+        starvationDays: 0,
+        crewLosses: [],
+        adrift: false,
+      });
+    });
+
+    test('does not mutate ships while planning', () => {
+      const ships = [
+        ship(10, [
+          { type: 'water', quantity: 2 },
+          { type: 'food', quantity: 2 },
+        ]),
+      ];
+      const before = JSON.stringify(ships);
+
+      planDailyProvisionSettlement(ships, 1);
+
+      expect(JSON.stringify(ships)).toBe(before);
+    });
+
+    test('resolves day by day: a 5-day span with 3 days of food produces exactly 2 starvation days', () => {
+      // crew 10 -> 1 unit/day consumption, so “3 days of food” is unambiguous.
+      // The old whole-span math (required = dailyConsumption * days) could
+      // only ever see “short overall”, never which days ran out.
+      const ships = [
+        ship(10, [
+          { type: 'water', quantity: 100 },
+          { type: 'food', quantity: 3 },
+        ]),
+      ];
+
+      const result = planDailyProvisionSettlement(ships, 5);
+
+      expect(result.starvationDays).toBe(2);
+      expect(result.adrift).toBe(false);
+    });
+
+    test('deaths compound across consecutive starvation days as the shrinking crew lowers consumption', () => {
+      // crew 21, no provisions at all (both short every day). Consumption
+      // steps down (3, then 2, then 2) as the deaths from each prior day
+      // shrink the crew, which is exactly what the whole-span math couldn’t
+      // express — so the marginal death count shrinks day over day too
+      // (5, then 4, then 3).
+      const fleet = () => [ship(21, [])];
+
+      expect(planDailyProvisionSettlement(fleet(), 1).crewLosses).toEqual([
+        { shipNumber: 0, deaths: 5 },
+      ]);
+      expect(planDailyProvisionSettlement(fleet(), 2).crewLosses).toEqual([
+        { shipNumber: 0, deaths: 9 },
+      ]);
+      expect(planDailyProvisionSettlement(fleet(), 3)).toMatchObject({
+        starvationDays: 3,
+        crewLosses: [{ shipNumber: 0, deaths: 12 }],
+        adrift: false,
+      });
+    });
+
+    test('doubles the death rate when both provisions are short, not when only one is', () => {
+      const oneShort = planDailyProvisionSettlement(
+        [ship(10, [{ type: 'water', quantity: 100 }])],
+        1,
+      );
+      const bothShort = planDailyProvisionSettlement([ship(10, [])], 1);
+
+      expect(oneShort.crewLosses).toEqual([{ shipNumber: 0, deaths: 1 }]);
+      expect(bothShort.crewLosses).toEqual([{ shipNumber: 0, deaths: 2 }]);
+    });
+
+    test('removes crew from the largest ship first, deterministically, and never negative', () => {
+      // crew 10 and 8, nothing to eat or drink: 18 total crew -> consumption
+      // 2, both short -> 4 deaths. Taken one at a time from whichever ship
+      // is currently largest: 10->9->8 (tie) ->7 (index tie-break), then the
+      // now-larger second ship 8->7. Ends perfectly balanced at 7 and 7,
+      // proving the removals never dip below what each ship had.
+      const result = planDailyProvisionSettlement(
+        [ship(10, []), ship(8, [])],
+        1,
+      );
+
+      expect(result.crewLosses).toEqual([
+        { shipNumber: 0, deaths: 3 },
+        { shipNumber: 1, deaths: 1 },
+      ]);
+    });
+
+    test('reaching zero crew stops the simulation mid-span and reports adrift', () => {
+      const result = planDailyProvisionSettlement([ship(1, [])], 5);
+
+      expect(result.starvationDays).toBe(1);
+      expect(result.adrift).toBe(true);
+      expect(result.crewLosses).toEqual([{ shipNumber: 0, deaths: 1 }]);
+    });
+  });
+
+  describe('nearestPortId', () => {
+    test('returns the true minimum distance port, not just the first or last', () => {
+      // id '3' (50,0) is 10 away from (60,0); id '2'/'4' are 40 away and
+      // id '1' is 60 away — the nearest port is in the middle of the list.
+      expect(nearestPortId({ x: 60, y: 0 })).toBe('3');
+    });
+
+    test('breaks ties by ascending port id', () => {
+      // id '2' and (supply port) id '4' share the exact same position, both
+      // at distance 0 from this query point.
+      expect(nearestPortId({ x: 100, y: 0 })).toBe('2');
+    });
   });
 });

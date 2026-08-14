@@ -5,7 +5,10 @@ import { createRoot } from 'react-dom/client';
 import state from '../../state/state';
 import updateInterface from '../../state/updateInterface';
 import type { ProvisionSummary } from '../../state/provisions';
-import Provisions, { getProvisionStatusText } from './Provisions';
+import Provisions, {
+  getProvisionStatusText,
+  getStarvationReportText,
+} from './Provisions';
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 
@@ -37,6 +40,34 @@ describe('Provisions', () => {
     [summary('normal', null, 0), null],
   ] as const)('maps a summary to status copy', (value, expected) => {
     expect(getProvisionStatusText(value)).toBe(expected);
+  });
+
+  test.each<[ProvisionSummary, string | null]>([
+    [summary('normal', 5), null],
+    [
+      { ...summary('normal', 5), crewLosses: [{ shipNumber: 0, deaths: 1 }] },
+      'Lost 1 crew member to starvation',
+    ],
+    [
+      {
+        ...summary('normal', 5),
+        crewLosses: [
+          { shipNumber: 0, deaths: 2 },
+          { shipNumber: 1, deaths: 1 },
+        ],
+      },
+      'Lost 3 crew members to starvation',
+    ],
+    [
+      {
+        ...summary('normal', 5),
+        crewLosses: [{ shipNumber: 0, deaths: 1 }],
+        adrift: true,
+      },
+      'Lost 1 crew member to starvation — the fleet drifted into port',
+    ],
+  ])('maps a settlement outcome to starvation copy', (value, expected) => {
+    expect(getStarvationReportText(value)).toBe(expected);
   });
 
   test('initializes from loaded cargo and reacts to an exhausted update', () => {
@@ -91,6 +122,67 @@ describe('Provisions', () => {
         .querySelector('[data-test=provision-food]')
         ?.parentElement?.classList.contains('text-red-600'),
     ).toBe(true);
+
+    act(() => root.unmount());
+  });
+
+  test('renders the starvation report when present and clears it on the next update', () => {
+    state.fleets = {
+      '1': {
+        position: { x: 100, y: 100 },
+        ships: [
+          {
+            id: '6',
+            name: 'Flagship',
+            crew: 9,
+            cargo: [
+              { type: 'water', quantity: 7 },
+              { type: 'food', quantity: 7 },
+            ],
+            durability: 25,
+          },
+        ],
+      },
+    };
+    const container = document.createElement('div');
+    const root = createRoot(container);
+
+    act(() => root.render(<Provisions hidden={false} />));
+
+    expect(
+      container.querySelector('[data-test=provisionStarvation]'),
+    ).toBeNull();
+
+    act(() => {
+      updateInterface.provisions({
+        provisions: { water: 6, food: 6, lumber: 0, shot: 0 },
+        dailyConsumption: 1,
+        daysRemaining: 6,
+        status: 'normal',
+        starvationDays: 1,
+        crewLosses: [{ shipNumber: 0, deaths: 1 }],
+        adrift: false,
+      });
+    });
+
+    expect(
+      container.querySelector('[data-test=provisionStarvation]')?.textContent,
+    ).toBe('Lost 1 crew member to starvation');
+
+    // A later, uneventful settlement replaces the summary outright — the
+    // report shouldn’t linger from a previous day.
+    act(() => {
+      updateInterface.provisions({
+        provisions: { water: 5, food: 5, lumber: 0, shot: 0 },
+        dailyConsumption: 1,
+        daysRemaining: 5,
+        status: 'normal',
+      });
+    });
+
+    expect(
+      container.querySelector('[data-test=provisionStarvation]'),
+    ).toBeNull();
 
     act(() => root.unmount());
   });
