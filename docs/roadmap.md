@@ -67,12 +67,19 @@ MVP acceptance:
 - Implement remodel after core ship data is verified.
 - Add industry investment unlocks.
 
-## Phase 6: Exploration MVP
+## Phase 6: Exploration MVP ✅ (sighting + fame shipped — reporting still TODO)
 
-- Add discovery data.
-- Add map-coordinate proximity checks.
-- Add discovery reporting and fame rewards.
-- Start with a small set around Europe/Africa before filling the world.
+- ✅ Add discovery data — 14 historical landmarks, positions projected from
+  real latitude/longitude (see [D12](DECISIONS.md)).
+- ✅ Add map-coordinate proximity checks, with the radius derived from the
+  maximum per-tick displacement so a fleet cannot tunnel past a landmark.
+- ✅ Fame rewards on sighting; adventure fame is now a live field.
+- ⏳ Discovery **reporting** to a patron for a bonus is not built. Gold is
+  granted on sighting as a stand-in and moves to the report step when it
+  lands.
+- The set spans the whole world rather than starting with Europe/Africa,
+  since fame scales with voyage distance and that is what makes the far
+  landmarks worth reaching.
 
 ## Phase 7: Story Expansion (architecture + Lisbon migration ✅; new story pending)
 
