@@ -186,7 +186,28 @@
 - [Q12] `methodology.md` 要求每条内容走完 8 步、满足 8/8 才入库；`roadmap.md` 的「有分寸 /
   1-3 小时小切片」精神可能让 V1 卡死。是否为业余节奏设一个**轻量入库档位**（如 V1 允许 5/8）？
 
+**工程债（2026-08-14 记录，均在切片 B/A/C 期间发现，不影响已推送代码的运行）**
+- [E1] **prettier 长期无人把关**：`npx prettier --check src/ tests/ scripts/` 报 16 个文件不合规，
+  含 `System.tsx`、`legacyLisbonSnapshot.ts`、`validator.contract.test.ts` 等从未被本轮触碰的文件。
+  根因：`verify` 只跑 eslint 不跑 prettier，而 `eslint-config-prettier` 把 eslint 的格式规则全关了；
+  唯一强制点 lint-staged 挂在下面 E2 那个不执行的钩子后面。
+  **补这个缺口会让 CI 立刻变红直到 16 个文件全修完**，所以要么一次性全修+入 `verify`，要么继续不管，
+  不建议半修。
+- [E2] **husky 钩子按检出位置而定，且在 worktree 里是坏的**：`extensions.worktreeConfig = true`，
+  主检出 `core.hooksPath` 未设置（→ `.git/hooks`，无 `pre-commit`，钩子不执行）；
+  但每个 agent worktree 的 `config.worktree` 设了 `core.hooksPath = <repo>/.husky`，
+  于是 `.husky/pre-commit` 会执行，而它 `source` 一个不存在的 `_/husky.sh` → **提交中止**。
+  后果：今后每个 agent worktree 提交都要 `--no-verify`。修法是 `npx husky install` 或删掉该钩子，
+  但那会永久改变今后每次提交的行为，需用户拍板。
+- [E3] **断粮状态下 HUD 仍溢出约 56px**：D14 把列高固定为 800px 后，其余状态都有余量，
+  唯独「断粮 + 补给耗尽」两条警告同时显示时会滚动，把木材/弹药两行挤出视野。
+  收口需要内容决策（精简警告文案，或只显示断粮那条——它已隐含「补给耗尽」），故未擅自处理。
+- [E4] **B/A 的手感数值待实测调整**：`IMPACT_UNITS_PER_POINT=3` / `REGRESSION_POINTS_PER_DAY=1`
+  （D10）与 `STARVATION_DEATH_RATE=0.1`（D11）都是按推算选的，标注了「等能玩了照手感调」。
+  建议在开新系统之前先实际玩一轮再定。
+
 ---
 
 **修订日志**
 - 2026-06-13：建档，录入 D1-D6，集中 Q1-Q12。
+- 2026-08-14：录入 D9-D14（可玩性四切片），新增工程债 E1-E4。
