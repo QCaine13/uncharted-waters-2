@@ -18,6 +18,8 @@ baseline are being strengthened incrementally.
 
 ## 中文版开发进度
 
+继续开发请先读根目录的[交接文档](HANDOFF.md)：当前 M1 已完成，下一阶段从 M2 冲突与成长接续，附启动方式、验证证据及存档约束。
+
 首批中文可玩基础（M0）已完成并通过验收与审查：默认简体中文、中英显示切换、现有里斯本开场与界面汉化，以及海上读档修复。M1 在此基础上加入首次航海一章：工会委托、连续出海三天后遇见多明戈、探索直布罗陀海峡、返港上报与一次性委托奖励。约翰完整主线、战斗与结局仍在路线图中。
 
 首个完整交付目标是 **约翰·法雷尔全线通关**。后续按独立章节继续加入其他主角及扩展剧情，沿用稳定内容ID、声明式条件/奖励和兼容旧存档的迁移。参见[交付方案](docs/superpowers/specs/2026-09-06-chinese-playable-release-design.md)、[M1实施计划](docs/superpowers/plans/2026-09-06-m1-first-voyage.md)、[中文资料基线](docs/1-baseline/chinese-reference-baseline.md)及[M1验收记录](docs/superpowers/verification/2026-09-06-m1-first-voyage.md)。
