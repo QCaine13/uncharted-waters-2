@@ -1,4 +1,5 @@
 export const ui: Record<string, string> = {
+  'Sea encounter': '海上相遇',
   System: '系统',
   Save: '保存',
   Load: '读取',

@@ -40,6 +40,9 @@ export const directionMap: { [key in Direction | '']: number } = {
 const isWasd = (key: string): key is Wasd => key in cardinalKeyMap;
 
 let pressedWasd: Wasd[] = [];
+type Suspension = 'story' | 'overlay';
+const suspensions = new Map<symbol, Suspension>();
+const suppressedUntilRelease = new Set<string>();
 
 let pressedE = false;
 
@@ -50,6 +53,11 @@ const onKeydown = (e: KeyboardEvent) => {
   if (isInteractiveTextTarget(e.target)) return;
   const pressedKey = e.key.toLowerCase();
 
+  if (suspensions.size > 0) {
+    suppressedUntilRelease.add(pressedKey);
+    return;
+  }
+
   if (isWasd(pressedKey) && !pressedWasd.includes(pressedKey)) {
     pressedWasd.unshift(pressedKey);
   }
@@ -57,6 +65,8 @@ const onKeydown = (e: KeyboardEvent) => {
 
 const onKeyup = (e: KeyboardEvent) => {
   const pressedKey = e.key.toLowerCase();
+
+  if (suppressedUntilRelease.delete(pressedKey) || suspensions.size > 0) return;
 
   if (isWasd(pressedKey)) {
     pressedWasd = pressedWasd.filter((key) => key !== pressedKey);
@@ -73,6 +83,18 @@ const onKeyup = (e: KeyboardEvent) => {
 };
 
 const Input = {
+  isSuspended: (reason?: Suspension): boolean =>
+    reason === undefined
+      ? suspensions.size > 0
+      : [...suspensions.values()].includes(reason),
+  suspend: (reason: Suspension = 'overlay'): (() => void) => {
+    const token = Symbol(reason);
+    suspensions.set(token, reason);
+    Input.reset();
+    return () => {
+      if (suspensions.delete(token)) Input.reset();
+    };
+  },
   setup: () => {
     document.addEventListener('keydown', onKeydown);
     document.addEventListener('keyup', onKeyup);

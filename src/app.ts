@@ -8,6 +8,7 @@ import state from './state/state';
 import { updateGeneral } from './state/actionsPort';
 import { setDockedFleetPositions } from './state/actionsWorld';
 import { localizeDocument, subscribeLocale } from './localization';
+import { startSeaStory } from './story/seaStory';
 
 localizeDocument();
 subscribeLocale(localizeDocument);
@@ -34,7 +35,7 @@ const start = async () => {
       }
 
       if (state.buildingId === null) {
-        state.port.update();
+        if (!Input.isSuspended()) state.port.update();
         state.port.draw();
       }
     }
@@ -44,7 +45,7 @@ const start = async () => {
         state.world = createWorld();
       }
 
-      state.world.update();
+      if (!Input.isSuspended() && !startSeaStory()) state.world.update();
       state.world.draw();
     }
 

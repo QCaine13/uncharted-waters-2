@@ -1,16 +1,12 @@
 import { useRef, useState } from 'react';
 
 import { compiledStoryContent } from '../../story';
-import {
-  executeStoryEffects,
-  type StoryEffectRuntime,
-} from '../../story/core/effects';
+import { advanceQuestSession } from '../../story/advanceSession';
 import {
   createStoryContext,
   resolveStoryEvent,
 } from '../../story/core/resolver';
 import {
-  advanceStorySession,
   createStorySession,
   getStoryFrame,
   type StorySession,
@@ -20,36 +16,9 @@ import { storyRuntimeActions } from '../../story/storyRuntimeActions';
 import state from '../../state/state';
 import updateInterface from '../../state/updateInterface';
 import { getMessageBoxesFromFrame } from './getMessageBoxes';
+import Input from '../../input';
 
-export const advanceQuestSession = (
-  session: StorySession,
-  runtime: StoryEffectRuntime,
-  choiceId?: string,
-): StorySession => {
-  const first = advanceStorySession(session, choiceId);
-  if (first.type === 'blocked' || first.type === 'completed')
-    return first.session;
-  let next = first.session;
-  if (first.type === 'effects') {
-    const execution = executeStoryEffects(first.effects, runtime);
-    if (!execution.ok)
-      throw new Error(
-        execution.diagnostics.map(({ message }) => message).join('\n'),
-      );
-  }
-
-  while (getStoryFrame(next)?.type === 'effect') {
-    const result = advanceStorySession(next);
-    if (result.type !== 'effects') throw new Error('Expected story effects');
-    const execution = executeStoryEffects(result.effects, runtime);
-    if (!execution.ok)
-      throw new Error(
-        execution.diagnostics.map(({ message }) => message).join('\n'),
-      );
-    next = result.session;
-  }
-  return next;
-};
+export { advanceQuestSession } from '../../story/advanceSession';
 
 const dialogueHistory = (session: StorySession): DialogueStep[] =>
   session.steps
@@ -75,6 +44,7 @@ export default function useQuestStep() {
   if (frame === null || frame.type === 'effect') return null;
 
   const proceed = (choiceId?: string) => {
+    if (Input.isSuspended('overlay')) return;
     if (transitionPendingRef.current || activeSessionRef.current !== session) {
       return;
     }

@@ -6,6 +6,7 @@ import { Transition } from '@headlessui/react';
 
 import { classNames } from '../interfaceUtils';
 import { t } from '../../localization';
+import Input from '../../input';
 
 interface Props {
   label: string;
@@ -14,6 +15,8 @@ interface Props {
 
 export default function Popover({ label, children }: Props) {
   const [active, setActive] = useState(false);
+
+  useEffect(() => (active ? Input.suspend('overlay') : undefined), [active]);
 
   useEffect(() => {
     if (!active) {
