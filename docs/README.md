@@ -45,6 +45,10 @@
 
 ---
 
+## 当前执行入口
+
+2026-09-06：用户已授权接手与分阶段开发。请先读 [中文交付方案](superpowers/specs/2026-09-06-chinese-playable-release-design.md)、[M0 实施计划](superpowers/plans/2026-09-06-chinese-foundation.md)和[中文资料基线](1-baseline/chinese-reference-baseline.md)。M0 正在执行，尚不代表约翰完整路线已经完成。
+
 ## 当前状态面板
 
 > 2026-07-11 verified against the checked-out code.

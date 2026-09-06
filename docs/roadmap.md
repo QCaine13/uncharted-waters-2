@@ -1,6 +1,12 @@
 # 统一路线图 (Roadmap)
 
-**Status**: Living · **Date**: 2026-07-11 ·（原 `research/implementation-plan.md`，已提到 docs 顶层）
+**Status**: Living · **Date**: 2026-09-06
+
+> **当前执行方向（D15）**：用户已授权按“全中文可玩基础 → 出海新章节 → 冲突与成长 → 约翰全线通关 → 其他主角 → 扩展内容”连续推进。完整目标与验收见 [交付方案](superpowers/specs/2026-09-06-chinese-playable-release-design.md)，首批任务见 [M0 实施计划](superpowers/plans/2026-09-06-chinese-foundation.md)。下方旧 Phase 保留为历史规划；与当前方案冲突时，以 D15 和当前计划为准。
+
+首批 M0 正在实施：恢复资源、修复海上读档初始化、默认简体中文与英文切换、现有界面及开场汉化、实际浏览器验收。通过前不标记完成。
+
+## 历史规划（保留背景）
 
 > **进度快照（2026-07-11）**：Save/Load v2 migration、Market MVP、结构化剧情架构、
 > 既有 João 里斯本开场的行为等价迁移与项目自有 runtime baseline 均已实现；详见
@@ -138,4 +144,4 @@ pending, along with every other post-Lisbon chapter.
 - ItemShop 的 secret/black-market 时间窗口模式可直接复用于 Market。
 - Cargo 模型已有“will be both Provisions and Goods”的前向设计。
 
-下次抽空时我们挑一个 slice 一起做（我可以准备数据、写 spec、实现初稿、或 review）。
+当前不再按零散的临时 slice 选题，执行上方 M0–M5 交付顺序。
