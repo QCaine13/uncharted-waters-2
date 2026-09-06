@@ -5,7 +5,7 @@
 ## 当前状态与本次收口
 
 - M0 中文基础、M1 首次航海已完成并通过验收；约翰完整主线、战斗和结局尚未完成。
-- 用户本次要求“写交接文档，合并提交推送，回头接着干”。本次将 M1 与交接文档合入 `master`，推送到 `origin/master`；M2 留待继续开发时启动。此前 M1 计划中的“不合并、不推送”约束仅限当时验收阶段，已被本次明确授权更新。
+- 用户本次要求“写交接文档，合并提交推送，回头接着干”。M1 与交接文档已合入 `master` 并推送到 `origin/master`，合并提交为 `cff085b`；M2 留待继续开发时启动。此前 M1 计划中的“不合并、不推送”约束仅限当时验收阶段，已被本次明确授权更新。
 - 主仓库：`/Users/qsircaine/uncharted-waters-2`；自己的远端为 `origin`（`QCaine13/uncharted-waters-2`）。`upstream` 是原作者仓库。
 - M1 分支：`codex/m1-first-voyage`；实现最终修补 `c07b34d`，完整验收记录 `7af63e5`，基线 M0 为 `87e3319`。合并提交可用 `git log --first-parent --oneline -5` 定位。
 - M1 工作树暂留在 `.worktrees/m1-first-voyage`，用于现有预览和本机验收附件。后续以更新后的 `master` 为基线建立新的 `codex/` 工作分支，不要在旧 M1 工作树继续堆 M2。
@@ -45,7 +45,7 @@
 
 ## 验证证据与已解决问题
 
-详细版本和命令见 [M1 验收记录](docs/superpowers/verification/2026-09-06-m1-first-voyage.md)。最终 `npm run verify` 通过：38 项资源预检、剧情校验、69 组 530 项 Jest、TypeScript、ESLint、生产构建。交接合并前再次运行全部 Jest，同为 530 项通过，日志 `/tmp/uw2-m1-premerge-jest.log`。
+详细版本和命令见 [M1 验收记录](docs/superpowers/verification/2026-09-06-m1-first-voyage.md)。最终 `npm run verify` 通过：38 项资源预检、剧情校验、69 组 530 项 Jest、TypeScript、ESLint、生产构建。交接合并前再次运行全部 Jest，同为 530 项通过，日志 `/tmp/uw2-m1-premerge-jest.log`。合并提交 `cff085b` 在主仓库再次完成 `npm run verify`，所有阶段通过，仍为 69 组 530 项；日志 `/tmp/uw2-m1-merged-verify.log`，已另存于本机验收附件的 `merged-verify.log`。
 
 浏览器证据需按版本区分：`325c882` 的全量运行有 16 份规格、67 项，66 项通过，中文长旅程发现退场遮罩仍拦截鼠标；`c07b34d` 修补后，8 项相关回归通过，包括连续 25 次弹窗开关及约 10 分钟的中文空存档完整首航。5 项刚通过的英文/旧档用例未在该专项重复运行。不能把这份专项报告描述成最终提交的全量浏览器重跑。
 
