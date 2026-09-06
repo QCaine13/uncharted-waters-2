@@ -12,6 +12,7 @@ import {
 import state from '../../state/state';
 import updateInterface from '../../state/updateInterface';
 import useQuestStep from './useQuestStep';
+import Input from '../../input';
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 
@@ -70,6 +71,25 @@ describe('useQuestStep React lifecycle', () => {
   });
 
   afterEach(() => jest.restoreAllMocks());
+
+  test('a sidebar overlay blocks the underlying port story until it closes', () => {
+    mockResolve.mockReturnValue(
+      event([
+        { type: 'dialogue', body: 'Continue?', position: 2, speaker: joao },
+        { type: 'effect', effects: [{ type: 'receiveGold', amount: 5 }] },
+      ]),
+    );
+    const { root } = renderHarness();
+    const release = Input.suspend('overlay');
+    act(() => latest?.messageBoxes[2]?.acknowledge?.());
+    expect(state.gold).toBe(0);
+    expect(latest?.messageBoxes[2]?.body).toBe('Continue?');
+    release();
+    act(() => latest?.messageBoxes[2]?.acknowledge?.());
+    expect(state.gold).toBe(5);
+    expect(latest).toBeNull();
+    act(() => root.unmount());
+  });
 
   test('resolves once across rerenders and returns null when no event resolves', () => {
     mockResolve.mockReturnValue(null);

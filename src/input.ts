@@ -98,6 +98,10 @@ const Input = {
   setup: () => {
     document.addEventListener('keydown', onKeydown);
     document.addEventListener('keyup', onKeyup);
+    window.addEventListener('blur', () => {
+      Input.reset();
+      suppressedUntilRelease.clear();
+    });
   },
   getDirection: (options: { includeOrdinal: boolean }): Direction | '' => {
     if (!pressedWasd.length) {

@@ -34,3 +34,13 @@ test('a dialogue confirmation key released after closing never docks the ship', 
   key('keyup', 'e');
   expect(Input.getPressedE()).toBe(true);
 });
+
+test('losing focus during a held dialog key does not latch the next sailing direction', () => {
+  const release = Input.suspend();
+  key('keydown', 'w');
+  window.dispatchEvent(new Event('blur'));
+  release();
+  key('keydown', 'w');
+  key('keyup', 'w');
+  expect(Input.getDirection({ includeOrdinal: true })).toBe('');
+});

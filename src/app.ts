@@ -8,7 +8,7 @@ import state from './state/state';
 import { updateGeneral } from './state/actionsPort';
 import { setDockedFleetPositions } from './state/actionsWorld';
 import { localizeDocument, subscribeLocale } from './localization';
-import { startSeaStory } from './story/seaStory';
+import { runWorldFrame } from './game/world/runWorldFrame';
 
 localizeDocument();
 subscribeLocale(localizeDocument);
@@ -45,8 +45,7 @@ const start = async () => {
         state.world = createWorld();
       }
 
-      if (!Input.isSuspended() && !startSeaStory()) state.world.update();
-      state.world.draw();
+      runWorldFrame(state.world);
     }
 
     requestAnimationFrame(loop);
