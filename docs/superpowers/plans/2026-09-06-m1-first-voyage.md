@@ -35,7 +35,7 @@
 
 **Interfaces:** Produces `State.storyEvents: string[]`, `State.reportedDiscoveries: string[]`; StoryContext adds `dayAtSea: number`, `discoveries: ReadonlySet<string>`, `reportedDiscoveries: ReadonlySet<string>`. New conditions have `{type:'daysAtSea',min?:number,max?:number}`, `{type:'hasDiscovery',discoveryId:string}`, `{type:'hasReportedDiscovery',discoveryId:string}`. Add optional discovery catalog for test fixture compatibility and provide production catalog. Existing callers without newly added fields must default safely.
 
-- [ ] Write behavior tests before implementation. Core examples (incorporate into existing fixture helpers):
+- [x] Write behavior tests before implementation. Core examples (incorporate into existing fixture helpers):
 
 ```ts
 const old = { version: 4, quests: ['houseBeforeQuest', 'future-old-key'], discoveries: ['strait-of-gibraltar'], gold: 900 };
@@ -47,8 +47,8 @@ expect(upgraded?.gold).toBe(900);
 ```
 
 Test save/load roundtrip of a nonlegacy semantic event and unknown semantic IDs; new event completion with no legacy key; existing Lisbon completion still writes its legacy key exactly once; resolver excludes completed once events; three sea days matches while 30 elapsed calendar days with zero sea days does not; invalid numeric range and unknown discovery ID diagnostics remain strict.
-- [ ] Run `npm test -- --runInBand src/state/saveMigrations.test.ts src/story/storyProgress.test.ts` and record the expected missing-feature failures.
-- [ ] Implement pure v4→v5 mapping without importing compiled runtime into state initialization. Union semantic events with mapped legacy events in `createStoryContext`. `completeEvent` accepts any registered event and records semantic completion idempotently plus a legacy key where defined. Replace universal once/legacy requirement with the legacy parity manifest's requirement so migrated events cannot silently lose their mapping. Preserve unknown IDs and original v4 fields.
+- [x] Run `npm test -- --runInBand src/state/saveMigrations.test.ts src/story/storyProgress.test.ts` and record the expected missing-feature failures.
+- [x] Implement pure v4→v5 mapping without importing compiled runtime into state initialization. Union semantic events with mapped legacy events in `createStoryContext`. `completeEvent` accepts any registered event and records semantic completion idempotently plus a legacy key where defined. Replace universal once/legacy requirement with the legacy parity manifest's requirement so migrated events cannot silently lose their mapping. Preserve unknown IDs and original v4 fields.
 
 ```ts
 const completedEvents = new Set([
@@ -57,8 +57,8 @@ const completedEvents = new Set([
 ]);
 ```
 
-- [ ] Run all Jest tests and typecheck. Update tests that intentionally asserted the old legacy-only restriction, retain migrated-key missing/mismatch tests.
-- [ ] Commit only task files as `feat: persist semantic story progress and discovery reports` and write the task report with commands/results and compatibility decisions.
+- [x] Run all Jest tests and typecheck. Update tests that intentionally asserted the old legacy-only restriction, retain migrated-key missing/mismatch tests.
+- [x] Commit only task files as `feat: persist semantic story progress and discovery reports` and write the task report with commands/results and compatibility decisions.
 
 ### Task 2: Sea story sessions and simulation pause
 
@@ -66,7 +66,7 @@ const completedEvents = new Set([
 
 **Interfaces:** Consumes `createStoryContext`, `resolveStoryEvent`, `storyRuntimeActions` and Task 1 fields. Exposes a transient subscribed store: `getSeaStorySession(): StorySession|null`, `subscribeSeaStory(listener):()=>void`, `startSeaStory():boolean`, `advanceSeaStory(choiceId?:string):void`, `clearSeaStory():void`. Store is the single session authority. Root integrates these interfaces; names may be simplified with a recorded ruling before handoff.
 
-- [ ] Add a test using a real compiled synthetic world event and production session advancement boundary: one active session, pause before any clock movement, valid yes/no branches, duplicate/stale acknowledgements cannot repeat effects, completion clears state, reload can re-resolve unfinished event and cannot replay finished event.
+- [x] Add a test using a real compiled synthetic world event and production session advancement boundary: one active session, pause before any clock movement, valid yes/no branches, duplicate/stale acknowledgements cannot repeat effects, completion clears state, reload can re-resolve unfinished event and cannot replay finished event.
 
 ```ts
 expect(startSeaStory()).toBe(true);
@@ -76,10 +76,10 @@ expect(getSeaStorySession()).not.toBeNull();
 expect(state.timePassed).toBe(before);
 ```
 
-- [ ] Run the focused tests and observe failures before writing implementation.
-- [ ] Implement the controller using immutable StorySession frames and the existing effect executor. Check sea scene only, resolve once per loop when idle, clear input on entry/exit; expose snapshot subscriptions for React. In `app.ts`, create/draw world normally but resolve/hold a sea story before `world.update`. Never let world clock, provisions, docking or movement progress while the session is open. Prevent choice keys leaking to the sailing input after dismissal.
-- [ ] Render character/vendor frames, yes/no and acknowledgement controls above the camera, retain language switching, and provide ordinary readable modal dimensions. Use actual dialogue controls, not test-only runtime globals.
-- [ ] Run sea session, advancement and world regression tests plus typecheck; commit `feat: run sea story sessions with paused navigation` and record evidence.
+- [x] Run the focused tests and observe failures before writing implementation.
+- [x] Implement the controller using immutable StorySession frames and the existing effect executor. Check sea scene only, resolve once per loop when idle, clear input on entry/exit; expose snapshot subscriptions for React. In `app.ts`, create/draw world normally but resolve/hold a sea story before `world.update`. Never let world clock, provisions, docking or movement progress while the session is open. Prevent choice keys leaking to the sailing input after dismissal.
+- [x] Render character/vendor frames, yes/no and acknowledgement controls above the camera, retain language switching, and provide ordinary readable modal dimensions. Use actual dialogue controls, not test-only runtime globals.
+- [x] Run sea session, advancement and world regression tests plus typecheck; commit `feat: run sea story sessions with paused navigation` and record evidence.
 
 ### Task 3: First voyage content, reporting and journal
 
@@ -87,7 +87,7 @@ expect(state.timePassed).toBe(before);
 
 **Interfaces:** Stable events use arc `joao.first-voyage` with `commission-accepted`, `domingo-met`, `domingo-recruited`, `chapter-complete`. Register every completion target as an actual event; use a repeatable offer and terminal acceptance/rejection branches where appropriate. Export ID constants and `getFirstVoyageJournal(state): JournalEntry[]`, where entries have `{id:string,title:string,body:string,completed:boolean}`. `reportDiscoveries(): {ids:string[],gold:number}` runs only at Lisbon guild, filters to known discovered/unreported IDs, updates state and saves once, returns empty result otherwise.
 
-- [ ] Write/report tests first for zero gold at sighting, 300g at Gibraltar report, repeat report/reload pays zero, wrong building cannot report, v4 discovered Gibraltar grants zero. Use hand-derived expected amounts. Write chapter behavior tests for initial offer, decline/reoffer, sea three-day gating, accept/decline/reconsider, chapter reward once and all prerequisites.
+- [x] Write/report tests first for zero gold at sighting, 300g at Gibraltar report, repeat report/reload pays zero, wrong building cannot report, v4 discovered Gibraltar grants zero. Use hand-derived expected amounts. Write chapter behavior tests for initial offer, decline/reoffer, sea three-day gating, accept/decline/reconsider, chapter reward once and all prerequisites.
 
 ```ts
 state.portId = '1'; state.buildingId = '7';
@@ -98,10 +98,10 @@ expect(state.gold).toBe(400);
 expect(reportDiscoveries()).toEqual({ ids: [], gold: 0 });
 ```
 
-- [ ] Observe red focused tests, then implement chapter and reusable report action. Guild exposes commission, report and reconsideration actions through existing story sessions; after reporting, refresh story resolution so final chapter conversation is available immediately or after an explicit visible continue action. Preserve Lisbon ambient parity.
-- [ ] Make journal readable from port and sea with current next steps and completed progress. Ensure display refreshes after reporting/finishing without reload. Clearly distinguish already reported discoveries from pending gold in both discoveries panel and sighting banner.
-- [ ] Bind Domingo to the verified existing sailor/portrait, provide safe mate-panel presentation for all recruited sailors, add no new ships. New dialogue must be short enough for existing boxes, Chinese names use approved terminology. Merge chapter dictionaries with conflict detection before flattening and test every branch's translation/parameters.
-- [ ] Run chapter/report/journal/translation focused tests, full Jest, typecheck and lint; commit `feat: add first voyage commission and Chinese quest journal` and report evidence.
+- [x] Observe red focused tests, then implement chapter and reusable report action. Guild exposes commission, report and reconsideration actions through existing story sessions; after reporting, refresh story resolution so final chapter conversation is available immediately or after an explicit visible continue action. Preserve Lisbon ambient parity.
+- [x] Make journal readable from port and sea with current next steps and completed progress. Ensure display refreshes after reporting/finishing without reload. Clearly distinguish already reported discoveries from pending gold in both discoveries panel and sighting banner.
+- [x] Bind Domingo to the verified existing sailor/portrait, provide safe mate-panel presentation for all recruited sailors, add no new ships. New dialogue must be short enough for existing boxes, Chinese names use approved terminology. Merge chapter dictionaries with conflict detection before flattening and test every branch's translation/parameters.
+- [x] Run chapter/report/journal/translation focused tests, full Jest, typecheck and lint; commit `feat: add first voyage commission and Chinese quest journal` and report evidence.
 
 ### Task 4: Whole chapter integration and playable acceptance
 

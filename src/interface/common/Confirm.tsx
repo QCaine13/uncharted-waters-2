@@ -11,6 +11,7 @@ import { Position } from '../../types';
 import useCancel from '../port/hooks/useCancel';
 import { t } from '../../localization';
 import { isInteractiveTextTarget } from '../../localization/dom';
+import Input from '../../input';
 
 // e.g., if Yes is highlighted but the user clicks No
 const SUBMIT_DELAY_IF_NOT_HIGHLIGHTED = 50;
@@ -54,6 +55,7 @@ export default function Confirm({ onYes, onNo, initialPosition }: Props) {
 
   useEffect(() => {
     const onKeydown = (e: KeyboardEvent) => {
+      if (Input.isSuspended('overlay')) return;
       if (isInteractiveTextTarget(e.target)) return;
       const pressedKey = e.key.toLowerCase();
 

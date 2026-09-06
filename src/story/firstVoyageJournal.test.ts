@@ -87,7 +87,7 @@ describe('first voyage journal', () => {
     state.mates.push({ sailorId: '34', role: null });
     expect(firstIncomplete()).toMatchObject({
       id: 'gibraltar',
-      body: 'Sail east along the south Iberian coast toward Seville and Ceuta; chart Gibraltar near 864.4, 377.9.',
+      body: 'Sail south from Lisbon around Iberia’s southwest coast, then east toward Seville and Ceuta. Chart Gibraltar near 36° N, 5.6° W.',
     });
 
     state.discoveries.push(GIBRALTAR_DISCOVERY_ID);

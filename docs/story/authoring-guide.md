@@ -1,6 +1,6 @@
 # Structured Story Authoring Guide
 
-This guide covers the typed story system under `src/story`. The current registered content is the behavior-preserving João Lisbon opening. The [Chinese release plan](../superpowers/specs/2026-09-06-chinese-playable-release-design.md) schedules later chapters and expansion content. Their runtime dependencies must be implemented and verified before registering them as playable content.
+This guide covers the typed story system under `src/story`. The registered content includes the behavior-preserving João Lisbon opening and the first-voyage commission with Domingo recruitment. The [Chinese release plan](../superpowers/specs/2026-09-06-chinese-playable-release-design.md) schedules later chapters and expansion content. Their runtime dependencies must be implemented and verified before registering them as playable content.
 
 ## Stable IDs
 
@@ -78,7 +78,7 @@ export const chapterArc: StoryArc = {
 export const joaoExampleChapter = { arc: chapterArc, events: chapterEvents };
 ```
 
-Compose triggers from declarative conditions. `all`, `any`, and `not` may nest; leaf conditions cover event completion, port, building, stage, time, elapsed days, fame, items, and companions:
+Compose triggers from declarative conditions. `all`, `any`, and `not` may nest; leaf conditions cover event completion, port, building, stage, time, elapsed days, consecutive days at sea, fame, items, companions, discoveries, and discovery reports:
 
 ```ts
 trigger: {
@@ -148,7 +148,13 @@ The Lisbon examples are in `src/story/lisbonResolver.parity.test.ts`, `src/story
 
 ## Persistence and presentation
 
-The current save format is v4. Its story completion field still uses the strings in `state.quests` inherited from v2. A migrated once-only event therefore needs exactly one `legacyCompletionKey`; completing the semantic event writes that old key through `src/story/legacy/lisbonCompletionKeys.ts`. Unknown old keys are preserved. Do not bump `SAVE_VERSION`, add story progress fields, or persist relationships in an authoring-only change.
+The current save format is v5. `state.storyEvents` persists completed semantic event IDs; `state.quests` preserves the original Lisbon keys. Completing a registered event writes its semantic ID once and also writes its legacy key where mapped. The independent migrated-event inventory requires every migrated once-only event to retain its mapping. New chapters use semantic IDs without adding legacy keys. Unknown semantic IDs and legacy keys survive save/load.
+
+The v4→v5 migration maps known Lisbon keys to semantic IDs and marks existing discoveries as reported because v4 already paid their gold. New discoveries grant fame when sighted and gold only through `reportDiscoveries()` at Lisbon Guild. `reportedDiscoveries` prevents a second payout, including after reload. Do not bump `SAVE_VERSION` or add persistent fields in an authoring-only change.
+
+Use `{ type: 'daysAtSea', min: 3 }` for consecutive sailing days; elapsed calendar days are a different condition. `{ type: 'hasDiscovery', discoveryId }` and `{ type: 'hasReportedDiscovery', discoveryId }` reference the registered discovery catalog. Sea scenes resolve through the subscribed controller before simulation advances. Active dialogues and sidebar overlays pause simulation, and successful loads discard transient cursors.
+
+Put completion, recruitment and reward in one terminal effect group. Reloading an unfinished dialogue restarts that unpaid conversation; reloading a committed event cannot repeat its rewards. Offers that may be refused should remain retryable via a visible action. A terminal effect never assumes it can refresh the current building UI: the Guild explicitly re-resolves after reports and exposes Job Assignment for subsequent available events.
 
 Names, translated body text, dialogue color, portrait, title, speaker position, fade hints, and the active session cursor are presentation/runtime fields rather than Save v2 story progress. Stable IDs and legacy completion mappings are compatibility contracts even when they are not stored as new fields.
 
@@ -158,34 +164,34 @@ Names, translated body text, dialogue color, portrait, title, speaker position, 
 
 - 通用界面文案放在 `src/localization/ui.ts`，专名放在 `terms.ts`，章节对白分别放在 `src/localization/dialogue/` 下，由 `dialogue.ts` 汇总。英文剧情仍是现有运行时的原始文本，显示时才翻译。
 - 使用准确的原文键及命名参数；保持 `$firstName`、`$lastName` 等占位符。玩家自定船名原样显示，不能经过专名翻译。相同原文不能在不同词典中对应冲突译文；将共用选择词统一为通用界面文案。
-- 新增第二个对白章节时，先通过能检测冲突的合并器逐章汇总，再交给顶层词典。不能先用多个对象展开合并章节：那会在检查前丢失重复原文。需要时将合并器独立到无环依赖模块，并加入跨章节冲突回归。当前只有里斯本一章。
+- 新增第二个对白章节时，先通过能检测冲突的合并器逐章汇总，再交给顶层词典。不能先用多个对象展开合并章节：那会在检查前丢失重复原文。需要时将合并器独立到无环依赖模块，并加入跨章节冲突回归。现有里斯本和首次航海词典通过无环模块 `localization/catalogs.ts` 的 `mergeCatalogs` 逐章合并。
 - 为每章检查正文、提示和每个选择分支的翻译覆盖，以及参数完整性。结构校验通过后仍需人工审校中文，检查人物称谓、线索、金额、时段和实际对话框排版。
-- 新剧情状态必须经过存档迁移，并验证旧存档进入新章、章节中途读取、奖励只领取一次。当前运行时仅支持里斯本旧完成键；通用事件完成记录属于 M1 的前置工作，不能通过随意添加旧任务键绕过。
+- 新剧情状态必须经过存档迁移，并验证旧存档进入新章、章节中途读取、奖励只领取一次。新章节写入 `storyEvents`，不能通过添加里斯本旧任务键绕过语义进度。
 - 新增触发类型需要同时实现条件、校验、运行时入口和测试。海上事件还需要暂停移动、维持单个对话会话、处理结束与拒绝；只注册事件数据不足以让它在海上运行。
 - 新伙伴或船型要检查船员面板、头像、舰队容量和所有引用；新名声门槛要核算现有内容实际可获得的收入。每章都要有可到达的入口、可完成的出口和失败/拒绝后的继续路径。
 
-M0 只建立中文显示边界。M1 先完成一次航行中的新剧情与进度持久化，再沿这个边界增加完整主线、其他主角和扩展支线。具体顺序见[路线图](../roadmap.md)。
+M0 建立中文显示边界；M1 将首次航海、工会委托、发现上报和多明戈加入连成一章。后续沿这个边界增加完整主线、其他主角和扩展支线。具体顺序见[路线图](../roadmap.md)。
 
 ## Content safety boundary
 
 Story content is TypeScript data, but it must remain declarative. Never put a function callback in a step, choice, condition, or effect. Content modules must not import global state, mutable actions, save functions, UI stores, or runtime services. The interpreter receives explicit operations at the runtime boundary; tests supply an in-memory runtime.
 
-## Future Domingo layout (non-running example)
+## First-voyage chapter layout
 
-The complete expected directory shape for a later Domingo slice is:
+The registered first-voyage chapter is organized as:
 
 ```text
 src/story/content/
 ├── characters/
 │   └── domingo.ts
 ├── relationships/
-│   └── joao-domingo.ts
+│   └── joao-first-voyage.ts
 └── arcs/
     └── joao/
-        └── domingo-stowaway/
+        └── first-voyage/
             ├── dialogue.ts
             ├── events.ts
             └── index.ts
 ```
 
-Those files are an ownership example only: they do not exist, contain no dialogue here, and must not be added to `src/story/content/index.ts` until that content has its own approved design, tests, and migration decision.
+These modules are explicitly registered in `src/story/content/index.ts`. The commission reward is original project balance (500g); the Gibraltar sighting grants 30 adventure fame and reporting grants 300g. Domingo’s later identity reveal and conflict belong to M2.

@@ -1,5 +1,6 @@
 import { SAVED_STATE_KEY, type State } from '../../src/state/state';
 import { SAVE_VERSION } from '../../src/state/saveLoad';
+import { closeSidebar, readVoyageSave, saveFromSystem, sailLisbonToGibraltar, sailGibraltarToLisbon } from '../firstVoyageUtils';
 import {
   characterMessageIncludes,
   clickMenu,
@@ -7,7 +8,7 @@ import {
   vendorMessageIncludes,
 } from '../utils';
 
-type SavedState = Pick<State, 'items' | 'mates' | 'quests'> & {
+type SavedState = Pick<State, 'items' | 'mates' | 'quests' | 'storyEvents' | 'reportedDiscoveries'> & {
   version: number;
   buildingId?: State['buildingId'];
   fleets?: State['fleets'];
@@ -29,9 +30,13 @@ const readSavedState = () =>
     return JSON.parse(raw as string) as SavedState;
   });
 
-const expectSaveV2LegacyOnly = (saved: SavedState) => {
+const expectCompatibleSemanticSave = (saved: SavedState) => {
   expect(saved.version).to.equal(SAVE_VERSION);
-  expect(JSON.stringify(saved)).not.to.include('joao.lisbon-opening.');
+  expect(saved.storyEvents).to.be.an('array');
+  expect(saved.reportedDiscoveries).to.be.an('array');
+  expect(saved.quests.every((key) => !key.startsWith('joao.'))).to.equal(true);
+  if (saved.quests.includes('houseBeforeQuest'))
+    expect(saved.storyEvents).to.include('joao.lisbon-opening.house-introduction');
 };
 
 const clickCharacterLine = (body: string, position: 1 | 2) => {
@@ -119,7 +124,7 @@ const moveOneTile = (key: DirectionKey, context: string) =>
               currentMovementFrame === previousMovementFrame
                 ? stableFrames + 1
                 : 0;
-            if (nextStableFrames >= 2) {
+            if (nextStableFrames >= 6) {
               if (currentMovementFrame === startingMovementFrame) {
                 reject(new Error(`Movement ${key} was blocked at ${context}`));
               } else {
@@ -371,6 +376,26 @@ const pubToHarbor: Route = [
   ['w', 1],
 ];
 
+const harborToGuild: Route = [
+  ['a', 3],
+  ['w', 2],
+  ['a', 2],
+  ['w', 30],
+  ['a', 11],
+  ['w', 1],
+];
+const guildToHarbor: Route = [
+  ['s', 2],
+  ['d', 6],
+  ['s', 12],
+  ['d', 2],
+  ['s', 13],
+  ['d', 1],
+  ['s', 5],
+  ['d', 7],
+  ['w', 1],
+];
+
 const harborPrelude = [
   ['So what’s the plan of action?', 1],
   ['Well, I thought we’d just sail around from port to port.', 2],
@@ -485,8 +510,10 @@ const finishHouseFarewellAtNight = (
     finishHouseFarewellAtNight(availableText, blockedText, remaining - 1);
   });
 
+const regressionTest = Cypress.env('m1Only') ? it.skip : it;
+
 describe('Structured story architecture through production assets', () => {
-  it('plays a real new game through the complete Lisbon tutorial and departs', () => {
+  regressionTest('plays a real new game through the complete Lisbon tutorial and departs', () => {
     cy.visit('');
     cy.contains('System').click();
     cy.contains('button', 'Reset').click();
@@ -517,7 +544,7 @@ describe('Structured story architecture through production assets', () => {
     finishExitingStoryEvent('pubAfterQuest');
 
     readSavedState().then((saved) => {
-      expectSaveV2LegacyOnly(saved);
+      expectCompatibleSemanticSave(saved);
       expect(saved.gold).to.equal(1000);
       expect(saved.quests).to.deep.equal([
         'pubBeforeQuest',
@@ -562,7 +589,7 @@ describe('Structured story architecture through production assets', () => {
     finishStoryEventToMenu('harborFinal');
 
     readSavedState().then((saved) => {
-      expectSaveV2LegacyOnly(saved);
+      expectCompatibleSemanticSave(saved);
       expect(saved.gold).to.equal(2000);
       expect(saved.items).to.deep.equal(['53', '4']);
       expect(saved.mates).to.deep.equal([
@@ -625,7 +652,7 @@ describe('Structured story architecture through production assets', () => {
     cy.contains('Lisbon').should('not.exist');
 
     readSavedState().then((saved) => {
-      expectSaveV2LegacyOnly(saved);
+      expectCompatibleSemanticSave(saved);
       expect(saved.portId).to.be.null;
       expect(saved.buildingId).to.be.null;
       expect(saved.gold).to.equal(1400);
@@ -649,16 +676,16 @@ describe('Structured story architecture through production assets', () => {
     });
   });
 
-  it('starts a new Save v2 at the exact João opening line', () => {
+  regressionTest('starts a new Save v2 at the exact João opening line', () => {
     setState({ portId: '1', buildingId: '8' });
     cy.visit('');
 
     cy.contains('Game is loading...').should('not.exist');
     characterMessageIncludes('Father, did you send for me?', 2);
-    readSavedState().then(expectSaveV2LegacyOnly);
+    readSavedState().then(expectCompatibleSemanticSave);
   });
 
-  it('continues a partial Save v2 at the next Lisbon event without repeating it after reload', () => {
+  regressionTest('continues a partial Save v2 at the next Lisbon event without repeating it after reload', () => {
     setState({
       portId: '1',
       buildingId: '10',
@@ -680,7 +707,7 @@ describe('Structured story architecture through production assets', () => {
     );
 
     readSavedState().then((saved) => {
-      expectSaveV2LegacyOnly(saved);
+      expectCompatibleSemanticSave(saved);
       expect(saved.quests).to.deep.equal([
         'houseBeforeQuest',
         'pubAfterQuest',
@@ -699,7 +726,7 @@ describe('Structured story architecture through production assets', () => {
     );
   });
 
-  it('preserves legacy Save v2 mate roles and completion on the harbor Yes branch', () => {
+  regressionTest('preserves legacy Save v2 mate roles and completion on the harbor Yes branch', () => {
     harborFixture();
     cy.get('[data-test=confirmYes]').click();
 
@@ -708,7 +735,7 @@ describe('Structured story architecture through production assets', () => {
       2,
     );
     readSavedState().then((saved) => {
-      expectSaveV2LegacyOnly(saved);
+      expectCompatibleSemanticSave(saved);
       expectSerializedNullMateRoles(saved);
       expect(saved.quests).not.to.include('harborFinal');
     });
@@ -728,13 +755,13 @@ describe('Structured story architecture through production assets', () => {
     );
 
     readSavedState().then((saved) => {
-      expectSaveV2LegacyOnly(saved);
+      expectCompatibleSemanticSave(saved);
       expectSerializedNullMateRoles(saved);
       expect(saved.quests).to.include('harborFinal');
     });
   });
 
-  it('preserves legacy Save v2 mate roles and completion on the harbor No branch', () => {
+  regressionTest('preserves legacy Save v2 mate roles and completion on the harbor No branch', () => {
     harborFixture();
     cy.get('[data-test=confirmNo]').click();
 
@@ -752,13 +779,13 @@ describe('Structured story architecture through production assets', () => {
     );
 
     readSavedState().then((saved) => {
-      expectSaveV2LegacyOnly(saved);
+      expectCompatibleSemanticSave(saved);
       expectSerializedNullMateRoles(saved);
       expect(saved.quests).to.include('harborFinal');
     });
   });
 
-  it('plays the complete real Lisbon tutorial and departs in Chinese', () => {
+  it('plays a fresh Chinese game through the opening and first voyage chapter', () => {
     cy.visit('', {
       onBeforeLoad(window) {
         window.localStorage.setItem('uw2.e2e.locale', 'zh-CN');
@@ -787,7 +814,7 @@ describe('Structured story architecture through production assets', () => {
     finishExitingStoryEvent('pubAfterQuest');
 
     readSavedState().then((saved) => {
-      expectSaveV2LegacyOnly(saved);
+      expectCompatibleSemanticSave(saved);
       expect(saved.gold).to.equal(1000);
       expect(saved.quests).to.have.length(4);
     });
@@ -827,7 +854,7 @@ describe('Structured story architecture through production assets', () => {
     finishStoryEventToMenu('harborFinal');
 
     readSavedState().then((saved) => {
-      expectSaveV2LegacyOnly(saved);
+      expectCompatibleSemanticSave(saved);
       expect(saved.gold).to.equal(2000);
       expect(saved.items).to.deep.equal(['53', '4']);
       expect(saved.fleets?.['1'].ships[0]).to.deep.include({
@@ -851,33 +878,105 @@ describe('Structured story architecture through production assets', () => {
     clickMenu('补给');
     cy.get('[data-test=harborSupply]').contains(/^0$/).first().click();
     cy.get('#game').screenshot('chinese-provision-input');
-    cy.get('[data-test=inputNumberInput]').type('10{enter}');
+    cy.get('[data-test=inputNumberInput]').type('30{enter}');
     cy.get('[data-test=harborSupply]').contains(/^0$/).first().click();
-    cy.get('[data-test=inputNumberInput]').type('10{enter}');
+    cy.get('[data-test=inputNumberInput]').type('30{enter}');
     readSavedState().then((saved) => {
-      expect(saved.gold).to.equal(1400);
+      expect(saved.gold).to.equal(1000);
       expect(saved.fleets?.['1'].ships[0].cargo).to.deep.equal([
-        { type: 'water', quantity: 10 },
-        { type: 'food', quantity: 10 },
+        { type: 'water', quantity: 30 },
+        { type: 'food', quantity: 30 },
       ]);
     });
     cy.get('[data-test=building]').rightclick();
+    exitCurrentBuilding();
+    ensureNightOutsideAdjacentBuilding();
+    enterBuilding(harborToGuild, '工会需要一份最新的直布罗陀海峡海图。');
+    advanceStoryUntil(
+      (document) => document.querySelector('[data-test=confirmYes]') !== null,
+    );
+    cy.get('[data-test=confirmYes]').click();
+    finishStoryEventToMenu();
+    readVoyageSave().then((saved) =>
+      expect(saved.storyEvents).to.include(
+        'joao.first-voyage.commission-accepted',
+      ),
+    );
+    exitCurrentBuilding();
+    enterBuilding(guildToHarbor, '喂，伙计，要出航了吗？');
     clickMenu('出航');
-    characterMessageIncludes('补给可供航行 10 天。要出航吗？', 2);
+    characterMessageIncludes('补给可供航行 30 天。要出航吗？', 2);
     cy.get('[data-test=confirmYes]').click();
     cy.get('[data-test=building]').should('not.exist');
     cy.contains('里斯本').should('not.exist');
     cy.get('#game').screenshot('chinese-sea-hud');
 
     readSavedState().then((saved) => {
-      expectSaveV2LegacyOnly(saved);
+      expectCompatibleSemanticSave(saved);
       expect(saved.portId).to.be.null;
-      expect(saved.gold).to.equal(1400);
+      expect(saved.gold).to.equal(1000);
       expect(saved.fleets?.['1'].ships[0]).to.deep.include({
         name: 'Hermes II',
         crew: 10,
       });
       expect(saved.quests).to.have.length(10);
     });
+    sailLisbonToGibraltar();
+    readVoyageSave().then((saved) => {
+      expect(saved.discoveries).to.include('strait-of-gibraltar');
+      expect(saved.reportedDiscoveries).not.to.include('strait-of-gibraltar');
+      expect(saved.gold).to.equal(1000);
+      expect(saved.fame.adventure).to.equal(30);
+    });
+    closeSidebar();
+    cy.contains('[data-test=left] div', /^日志$/).click();
+    cy.get('[data-test=questJournal]').should('include.text', '返回里斯本工会');
+    cy.get('#game').screenshot('m1-chinese-journal-at-sea');
+    closeSidebar();
+    sailGibraltarToLisbon();
+    readVoyageSave().then((saved) => {
+      expect(saved.mates.filter(({ sailorId }) => sailorId === '34')).to.have.length(1);
+      expect(saved.storyEvents).to.include('joao.first-voyage.domingo-recruited');
+    });
+    cy.then(() => {
+      modeledPosition = { x: 54, y: 68 };
+    });
+    ensureNightOutsideAdjacentBuilding();
+    enterBuilding(harborToGuild);
+    finishStoryEventToMenu();
+    clickMenu('上报发现');
+    cy.get('[data-test=building]').should(
+      'include.text',
+      '你的直布罗陀海峡图清楚完整。',
+    );
+    finishStoryEventToMenu();
+    saveFromSystem().then((saved) => {
+      expect(saved.version).to.equal(5);
+      expect(saved.gold).to.equal(1800);
+      expect(saved.fame.adventure).to.equal(30);
+      expect(saved.reportedDiscoveries).to.deep.equal(['strait-of-gibraltar']);
+      expect(saved.storyEvents).to.include(
+        'joao.first-voyage.chapter-complete',
+      );
+    });
+    closeSidebar();
+    cy.contains('[data-test=left] div', /^日志$/).click();
+    cy.get('[data-test=questJournal]').should('include.text', '完成本章');
+    cy.get('#game').screenshot('m1-chinese-chapter-complete');
+    closeSidebar();
+    cy.reload();
+    finishStoryEventToMenu();
+    saveFromSystem().then((saved) => {
+      expect(saved.gold).to.equal(1800);
+      expect(
+        saved.storyEvents.filter(
+          (id) => id === 'joao.first-voyage.chapter-complete',
+        ),
+      ).to.have.length(1);
+      expect(
+        saved.mates.filter(({ sailorId }) => sailorId === '34'),
+      ).to.have.length(1);
+    });
+    closeSidebar();
   });
 });

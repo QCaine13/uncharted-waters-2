@@ -3,6 +3,7 @@
 
 import React, { useEffect } from 'react';
 import { isInteractiveTextTarget } from '../../localization/dom';
+import Input from '../../input';
 
 interface Props {
   onAcknowledge: (() => void) | undefined;
@@ -15,6 +16,7 @@ export default function Acknowledge({ onAcknowledge }: Props) {
     }
 
     const onKeydown = (e: KeyboardEvent) => {
+      if (Input.isSuspended('overlay')) return;
       if (isInteractiveTextTarget(e.target)) return;
       const pressedKey = e.key.toLowerCase();
 

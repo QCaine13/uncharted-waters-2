@@ -6,17 +6,19 @@
 
 首批 M0 已完成并通过验收与审查：默认简体中文、英文切换、现有界面与开场汉化、海上读档及音频中断修复均已实现。最近全量54套/462项单元测试通过；完整浏览器基线15套/63项通过，随后音频修复的中文真实旅程与末次标签修补的2套/14项专项分别通过。全分支审查的唯一标签遗漏已修复并复审关闭，具体版本与验证方法见[验收记录](superpowers/verification/2026-09-06-chinese-foundation.md)。
 
-## 下一阶段的前置条件
+## M1 首次航海
 
-M1 的详细实施计划将在 M0 验收后拆分。当前代码检查已确认以下依赖，新增章节必须连同这些依赖验收：
+M1 按[详细计划](superpowers/plans/2026-09-06-m1-first-voyage.md)衔接开场和首次航行：
 
-- 通用事件完成记录：现有保存格式为 v4，剧情仍通过 `state.quests` 和里斯本旧完成键保存；先迁移持久化边界，再加入新章。
-- 海上会话：多明戈登船依赖连续航海天数，不能用日历经过天数代替；需要海上事件入口、移动暂停和会话结束/拒绝后的恢复。
-- 发现上报：按 D12 将发现奖励的金币移到上报环节。旧存档已经发过金币的发现物必须视为已上报，避免重复奖励。
-- 可达的成长门槛：现有14个发现物合计仅有1380冒险名声，不能直接套用原版2000及更高的主线门槛。委托、上报奖励和门槛需一起核算。
-- 伙伴与舰队容量：现有舰队展示只有三个位置；新增伙伴和船只前检查头像、角色资料和舰队位置分配，避免内容触发运行时错误。
+- 存档 v5 同时保留旧任务键与语义事件完成记录；未知进度键不丢失。
+- 连续航海三天后遇见多明戈；接受后加入，拒绝后可在里斯本工会重新邀请。
+- 工会首次航海委托要求绘制并上报直布罗陀海峡，完成后领取500金币。此报酬为项目原创设计，无名声门槛。
+- 发现时获得名声，上报时领取发现物原有金币。直布罗陀海峡为30名声、300金币；v4已发现地点迁移为已上报，不重复支付。
+- 日志显示当前步骤和后续目标；海上对话、日志及其他侧栏弹窗暂停航行和补给消耗。
 
-章节组织、双语内容、引用校验和旧存档规则见[剧情编写指南](story/authoring-guide.md)。以上是实施依赖，尚未作为功能交付。
+验收方法与结果见[M1验收记录](superpowers/verification/2026-09-06-m1-first-voyage.md)。新章节沿用[剧情编写指南](story/authoring-guide.md)。
+
+下一阶段 M2 处理身份揭晓、冲突与成长；新增名声门槛仍需按可达奖励核算。现有14处发现物合计1380冒险名声，不能直接套用原版2000及更高的门槛。增加船只前还要扩展现有三个舰队展示位置。
 
 ## 历史规划（保留背景）
 
@@ -85,21 +87,20 @@ MVP acceptance:
 - Implement remodel after core ship data is verified.
 - Add industry investment unlocks.
 
-## Phase 6: Exploration MVP ✅ (sighting + fame shipped — reporting still TODO)
+## Phase 6: Exploration MVP ✅ (sighting, fame and Guild reporting implemented)
 
 - ✅ Add discovery data — 14 historical landmarks, positions projected from
   real latitude/longitude (see [D12](DECISIONS.md)).
 - ✅ Add map-coordinate proximity checks, with the radius derived from the
   maximum per-tick displacement so a fleet cannot tunnel past a landmark.
 - ✅ Fame rewards on sighting; adventure fame is now a live field.
-- ⏳ Discovery **reporting** to a patron for a bonus is not built. Gold is
-  granted on sighting as a stand-in and moves to the report step when it
-  lands.
+- ✅ Discovery reporting at Lisbon Guild pays the original landmark gold once.
+  Save v5 treats previously paid v4 discoveries as already reported.
 - The set spans the whole world rather than starting with Europe/Africa,
   since fame scales with voyage distance and that is what makes the far
   landmarks worth reaching.
 
-## Phase 7: Story Expansion (architecture + Lisbon migration ✅; new story pending)
+## Phase 7: Story Expansion (architecture, Lisbon and first voyage ✅)
 
 - Pick one protagonist path first.
 - Joao is the easiest fit because the existing quest data already leans that
@@ -107,9 +108,8 @@ MVP acceptance:
 - Model event triggers as data, not scattered component logic.
 
 The typed, validated runtime and the behavior-preserving migration of the
-existing João Lisbon opening are implemented. This completes the architecture
-slice only: the Domingo beat and the rest of the full João route remain
-pending, along with every other post-Lisbon chapter.
+existing João Lisbon opening are implemented. The first-voyage chapter now adds Domingo recruitment and a Guild commission.
+The rest of the full João route remains pending.
 
 ## Spare-time Slice Suggestions (推荐小切片)
 

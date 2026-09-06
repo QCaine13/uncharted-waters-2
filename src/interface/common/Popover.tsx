@@ -28,21 +28,23 @@ export default function Popover({ label, children }: Props) {
 
       if (pressedKey === 'escape') {
         e.preventDefault();
+        e.stopImmediatePropagation();
         setActive(false);
       }
     };
 
     const onContextmenu = (e: MouseEvent) => {
       e.preventDefault();
+      e.stopImmediatePropagation();
       setActive(false);
     };
 
-    window.addEventListener('keydown', onKeydown);
-    window.addEventListener('contextmenu', onContextmenu);
+    window.addEventListener('keydown', onKeydown, true);
+    window.addEventListener('contextmenu', onContextmenu, true);
 
     return () => {
-      window.removeEventListener('keydown', onKeydown);
-      window.removeEventListener('contextmenu', onContextmenu);
+      window.removeEventListener('keydown', onKeydown, true);
+      window.removeEventListener('contextmenu', onContextmenu, true);
     };
   });
 
@@ -65,14 +67,17 @@ export default function Popover({ label, children }: Props) {
       </Transition>
       <div
         className={classNames(
-          'relative cursor-pointer p-5 hover:bg-gray-800',
+          'cursor-pointer p-5 hover:bg-gray-800',
           active ? 'bg-gray-800' : '',
         )}
         onClick={() => setActive(true)}
       >
         <div className="text-right">{t(label)}</div>
         {active && (
-          <div className="absolute left-full bottom-1/2 translate-y-1/2 z-40">
+          <div
+            className="absolute left-full top-1/2 -translate-y-1/2 z-40"
+            data-overlay-panel
+          >
             {children}
           </div>
         )}

@@ -170,8 +170,8 @@ export const ui: Record<string, string> = {
   'Reconsider Domingo’s offer at the Lisbon Guild.':
     '前往里斯本工会重新考虑多明戈的提议。',
   'Chart Gibraltar': '绘制直布罗陀海图',
-  'Sail east along the south Iberian coast toward Seville and Ceuta; chart Gibraltar near 864.4, 377.9.':
-    '沿伊比利亚南岸向东驶向塞维尔与休达；在864.4、377.9附近绘制海图。',
+  'Sail south from Lisbon around Iberia’s southwest coast, then east toward Seville and Ceuta. Chart Gibraltar near 36° N, 5.6° W.':
+    '从里斯本沿岸南下，绕过西南端再向东，驶向塞维尔与休达之间（北纬36°、西经5.6°）。',
   'Report Gibraltar': '上报直布罗陀海峡',
   'Return to the Lisbon Guild and report the Strait of Gibraltar.':
     '返回里斯本工会上报直布罗陀海峡。',

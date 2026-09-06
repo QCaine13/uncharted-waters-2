@@ -91,7 +91,7 @@ export const getFirstVoyageJournal = (state: State): JournalEntry[] => {
     {
       id: 'gibraltar',
       title: 'Chart Gibraltar',
-      body: 'Sail east along the south Iberian coast toward Seville and Ceuta; chart Gibraltar near 864.4, 377.9.',
+      body: 'Sail south from Lisbon around Iberia’s southwest coast, then east toward Seville and Ceuta. Chart Gibraltar near 36° N, 5.6° W.',
       completed: discoveredGibraltar,
     },
     {

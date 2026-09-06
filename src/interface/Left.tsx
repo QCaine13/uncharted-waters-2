@@ -49,7 +49,7 @@ export default function Left({
 
   return (
     <div
-      className={classNames(hudClass, 'flex flex-col justify-between')}
+      className={classNames(hudClass, 'relative flex flex-col justify-between')}
       data-test="left"
     >
       {/*

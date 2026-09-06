@@ -3,12 +3,13 @@
 
 // TODO solve issue with multiple Menus being visible (Item Popover while in a building)
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { classNames } from '../interfaceUtils';
 import useCancel from '../port/hooks/useCancel';
 import { t } from '../../localization';
 import { isInteractiveTextTarget } from '../../localization/dom';
+import Input from '../../input';
 
 export interface Option<T> {
   label: string;
@@ -36,6 +37,7 @@ export default function Menu<T extends number | string>({
   translateLabels = true,
 }: Props<T>) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const firstOption = useRef<HTMLDivElement>(null);
 
   useCancel(!hidden ? onCancel : undefined);
 
@@ -51,6 +53,11 @@ export default function Menu<T extends number | string>({
     }
 
     const onKeydown = (e: KeyboardEvent) => {
+      if (
+        Input.isSuspended('overlay') &&
+        !firstOption.current?.closest('[data-overlay-panel]')
+      )
+        return;
       if (isInteractiveTextTarget(e.target)) return;
       const pressedKey = e.key.toLowerCase();
 
@@ -113,6 +120,7 @@ export default function Menu<T extends number | string>({
         return (
           <div
             key={value}
+            ref={i === 0 ? firstOption : undefined}
             className={classNames(
               'text-2xl py-1 my-2 cursor-pointer',
               buttonClass,
