@@ -17,6 +17,7 @@
 - 不修改港口/物品/船只/角色 ID、菜单 action value 或剧情事件 ID；仅本地化显示文本。
 - 现有英文剧情与等价测试保留，中文采用独立词典；动态文本使用明确参数插值，禁止通过模糊正则猜测整段渲染结果。
 - 语言切换不丢进度、不重新开始剧情、不改变金钱/船员/事件结果；中文对话可阅读，不溢出固定窗口。
+- 扩充约束：专名与通用界面独立，剧情翻译按章节模块汇总；沿用稳定ID与声明式内容，新章节可分别校验。
 - New narrative beyond Lisbon belongs to M1 onward; M0 must be an independently playable foundation.
 
 ---
@@ -32,8 +33,8 @@
 - Consumes: `updateWorldStatus(): void`, `createWorld(): World`, state.fleets/player position and state.timePassed.
 - Produces: a world whose wind/current are initialized before `characters.update()` and initial sea rendering, both at cold startup and after `load()` discards runtime objects.
 
-- [ ] Restore dependencies and tracked LFS assets, verifying hashes/signatures; record asset preflight and baseline results. Controller owns environment.
-- [ ] Add a regression that restores a sea save at an off-cycle timestamp (240 -> first tick 260), starts the actual world runtime and calls update/draw with minimal canvas/asset test doubles. The failure must come from uninitialized state.wind/current. Also cover startup at 220 and reloading a save in a different sea area with stale prior wind.
+- [x] Restore dependencies and tracked LFS assets, verifying hashes/signatures; record asset preflight and baseline results. Controller owns environment.
+- [x] Add a regression that restores a sea save at an off-cycle timestamp (240 -> first tick 260), starts the actual world runtime and calls update/draw with minimal canvas/asset test doubles. The failure must come from uninitialized state.wind/current. Also cover startup at 220 and reloading a save in a different sea area with stale prior wind.
 
 ```ts
 // Behavioral shape: populate persisted sea state, clear nonpersistent values,
@@ -43,8 +44,8 @@ expect(state.wind).toEqual(expect.objectContaining({ direction: expect.any(Numbe
 expect(() => world.update()).not.toThrow();
 ```
 
-- [ ] Run the focused regression and observe expected failure.
-- [ ] Initialize world status at the world creation boundary after valid fleet position is available and after interface mount; avoid storing derived weather or adding fallback guards that hide a missing initialization. Expected minimal production change:
+- [x] Run the focused regression and observe expected failure.
+- [x] Initialize world status at the world creation boundary after valid fleet position is available and after interface mount; avoid storing derived weather or adding fallback guards that hide a missing initialization. Expected minimal production change:
 
 ```ts
 import { updateWorldStatus, worldTimeTick } from '../../state/actionsWorld';
@@ -52,13 +53,13 @@ import { updateWorldStatus, worldTimeTick } from '../../state/actionsWorld';
 updateWorldStatus();
 ```
 
-- [ ] Replace the E2E fixture's safety timestamp workaround with arbitrary persisted times and add a reload assertion using the real browser. Cover both indicators and actual sailing. Maintain the single world creation boundary if existing tests expose additional initialization requirements.
-- [ ] Run focused tests, typecheck, relevant E2E when environment is ready, self-review and commit only owned files. Report exact commands and RED/GREEN evidence.
+- [x] Replace the E2E fixture's safety timestamp workaround with arbitrary persisted times and add a reload assertion using the real browser. Cover both indicators and actual sailing. Maintain the single world creation boundary if existing tests expose additional initialization requirements.
+- [x] Run focused tests, typecheck, relevant E2E when environment is ready, self-review and commit only owned files. Report exact commands and RED/GREEN evidence.
 
 ### Task 2: Chinese-first locale infrastructure and existing game presentation
 
 **Files:**
-- Create: `src/localization/index.ts`, `src/localization/useLocale.ts`, `src/localization/ui.ts`, `src/localization/terms.ts`, `src/localization/dialogue.ts`, `src/localization/localization.test.ts`
+- Create: `src/localization/index.ts`, `src/localization/useLocale.ts`, `src/localization/ui.ts`, `src/localization/terms.ts`, `src/localization/dialogue.ts`（汇总入口）、`src/localization/dialogue/joao-lisbon.ts`（章节文本）、`src/localization/localization.test.ts`
 - Modify: `src/interface/**` presentation files, `src/homepage/index.html`, `src/app.ts`, display helper call sites in `src/state/selectors.ts` as needed.
 - Test: existing presentation tests, dedicated Chinese interface tests, `tests/e2e/localization.cy.ts`, test setup/helpers for explicitly selecting English in the existing regression suite.
 
