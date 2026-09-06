@@ -87,10 +87,13 @@ describe('Lisbon resolver legacy-oracle parity', () => {
                   portId,
                   buildingId,
                   timePassed,
+                  dayAtSea: 0,
                   completedEvents,
                   fame: { adventure: 0, pirate: 0, trade: 0 },
                   items: new Set(),
                   companions: new Set(),
+                  discoveries: new Set(),
+                  reportedDiscoveries: new Set(),
                 } as StoryContext,
                 compiledStoryContent,
                 (candidates) => {

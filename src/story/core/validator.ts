@@ -19,6 +19,7 @@ export interface StoryValidationCatalogs {
   shipIds: ReadonlySet<string>;
   sailorIds: ReadonlySet<string>;
   mateRoles: ReadonlySet<string | number | null>;
+  discoveryIds?: ReadonlySet<string>;
   parityManifest: StoryParityManifest;
 }
 
@@ -136,6 +137,38 @@ const visitCondition = (
           'invalid-days-range',
           path,
           'Elapsed-day bounds must be non-negative and min must not exceed max.',
+          owner,
+        );
+      }
+      break;
+    case 'daysAtSea':
+      if (
+        (condition.min !== undefined &&
+          (!Number.isFinite(condition.min) || condition.min < 0)) ||
+        (condition.max !== undefined &&
+          (!Number.isFinite(condition.max) || condition.max < 0)) ||
+        (condition.min !== undefined &&
+          condition.max !== undefined &&
+          condition.min > condition.max)
+      ) {
+        add(
+          'invalid-days-at-sea-range',
+          path,
+          'Sea-day bounds must be non-negative and min must not exceed max.',
+          owner,
+        );
+      }
+      break;
+    case 'hasDiscovery':
+    case 'hasReportedDiscovery':
+      if (
+        catalogs?.discoveryIds !== undefined &&
+        !catalogs.discoveryIds.has(condition.discoveryId)
+      ) {
+        add(
+          'unknown-discovery',
+          `${path}.discoveryId`,
+          `Condition references unknown discovery "${condition.discoveryId}".`,
           owner,
         );
       }
@@ -848,11 +881,20 @@ export const validateStoryContent = (
       add,
     );
 
-    if (event.repeat === 'once' && event.legacyCompletionKey === undefined) {
+    const requiresLegacyCompletionKey =
+      event.repeat === 'once' &&
+      catalogs !== undefined &&
+      [...catalogs.parityManifest.legacyKeyToEvent.values()].includes(
+        String(event.id),
+      );
+    if (
+      requiresLegacyCompletionKey &&
+      event.legacyCompletionKey === undefined
+    ) {
       add(
         'once-without-legacy-key',
         `${eventPath}.legacyCompletionKey`,
-        'Once-only events require a legacy completion key.',
+        'Migrated once-only events require their legacy completion key.',
         String(event.id),
       );
     }

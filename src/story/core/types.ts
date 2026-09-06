@@ -65,6 +65,9 @@ export type StoryCondition =
   | { type: 'stage'; stage: Stage }
   | { type: 'timeWindow'; min: number; max: number }
   | { type: 'daysElapsed'; min?: number; max?: number }
+  | { type: 'daysAtSea'; min?: number; max?: number }
+  | { type: 'hasDiscovery'; discoveryId: string }
+  | { type: 'hasReportedDiscovery'; discoveryId: string }
   | { type: 'fameAtLeast'; fame: FameType; value: number }
   | { type: 'hasItem'; itemId: ItemId }
   | { type: 'hasCompanion'; characterId: CharacterId };
@@ -132,10 +135,13 @@ export interface StoryContext {
   portId: string | null;
   buildingId: string | null;
   timePassed: number;
+  dayAtSea: number;
   completedEvents: ReadonlySet<StoryEventId>;
   fame: Record<FameType, number>;
   items: ReadonlySet<ItemId>;
   companions: ReadonlySet<CharacterId>;
+  discoveries: ReadonlySet<string>;
+  reportedDiscoveries: ReadonlySet<string>;
 }
 
 export interface StoryContentSource {

@@ -115,8 +115,7 @@ export const storyRuntimeActions: StoryEffectRuntime = {
           : [diagnostic('unknown-mate', `Unknown mate ${effect.characterId}`)];
       }
       case 'completeEvent':
-        return compiledStoryContent.eventsById.has(effect.eventId) &&
-          getLegacyCompletionKey(effect.eventId, compiledStoryContent) !== null
+        return compiledStoryContent.eventsById.has(effect.eventId)
           ? []
           : [
               diagnostic(
@@ -139,6 +138,8 @@ export const storyRuntimeActions: StoryEffectRuntime = {
     }
   },
   completeEvent(eventId) {
+    if (!Array.isArray(state.storyEvents)) state.storyEvents = [];
+    if (!state.storyEvents.includes(eventId)) state.storyEvents.push(eventId);
     const key = getLegacyCompletionKey(eventId, compiledStoryContent);
     if (key !== null) completeLegacyQuestOnce(key as LegacyQuestCompletionKey);
   },

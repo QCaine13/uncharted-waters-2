@@ -67,6 +67,10 @@ export interface State {
   marketPrices: MarketPriceState;
   // Discovered landmark ids (src/data/discoveryData.ts), insertion order.
   discoveries: string[];
+  // Semantic story event ids, including IDs unknown to this build.
+  storyEvents: string[];
+  // Discovery ids whose one-time port report reward has already been paid.
+  reportedDiscoveries: string[];
 }
 
 export const SAVED_STATE_KEY = 'savedState';
@@ -109,6 +113,12 @@ const state = {
   marketPrices: {},
   discoveries: [] as string[],
   ...savedState,
+  storyEvents: Array.isArray(savedState.storyEvents)
+    ? savedState.storyEvents
+    : [],
+  reportedDiscoveries: Array.isArray(savedState.reportedDiscoveries)
+    ? savedState.reportedDiscoveries
+    : [],
 } as State;
 
 export default state;
