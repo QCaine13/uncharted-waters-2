@@ -8,6 +8,7 @@ import Confirm from './Confirm';
 import Input from '../../input';
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+let mockRetainExitingBackdrop = false;
 jest.mock('../../assets', () => ({
   __esModule: true,
   default: { images: () => ({ toDataURL: () => 'data:image/png;base64,' }) },
@@ -19,12 +20,13 @@ jest.mock('@headlessui/react', () => ({
   }: {
     show: boolean;
     children: React.ReactNode;
-  }) => (show ? children : null),
+  }) => (show || mockRetainExitingBackdrop ? children : null),
 }));
 
 let container: HTMLDivElement;
 let root: Root;
 beforeEach(() => {
+  mockRetainExitingBackdrop = false;
   localStorage.setItem('uw2.locale', 'en');
   container = document.createElement('div');
   document.body.appendChild(container);
@@ -121,4 +123,22 @@ test('a covered confirmation cannot accept a building action', () => {
   open();
   key('Enter');
   expect(yes).not.toHaveBeenCalled();
+});
+
+test('a fading backdrop releases pointer input as soon as its panel closes', () => {
+  // Transition libraries may keep the exiting node mounted for the animation.
+  mockRetainExitingBackdrop = true;
+  act(() =>
+    root.render(
+      <Popover label="Journal">
+        <div>Chapter progress</div>
+      </Popover>,
+    ),
+  );
+  open();
+  key('Escape');
+  expect(container.querySelector('[data-overlay-panel]')).toBeNull();
+  expect(Input.isSuspended()).toBe(false);
+  const backdrop = container.querySelector('.fixed')!;
+  expect(window.getComputedStyle(backdrop).pointerEvents).toBe('none');
 });

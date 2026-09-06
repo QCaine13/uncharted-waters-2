@@ -94,6 +94,19 @@ const toMenu = () =>
 describe('First voyage chapter compatibility and choices', () => {
   const branchTest = Cypress.env('m1NavigationOnly') ? it.skip : it;
   branchTest(
+    'reopens the System panel during repeated navigation pauses',
+    () => {
+      fixture({ dayAtSea: 0, timePassed: 220 });
+      cy.visit('');
+      for (let i = 0; i < 25; i += 1) {
+        saveFromSystem();
+        closeSidebar(0);
+      }
+      saveFromSystem();
+      cy.get('#locale-select').should('be.visible');
+    },
+  );
+  branchTest(
     'pauses a Chinese sea encounter, restarts on load, and allows refusal then guild recruitment and one payout',
     () => {
       fixture();

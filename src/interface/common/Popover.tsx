@@ -62,6 +62,7 @@ export default function Popover({ label, children }: Props) {
       >
         <div
           className="fixed inset-0 bg-black bg-opacity-75 transition-opacity z-30"
+          style={{ pointerEvents: active ? 'auto' : 'none' }}
           onClick={() => setActive(false)}
         />
       </Transition>
