@@ -1,0 +1,100 @@
+# M2 Conflict and Growth Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Steps use checkbox syntax for tracking.
+
+**Goal:** Make João's Domingo identity, Katarina pursuit and Ali sister-search chapter playable with real combat, recovery, equipment and growth.
+
+**Architecture:** Pure serializable combat reducers feed a state action boundary. Declarative story effects start encounters; durable result conditions resume the chapter. React presents combat and preparation without owning combat rules.
+
+**Tech Stack:** React 18, TypeScript 4.8, Jest 29, Cypress 10, Node.js 22, existing Canvas and save architecture.
+
+**Spec:** ../specs/2026-09-06-m2-conflict-and-growth-design.md
+
+## Global Constraints
+
+- Work in `/Users/qsircaine/uncharted-waters-2/.worktrees/m2-conflict-and-growth`, branch `codex/m2-conflict-and-growth`, base `3cf4a8e`. Do not merge or push this implementation.
+- Use Node.js 22. Set PATH to `/Users/qsircaine/uncharted-waters-2/.worktrees/.tools/bin:/Users/qsircaine/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin:$PATH`. Keep locked dependencies unchanged.
+- Default Simplified Chinese with English switch. New UI and story text must have both languages. Preserve stable legacy and semantic IDs and unknown save progress.
+- Combat decisions, resource costs, outcomes and rewards must be real, serializable, deterministic and testable. No narrative auto-win or imperative callback in story content.
+- M2 ends at Ali's Istanbul report; M3 remains future work. Original references and project balance changes must be distinguished.
+- Follow TDD for behavior. Run focused tests during iteration, full Jest and typecheck once before task commit; reviewers use the recorded evidence.
+- One implementation subagent at a time, Sol as previously authorized. Workers never spawn subagents. Root owns coordination, independent browser validation and final integration.
+
+## Implementation decisions
+
+Existing approved M2 scope plus the explicit request to continue authorizes these internal decisions; no repeated approval checkpoint is needed. The controller records material decisions and any changes to this plan in the execution ledger. The work is one dependent vertical chapter, with independently reviewable task gates below.
+
+### Task 1: Pure combat rules and save v6
+
+**Files:** Create `src/combat/types.ts`, `duel.ts`, `naval.ts`, `encounters.ts`, `combat.test.ts`; modify `src/state/state.ts`, `saveMigrations.ts`, `saveLoad.ts` and their tests. A small shared `src/combat/stats.ts` is allowed for equipment and level calculations. No UI or story runtime changes.
+
+**Interfaces:** Export `CombatOutcome = 'victory' | 'defeat' | 'draw' | 'retreat'`; `DuelAttack = 'thrust' | 'slash' | 'heavy'`, `DuelDefense = 'parry' | 'block' | 'dodge'`; `Equipment {weaponId:string|null;armorId:string|null}`, `MateProgress = Record<string,{battleExperience:number}>`. Save fields: `equipment`, `mateProgress`, `combatResults: Record<string,CombatOutcome>`, `activeCombat: CombatState|null`. `CombatState` discriminates `kind:'duel'|'naval'`, carries `encounterId`, `revision`, `round`, `outcome:CombatOutcome|null` and a bounded serializable action log. Duel stores both combatant stats/HP and `phase:'attack'|'defend'`; naval stores player/enemy hull/crew, max hull, guns, shot, lumber, range and optional nested boarding duel. Export `createDuel`, `advanceDuel`, `createNaval`, `advanceNaval`; exact parameter object shapes may be chosen and must be documented in report. Invalid actions return unchanged snapshot reference, valid ones increment revision; no random or clocks.
+
+Encounter IDs: `joao.m2.kahn-shipyard`, `joao.m2.kahn-house`, `joao.m2.katarina`. Enemy Kahn shipyard swordplay 66, level 2, weapon rating 10, armor rating 0; house swordplay 78, level 3, weapon rating 20, armor rating 10; Katarina captain swordplay 84, level 4, weapon rating 25, armor rating 15. Duel max HP `80 + 2*level`. Enemy stance rotates parry/block/dodge by round, enemy attack thrust/slash/heavy by round; UI will expose these as intentional tutorial tells. Correct defense reduces damage to zero. Other damage is `max(1, floor((8+floor(swordplay/12)+floor(weaponRating/4)+floor(level/3))*preference)-floor(armorRating/5))`; preference 1.25 for fencing weapon category 2 thrust, heavy category 4 heavy, straight/curved categories 1/3 slash, otherwise 1. Enemy uses same formula. Attack phase can end victory; defense can end defeat; after ten full rounds unresolved duel draws. Saved snapshots retain current phase and intent.
+
+Naval starts range 2 (0 adjacent, 1 close, 2 cannon, 3 edge). Actions approach/withdraw change range by one; fire requires guns>0, shot>0, range<=2, costs one shot, damage `6+floor(guns/4)`; board requires range0 and crew>0, enemy crew loses `max(2,floor(playerCrew/3))`, player loses `max(1,floor(enemyCrewBefore/5))`; repair costs one lumber and restores min(8, missingHull); retreat only range3 and ends before enemy response. Enemy maxHull42, crew18, guns8; after other legal actions fires for4 hull at range1/2, boards for3 crew at range0, no attack at range3, then moves one range toward player only if range3 (range becomes2). To permit retreat, withdrawing from range2 must leave range3 until the next player action: enemy does not chase on a withdraw action. Naval challenge requires range0 and playerCrew>=enemyCrew, runs nested duel against Katarina; victory wins naval, defeat loses naval, draw resumes naval at range0. Hull0 or crew0 defeats, enemy hull0 or crew0 wins. Illegal actions do not consume a round/resource. Max round is not capped for naval.
+
+- [ ] Write tests for all duel outcomes, stance matching, weapon/armor/level effect, pure snapshots, round cap; naval unavailable actions, real resource cost, successful retreat versus defeat, boarding-duel outcomes, no input mutation.
+- [ ] Run `npm test -- --runInBand src/combat/combat.test.ts` and capture expected RED missing-module/features.
+- [ ] Implement pure rules and catalog. Bound log to last 8 records (structured keys/data, localization in UI). Preserve full deterministic state through JSON roundtrip.
+- [ ] Add v5→v6 migration defaults; do not change old possessions or progress. Defensive normalization defaults missing v6 fields; active combat malformed/unsupported snapshots must be discarded safely rather than crash or mint results. Unknown result IDs may remain if outcome valid. Equipment unknown/unowned IDs cannot contribute stats. Test ongoing duel/naval roundtrips and failed load remains non-mutating.
+- [ ] Run targeted tests then full Jest, `npm run typecheck`, `git diff --check`; commit `feat: add deterministic combat rules and save v6`; record report with RED/GREEN and public APIs.
+
+### Task 2: Combat state actions, recovery and preparation
+
+**Files:** Create `src/state/actionsCombat.ts`, `actionsCombat.test.ts`, `actionsEquipment.ts`, `actionsEquipment.test.ts`, `actionsRepair.ts`, `actionsRepair.test.ts`, `src/combat/combatEvents.ts`; modify `src/state/selectors.ts`, `src/input.ts`, input tests, `src/game/world/runWorldFrame.ts` and tests, `src/app.ts` only where initialization needed. This task does not add React UI or story effects.
+
+**Interfaces:** Consume Task1 snapshots/catalog. Export `startCombat(encounterId:string):boolean`, `actCombat(expected:CombatState, action:CombatAction):boolean`, `finishCombat(expected:CombatState):boolean`; `canStartCombat(encounterId):boolean`; event store `getCombatSnapshot`, `subscribeCombat`, `getCombatGeneration` for resolution remount. Actions reject stale object identity, active overlay, and replays. `equipItem(itemId):boolean`, `unequipItem(slot):boolean`; `getRepairQuote(shipIndex):{missing:number,points:number,cost:number}`, `repairShip(shipIndex):boolean`; `getMateBattleLevel(sailorId)` uses base level plus floor(XP/100).
+
+- [ ] Tests first: one active encounter, every legal action autosaves, illegal/stale/covered actions don't; pending result survives load and confirms once; a successful historical result cannot be farmed; Kahn shipyard any outcome recorded, house draw permits rematch; Katarina defeat permits retry, victory/retreat locks repeat.
+- [ ] Run focused test files for RED.
+- [ ] Build player duel stats from João, owned equipment and growth. Build naval from actual flagship/model/cargo/captain; captain effective level grants +floor(level/10) guns for damage calculations only, capped at model.maxGuns, while a ship with usedGuns0 cannot gain guns. No imaginary shot/wood. Sync hull, crew, shot, lumber to fleet after each naval action including nested duel. Don't let active battle modify unrelated ships.
+- [ ] Finishing house victory gives João100 XP; first duel gives none. Naval victory João100 and other current mates50 XP; retreat everyone25 XP. Grant only at confirmation, set outcome and clear active battle in same save transaction. No extra money reward. Combat defeat restores flagship to at least ceil(model.durability/2) and model.minCrew, returns Lisbon port1 building null, resets sea days and clears world/port objects through established regeneration boundary. Retain all ships, equipment, cargo, money and progress. Retry can start in port and cannot need money/provisions. Settlement and recovery once only.
+- [ ] Acquire `Input.suspend('combat')` for every restored/new active combat, release on finish or load replacement. Pause simulation and sea-story initiation while active. Subscribe successful game load to reconcile snapshot/pause and notify React; avoid leaked tokens on repeated loads. Combat generation increases only resolution/load, not every action.
+- [ ] Equip only owned categories1–4 weapon/category7 armor; ignore foreign IDs. Reject equipment and repair during combat. Repair selected ship at10g/hull, up to affordable missing integer points, never over max, no charge on zero work; persist. Selectors expose real XP/level without mutating static sailorData.
+- [ ] Full Jest, typecheck and diff check; commit `feat: settle combat and support fleet preparation`; report exact APIs and recovery behavior.
+
+### Task 3: Combat, equipment and repair interface
+
+**Files:** Create `src/interface/combat/Combat.tsx`, `DuelControls.tsx`, `NavalControls.tsx`, `Combat.test.tsx`, `src/localization/combat.ts`; modify `Interface.tsx`, `Items.tsx`, `Mates.tsx`, `port/shipyard/Shipyard.tsx`, `quest/useQuestStep.ts`, shared Menu/Confirm/Acknowledge/BuildingWrapper only as needed for combat guards, localization catalog registration and focused UI tests.
+
+**Interfaces:** Use Task2 subscribe/snapshot/actions. Combat panel overlays right game canvas within1280×800, below sidebar popovers, with native buttons and a result confirmation action. Underlying buildings and SeaStory neither display actionable dialogue nor consume keyboard while combat active. System menu save/load/language remains usable. On resolution remount current building using combat generation so next story event resolves.
+
+- [ ] Write UI behavior tests for legal action dispatch, stale click, disabled action reasons, result confirmation, system overlay input guard and resumed story. RED first.
+- [ ] Render two participants, HP, phase/round, visible enemy defense/attack, player's equipment and clear three-choice attack/defense controls. Explain correct defenses; expose structured battle log translated in both locales. Render naval range, hull, crew, guns, shot, lumber, action availability and victory/defeat/retreat distinction. Nested duel renders duel controls and returns to naval correctly. Result screen summarizes recovery or XP before confirmation.
+- [ ] Equip/unequip buttons in Items with selected/current markers, no overflow; repair submenu lists ships with damage, affordable points, exact quote and confirmation, then actual result. Mates shows effective battle level and accumulatedXP. Reuse established pixel-game palette and spacing, no external assets/dependencies.
+- [ ] Block global background key handlers during combat while allowing overlay controls. Do not disable all Menu instances globally if it prevents the system overlay itself. Existing overlay exit/repeat-key fixes must remain. Ensure read/save while combat is open recreates valid controls and release on completion.
+- [ ] Full Jest, typecheck, lint and build; commit `feat: make combat and fleet preparation playable`; report UI entry points for browser validation.
+
+### Task 4: Declarative combat and companion departure effects
+
+**Files:** Modify `src/story/core/types.ts`, `resolver.ts`, `validator.ts`, `effects.ts`, `content/catalogs.ts`, `contentManifest.ts`, `storyRuntimeActions.ts`, corresponding tests; create `src/story/companionDeparture.ts` and tests; modify `src/data/sailorData.ts`, `src/interface/Mates.tsx` and selector/fleet avatar access only to support portraitless relief captain. May create `src/story/content/characters/relief-captain.ts` and registration.
+
+**Interfaces:** New condition `{type:'combatResolved',encounterId:string,outcomes:CombatOutcome[]}`; new effects `{type:'startCombat',encounterId:string}`, `{type:'receiveFame',fame:FameType,amount:number}`, `{type:'removeCompanion',characterId:CharacterId}`. Context gets `combatResults` with backwards-safe default. Production catalog validates encounter IDs. startCombat must be final non-save effect in its group, preflight entire group before any mutation, including valid equipment/fleet requirement from canStartCombat. Preserve unknown IDs and old validators/parity rules.
+
+- [ ] Test RED condition outcomes, unknown encounter diagnostics, terminal-start validation, no partial reward/completeEvent when start preflight fails, exactly-once semantic effect group saves, departure with null/officer/captain role and four ships.
+- [ ] Wire runtime actions without content/initialization import cycles. Effects use pure preflight followed by synchronous execution. Conditional results drive fresh scene resolution after combat. No battle callbacks in content.
+- [ ] Implement removeCompanion: remove sailor, if numeric captain role assign first remaining null-role mate; else create project-original sailor `m2-relief-captain` and assign that role. Relief profile name 'Relief Captain', age30, allstats50, nav1,battle1,skills[]; character name中文'代理船长', rolecompanion, sailorId as above, no legacyCharacterId/portraitId. Only create when replacement required, never duplicate. UI uses a neutral text initials placeholder for missing portrait and safe dialogue color. All captain references remain valid, João retained. Do not fabricate original asset coordinates. Tests verify owning4ships and dismissingDomingo retains4ships and exactly4validcaptains. Guard against invalid/removingJoão.
+- [ ] Full Jest, contentcheck, typecheck, diff check; commit `feat: connect combat outcomes to declarative story events`; report validator and effect extension points.
+
+### Task 5: M2 chapter, bilingual narrative and journal
+
+**Files:** Create `src/story/content/arcs/joao/conflict-and-growth/{index,events,dialogue}.ts`, `src/localization/dialogue/joaoConflictAndGrowth.ts`, `src/story/conflictAndGrowthJournal.ts`, chapter/resolver/effect/transcript/journal tests, character files for Kahn/Katarina/Ali/Sasha with explicit registration and relationships. Modify content index, localization registration, QuestJournal integration, firstVoyageJournal and tests. Read docs/story/authoring-guide.md. No invented portrait IDs.
+
+**Interfaces and arc:** `joao.conflict-and-growth`. Event IDs below use that prefix. Fixed ports resolve verified portData indices; Lisbon1, buildingPub2/Shipyard3/Harbor4/Lodge5/Palace6/House8. The chapter works from existing M1 completed v5 saves. Write a durable event milestone list and journal instructions including actual port names/coordinates and daytime08:00–16:00 trigger. Each reward at terminal effect group with its completion marker.
+
+- [ ] Tests first for ordered trigger graph, two duel outcomes, rematch, departure, pursuit return legs, naval recovery/retry, sister-report closure and no duplicate rewards. Run focused files RED.
+- [ ] `domingo-missing`: M1complete, Domingo aboard, CeutaPub08:00–16:00. `lodge-search`: CeutaLodge. `kahn-shipyard-start`: CeutaShipyard starts encounter. `identity-revealed`: CeutaHarbor after any shipyard result. `kahn-house-start`: LisbonHouse after identity. Repeatable `kahn-house-rematch` after draw. `father-cleared`: LisbonPalace after house victory/defeat, gives adventure1000/pirate1000 once. `domingo-farewell`: LisbonHouse after father-cleared, receiveItem13 only if notalreadyowned (split conditional event or idempotentreceiveItem), removes Domingo, marksidentitychapterdone; explain relief captain if required. Record M1 completion as historical so Domingo departure never marks M1 incomplete.
+- [ ] `katarina-warning`: SevillePub after farewell. `pursuit-first-sea`: world daysAtSea>=1, warningcomplete; Rocco directs dock. `pursuit-first-port`: any Harbor after firstsea, directs departagain. `katarina-battle-start`: world daysAtSea>=1 after firstport starts naval. Repeatable `katarina-retry`: LisbonHarbor after navaldefeat, clear offer 'Sail out and face Katarina again' versus 'Prepare first'; starting immediate battle at harbor is project adaptation allowing recovery without costly sailing, no replay of earned results.
+- [ ] `ali-request`: any nonLisbonPub after navalvictory/retreat. `lisbon-inquiry`: LisbonPub. `sasha-found`: BasraPub after inquiry. `chapter-complete`: IstanbulLodge after sasha-found, savecompletion only, no M3events. Dialogue acknowledges Lucia kidnapping and Ali's sister without claiming M3resolution. Add defer choices for approachingKatarina/retry; declined activities remain journal-discoverable.
+- [ ] Journal covers preparation (equipRapier4, repair, recruitcrew, shot/wood), current requiredlocation/time, Kahn drawretry, lossprogress, Domingoidentity, Roccodockingsteps, successfulretreatcondition, defeat+retry, Ali travelroute. CompletionshowsM2done andM3future; never gates on unreachablefame. Localizationcoversallnames/options/loglines and tests rejectduplicatekeys/missingtranslations.
+- [ ] Full Jest, contentcheck, typecheck, lint, build; commit `feat: add Joao conflict and growth chapter`; report event table and browserfixture guidance.
+
+### Task 6: Browser acceptance, regression fixes and handoff
+
+**Files:** Create `tests/e2e/conflictAndGrowth.cy.ts`, `tests/conflictAndGrowthUtils.ts`, `docs/superpowers/verification/2026-09-06-m2-conflict-and-growth.md`; update HANDOFF.md, docs/roadmap.md, save/story authoring docs, DECISIONS.md as needed. Behavior fixes must be specifically justified by a reproduced failure and covered by focused tests; controller coordinates one fix worker.
+
+- [ ] Write browser scenarios using actual DOM clicks and legitimate save fixtures, never direct battle outcome injection. M1completedv5→Ceuta chain, both Kahn outcomes/draw, equip and actual repair, mid-attack and mid-defense save/load, navalshotconsumption/boarding/retreat/defeat/retry, zero-moneyrecovery, fourshipdeparture, Ali endchain (locationfixtures clearlylabelled), English toggle and overlayisolation.
+- [ ] Build stable production and serve8082 while old8080/8081 remain. Run `npm run verify`, browsernewchapter + existing M1/overlay/save regression suites. Root visually inspects screenshots/realbrowser at1700×1000; ensure panels insidecanvas and visiblecontrols. Do not rebuildwhileCypressreadsbuild. Record exactpassed/failed/scoped/fullcounts, limitations and evidencepaths.
+- [ ] Resolve reproduced failures through scoped worker fixes/review, then final wholebranch independent review with base3cf4a8e. Update handoffwithcurrentbranch,commits,preview,tests,knownlimits and nextM3. Preserveignoreduniqueevidenceworktree ratherthan deleting it.
+- [ ] Commit verified handoff, leavebranchclean, no merge/push; report playablepreviewandM2completion with concretevalidation andmaterialdesignadaptations.
