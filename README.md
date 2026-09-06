@@ -18,7 +18,7 @@ baseline are being strengthened incrementally.
 
 ## 中文版开发进度
 
-首批中文可玩基础已实现并通过功能验收：默认简体中文、中英显示切换、现有里斯本开场与界面汉化，以及海上读档修复。当前可玩内容是里斯本开场、航海、贸易、补给和探索；约翰后续章节、战斗与结局仍在路线图中。
+首批中文可玩基础（M0）已完成并通过验收与审查：默认简体中文、中英显示切换、现有里斯本开场与界面汉化，以及海上读档修复。当前可玩内容是里斯本开场、航海、贸易、补给和探索；约翰后续章节、战斗与结局仍在路线图中。
 
 首个完整交付目标是 **约翰·法雷尔全线通关**。后续按独立章节继续加入其他主角及扩展剧情，沿用稳定内容ID、声明式条件/奖励和兼容旧存档的迁移。参见[交付方案](docs/superpowers/specs/2026-09-06-chinese-playable-release-design.md)、[实施计划](docs/superpowers/plans/2026-09-06-chinese-foundation.md)、[中文资料基线](docs/1-baseline/chinese-reference-baseline.md)及[验收记录](docs/superpowers/verification/2026-09-06-chinese-foundation.md)。
 
