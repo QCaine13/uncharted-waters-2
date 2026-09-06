@@ -107,7 +107,7 @@ expect(reportDiscoveries()).toEqual({ ids: [], gold: 0 });
 
 **Files:** Create `tests/e2e/firstVoyage.cy.ts`, update discovery e2e expectations and docs `roadmap.md`, `story/authoring-guide.md`, `README.md`, `superpowers/verification/2026-09-06-m1-first-voyage.md`.
 
-- [ ] Build and serve M1 at `http://127.0.0.1:8081`, keep existing M0 preview on 8080. Add browser tests for Chinese commission→sea encounter→discovery→guild report→chapter reward; assert saved v5 progress and no repeated rewards after reload. Include decline/reconsider and English display branches. Use save fixtures only for long travel positioning; at least one acceptance journey must start fresh and perform actual opening, supplies, navigation and report.
-- [ ] Verify live DOM states and screenshots, readable overlays, four-member roster, HUD height and no console errors. Run `npm run verify` and Cypress suite against the M1 build; investigate failures before claiming completion.
-- [ ] Request independent broad review of the branch and address critical/important findings. Record exact test evidence, screenshot paths, original-design balance choices, tested old-save migration and remaining M2 scope.
-- [ ] Commit validated integration/docs, retain feature branch/worktree and open the playable M1 preview for the user.
+- [x] Build and serve M1 at `http://127.0.0.1:8081`, keep existing M0 preview on 8080. Add browser tests for Chinese commission→sea encounter→discovery→guild report→chapter reward; assert saved v5 progress and no repeated rewards after reload. Include decline/reconsider and English display branches. Use save fixtures only for long travel positioning; at least one acceptance journey must start fresh and perform actual opening, supplies, navigation and report.
+- [x] Verify live DOM states and screenshots, readable overlays, four-member roster, HUD height and no console errors. Run `npm run verify` and Cypress suite against the M1 build; investigate failures before claiming completion.
+- [x] Request independent broad review of the branch and address critical/important findings. Record exact test evidence, screenshot paths, original-design balance choices, tested old-save migration and remaining M2 scope.
+- [x] Commit validated integration/docs, retain feature branch/worktree and open the playable M1 preview for the user.
