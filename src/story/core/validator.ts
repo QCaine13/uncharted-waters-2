@@ -884,9 +884,7 @@ export const validateStoryContent = (
     const requiresLegacyCompletionKey =
       event.repeat === 'once' &&
       catalogs !== undefined &&
-      [...catalogs.parityManifest.legacyKeyToEvent.values()].includes(
-        String(event.id),
-      );
+      catalogs.parityManifest.migratedEventIds.has(String(event.id));
     if (
       requiresLegacyCompletionKey &&
       event.legacyCompletionKey === undefined

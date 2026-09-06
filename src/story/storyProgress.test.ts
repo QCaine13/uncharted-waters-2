@@ -1,7 +1,7 @@
 import { landmarks } from '../data/discoveryData';
 import { load, save } from '../state/saveLoad';
 import state, { SAVED_STATE_KEY, type State } from '../state/state';
-import { compiledStoryContent } from '.';
+import { compiledStoryContent, storyContentSource } from '.';
 import updateInterface from '../state/updateInterface';
 import { executeStoryEffects } from './core/effects';
 import {
@@ -319,6 +319,41 @@ describe('extensible story condition validation', () => {
       expect.arrayContaining([
         expect.objectContaining({
           code: 'once-without-legacy-key',
+          path: 'events[0].legacyCompletionKey',
+        }),
+      ]),
+    );
+  });
+
+  test('rejects silent loss of both a migrated event key and legacy map entry', () => {
+    const eventId = 'joao.lisbon-opening.house-introduction';
+    const source: StoryContentSource = {
+      ...storyContentSource,
+      events: storyContentSource.events.map((event) =>
+        event.id === eventId
+          ? { ...event, legacyCompletionKey: undefined }
+          : event,
+      ),
+    };
+    const legacyKeyToEvent = new Map(
+      storyValidationCatalogs.parityManifest.legacyKeyToEvent,
+    );
+    legacyKeyToEvent.delete('houseBeforeQuest');
+    const catalogs = {
+      ...storyValidationCatalogs,
+      parityManifest: {
+        legacyKeyToEvent,
+        migratedEventIds: new Set(
+          storyValidationCatalogs.parityManifest.migratedEventIds,
+        ),
+      },
+    };
+
+    expect(validateStoryContent(source, catalogs)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'once-without-legacy-key',
+          owner: eventId,
           path: 'events[0].legacyCompletionKey',
         }),
       ]),
