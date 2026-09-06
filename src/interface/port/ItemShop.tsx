@@ -16,6 +16,7 @@ import {
   ITEM_SHOP_SELL_MULTIPLIER,
   sellItem,
 } from '../../state/actionsPort';
+import { t } from '../../localization';
 
 const itemShopOptions = ['Buy', 'Sell'] as const;
 type ItemShopOptions = typeof itemShopOptions[number];
@@ -89,7 +90,10 @@ export default function ItemShop() {
         const item = itemData[selectedItemId];
 
         vendorMessage = {
-          body: `The ${item.name} will cost you ${item.price} gold pieces.`,
+          body: t('The {name} will cost you {price} gold pieces.', {
+            name: t(item.name),
+            price: item.price,
+          }),
           confirm: {
             yes: () => {
               if (!buyItem(selectedItemId)) {
@@ -162,11 +166,13 @@ export default function ItemShop() {
         const item = getPlayerItem(selectedItemI);
 
         vendorMessage = {
-          body: `I’d like to take that ${
-            item.name
-          } off your hands. I’ll take it for ${
-            item.price * ITEM_SHOP_SELL_MULTIPLIER
-          } gold pieces.`,
+          body: t(
+            'I’d like to take that {name} off your hands. I’ll take it for {price} gold pieces.',
+            {
+              name: t(item.name),
+              price: item.price * ITEM_SHOP_SELL_MULTIPLIER,
+            },
+          ),
           confirm: {
             yes: () => {
               sellItem(selectedItemI);

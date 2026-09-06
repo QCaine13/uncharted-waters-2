@@ -12,6 +12,7 @@ import updateInterface from '../state/updateInterface';
 import Building from './port/Building';
 import { classNames } from './interfaceUtils';
 import useFade from './port/hooks/useFade';
+import useLocale from '../localization/useLocale';
 
 import './global.css';
 
@@ -28,6 +29,7 @@ type Props = {
 };
 
 function Interface({ resolve }: Props) {
+  const locale = useLocale();
   const [portId, setPortId] = useState<string | null>(null);
   const [buildingId, setBuildingId] = useState<string | null>(null);
   const [timePassed, setTimePassed] = useState(0);
@@ -49,7 +51,7 @@ function Interface({ resolve }: Props) {
   const inPort = portId !== null;
 
   return (
-    <div className="[image-rendering:pixelated]">
+    <div className="[image-rendering:pixelated]" lang={locale}>
       <div className="flex items-stretch">
         <Left
           portId={portId}

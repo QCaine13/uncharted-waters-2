@@ -5,6 +5,7 @@ import React, { Fragment, ReactNode, useEffect, useState } from 'react';
 import { Transition } from '@headlessui/react';
 
 import { classNames } from '../interfaceUtils';
+import { t } from '../../localization';
 
 interface Props {
   label: string;
@@ -66,7 +67,7 @@ export default function Popover({ label, children }: Props) {
         )}
         onClick={() => setActive(true)}
       >
-        <div className="text-right">{label}</div>
+        <div className="text-right">{t(label)}</div>
         {active && (
           <div className="absolute left-full bottom-1/2 translate-y-1/2 z-40">
             {children}

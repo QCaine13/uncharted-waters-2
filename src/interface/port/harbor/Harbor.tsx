@@ -15,6 +15,7 @@ import {
   getDaysProvisionsWillLast,
 } from '../../../state/selectorsFleet';
 import HarborSummary from './HarborSummary';
+import { t } from '../../../localization';
 
 const harborOptions = ['Sail', 'Supply', 'Moor'] as const;
 type HarborOptions = typeof harborOptions[number];
@@ -57,7 +58,7 @@ export default function Harbor() {
         characterMessage = {
           body:
             days >= 10
-              ? `We can sail for ${days} days. Shall we cast off?`
+              ? t('We can sail for {days} days. Shall we cast off?', { days })
               : 'We won’t be able to sail for long. Shall we cast off anyway?',
           characterId: '32',
           confirm: {

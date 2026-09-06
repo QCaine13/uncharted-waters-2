@@ -1,4 +1,5 @@
 import React, { ReactNode } from 'react';
+import { t } from '../localization';
 
 interface Props {
   label: string;
@@ -15,7 +16,7 @@ interface Props {
 export default function HudReadout({ label, value, testId }: Props) {
   return (
     <div className="flex items-baseline">
-      <div className="flex-1 text-sm">{label}</div>
+      <div className="flex-1 text-sm">{t(label)}</div>
       <div className="text-xl" data-test={testId}>
         {value}
       </div>

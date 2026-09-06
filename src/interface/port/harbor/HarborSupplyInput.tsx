@@ -10,6 +10,7 @@ import {
   supplyShip,
 } from '../../../state/actionsPort';
 import InputNumber from '../../common/InputNumber';
+import { t } from '../../../localization';
 
 export type ShipProvision = {
   shipNumber: number;
@@ -36,13 +37,22 @@ export default function HarborSupplyInput({
       <MessageBox>
         <div className="w-[400px] px-4 py-2 text-2xl">
           {provision === 'water' &&
-            'Water is free. How many barrels should we load?'}
+            t('Water is free. How many barrels should we load?')}
           {provision === 'food' &&
-            `Food will cost us ${provisionCost[provision]} gold pieces per barrel. How many barrels will we buy?`}
+            t(
+              'Food will cost us {price} gold pieces per barrel. How many barrels will we buy?',
+              { price: provisionCost[provision] },
+            )}
           {provision === 'lumber' &&
-            `Lumber will cost us ${provisionCost[provision]} gold pieces per plank. How many planks will we buy?`}
+            t(
+              'Lumber will cost us {price} gold pieces per plank. How many planks will we buy?',
+              { price: provisionCost[provision] },
+            )}
           {provision === 'shot' &&
-            `Cannonballs will cost us ${provisionCost[provision]} gold pieces per barrel. How many barrels will we buy?`}{' '}
+            t(
+              'Cannonballs will cost us {price} gold pieces per barrel. How many barrels will we buy?',
+              { price: provisionCost[provision] },
+            )}{' '}
           <InputNumber
             limit={limit}
             onComplete={(quantity) => {

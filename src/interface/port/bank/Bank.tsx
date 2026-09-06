@@ -12,6 +12,7 @@ import {
   getRepayAmount,
 } from '../../../state/selectors';
 import InputNumber from '../../common/InputNumber';
+import { t } from '../../../localization';
 
 const bankOptions = ['Deposit', 'Withdraw', 'Borrow', 'Repay'] as const;
 type BankOptions = typeof bankOptions[number];
@@ -61,7 +62,7 @@ export default function Bank() {
         };
       } else {
         vendorMessage = {
-          body: `Now you have ${savings} gold pieces in your savings account.`,
+          body: t('Now you have {amount} gold pieces in your savings account.', { amount: savings }),
           acknowledge: next,
         };
       }
@@ -69,7 +70,7 @@ export default function Bank() {
 
     if (step === 1) {
       vendorMessage = {
-        body: `How much would you like to deposit? (0-${gold})`,
+        body: t('How much would you like to deposit? (0-{limit})', { limit: gold }),
       };
 
       children = (
@@ -87,14 +88,14 @@ export default function Bank() {
 
     if (step === 2) {
       vendorMessage = {
-        body: `We’ll deposit ${depositAmount.current} gold pieces into your account. The monthly interest rate is 3%`,
+        body: t('We’ll deposit {amount} gold pieces into your account. The monthly interest rate is 3%', { amount: depositAmount.current }),
         acknowledge: next,
       };
     }
 
     if (step === 3) {
       vendorMessage = {
-        body: `Now you have ${savings} gold pieces in your savings account.`,
+        body: t('Now you have {amount} gold pieces in your savings account.', { amount: savings }),
         acknowledge: reset,
       };
     }
@@ -111,7 +112,7 @@ export default function Bank() {
         };
       } else {
         vendorMessage = {
-          body: `Now you have ${savings} gold pieces in your savings account.`,
+          body: t('Now you have {amount} gold pieces in your savings account.', { amount: savings }),
           acknowledge: next,
         };
       }
@@ -119,7 +120,7 @@ export default function Bank() {
 
     if (step === 1) {
       vendorMessage = {
-        body: `How much would you like to withdraw? (0-${savings})`,
+        body: t('How much would you like to withdraw? (0-{limit})', { limit: savings }),
       };
 
       children = (
@@ -137,14 +138,14 @@ export default function Bank() {
 
     if (step === 2) {
       vendorMessage = {
-        body: `Here is ${withdrawAmount.current} gold from your account.`,
+        body: t('Here is {amount} gold from your account.', { amount: withdrawAmount.current }),
         acknowledge: next,
       };
     }
 
     if (step === 3) {
       vendorMessage = {
-        body: `Now you have ${savings} gold pieces in your savings account.`,
+        body: t('Now you have {amount} gold pieces in your savings account.', { amount: savings }),
         acknowledge: reset,
       };
     }
@@ -156,7 +157,7 @@ export default function Bank() {
     if (step === 0) {
       if (creditLine > 0) {
         vendorMessage = {
-          body: `Your credit line is ${creditLine} gold pieces.`,
+          body: t('Your credit line is {amount} gold pieces.', { amount: creditLine }),
           acknowledge: next,
         };
       } else {
@@ -169,7 +170,7 @@ export default function Bank() {
 
     if (step === 1) {
       vendorMessage = {
-        body: `How much gold do you need to borrow? (0-${creditLine})`,
+        body: t('How much gold do you need to borrow? (0-{limit})', { limit: creditLine }),
       };
 
       children = (
@@ -187,7 +188,7 @@ export default function Bank() {
 
     if (step === 2) {
       vendorMessage = {
-        body: `Then we’ll lend you ${borrowAmount.current} gold pieces.`,
+        body: t('Then we’ll lend you {amount} gold pieces.', { amount: borrowAmount.current }),
         acknowledge: next,
       };
     }
@@ -211,7 +212,7 @@ export default function Bank() {
         };
       } else {
         vendorMessage = {
-          body: `Now your debt is ${debt} gold.`,
+          body: t('Now your debt is {amount} gold.', { amount: debt }),
           acknowledge: next,
         };
       }
@@ -228,7 +229,7 @@ export default function Bank() {
         };
       } else {
         vendorMessage = {
-          body: `How much of your loan will you be paying back? (0-${repayAmount})`,
+          body: t('How much of your loan will you be paying back? (0-{limit})', { limit: repayAmount }),
         };
 
         children = (
@@ -259,7 +260,7 @@ export default function Bank() {
         };
       } else {
         vendorMessage = {
-          body: `Now your debt is ${debt} gold.`,
+          body: t('Now your debt is {amount} gold.', { amount: debt }),
           acknowledge: next,
         };
       }

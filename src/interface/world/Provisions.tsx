@@ -5,6 +5,7 @@ import { classNames } from '../interfaceUtils';
 import updateInterface from '../../state/updateInterface';
 import { getPlayerFleet } from '../../state/selectorsFleet';
 import { getProvisionSummary, ProvisionSummary } from '../../state/provisions';
+import { t } from '../../localization';
 
 /*
   The icons are 16x32 pixel art drawn at their native size. At the 2x they used
@@ -30,17 +31,15 @@ export const getProvisionStatusText = ({
     return null;
   }
   if (status === 'exhausted') {
-    return 'Supplies exhausted';
+    return t('Supplies exhausted');
   }
   if (daysRemaining === 0) {
-    return 'Less than 1 day remaining';
+    return t('Less than 1 day remaining');
   }
   if (status === 'low') {
-    return `Only ${daysRemaining} day${
-      daysRemaining === 1 ? '' : 's'
-    } remaining`;
+    return t(daysRemaining === 1 ? 'Only {days} day remaining' : 'Only {days} days remaining', { days: daysRemaining });
   }
-  return `${daysRemaining} days remaining`;
+  return t('{days} days remaining', { days: daysRemaining });
 };
 
 export const getStarvationReportText = ({
@@ -56,11 +55,9 @@ export const getStarvationReportText = ({
     return null;
   }
 
-  const lost = `Lost ${deaths} crew member${
-    deaths === 1 ? '' : 's'
-  } to starvation`;
+  const lost = t(deaths === 1 ? 'Lost {deaths} crew member to starvation' : 'Lost {deaths} crew members to starvation', { deaths });
 
-  return adrift ? `${lost} — the fleet drifted into port` : lost;
+  return adrift ? t('{lost} — the fleet drifted into port', { lost }) : lost;
 };
 
 export default function Provisions({ hidden }: Props) {
@@ -88,7 +85,7 @@ export default function Provisions({ hidden }: Props) {
       className={classNames('mt-8', hidden ? 'hidden' : '')}
       data-test="provisions"
     >
-      <div className="text-sm mb-4">Provisions</div>
+      <div className="text-sm mb-4">{t('Provisions')}</div>
       {!!statusText && (
         <div
           className={classNames('text-sm mb-2', warningClass)}
@@ -108,7 +105,7 @@ export default function Provisions({ hidden }: Props) {
       <div className={classNames(provisionClass, warningClass)}>
         <img
           src={Assets.images('worldWater').toDataURL()}
-          alt="Water"
+          alt={t('Water')}
           className={iconClass}
         />
         <div className={quantityClass} data-test="provision-water">
@@ -118,7 +115,7 @@ export default function Provisions({ hidden }: Props) {
       <div className={classNames(provisionClass, warningClass)}>
         <img
           src={Assets.images('worldFood').toDataURL()}
-          alt="food"
+          alt={t('Food')}
           className={iconClass}
         />
         <div className={quantityClass} data-test="provision-food">
@@ -128,7 +125,7 @@ export default function Provisions({ hidden }: Props) {
       <div className={provisionClass}>
         <img
           src={Assets.images('worldLumber').toDataURL()}
-          alt="Lumber"
+          alt={t('Lumber')}
           className={iconClass}
         />
         <div className={quantityClass}>{lumber}</div>
@@ -136,7 +133,7 @@ export default function Provisions({ hidden }: Props) {
       <div className={provisionClass}>
         <img
           src={Assets.images('worldShot').toDataURL()}
-          alt="Shot"
+          alt={t('Shot')}
           className={iconClass}
         />
         <div className={quantityClass}>{shot}</div>

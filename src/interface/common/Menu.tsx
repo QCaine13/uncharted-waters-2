@@ -7,6 +7,8 @@ import React, { useEffect, useState } from 'react';
 
 import { classNames } from '../interfaceUtils';
 import useCancel from '../port/hooks/useCancel';
+import { t } from '../../localization';
+import { isInteractiveTextTarget } from '../../localization/dom';
 
 export interface Option<T> {
   label: string;
@@ -21,6 +23,7 @@ interface Props<T> {
   onActiveIndex?: (index: number) => void;
   hidden?: boolean;
   center?: boolean;
+  translateLabels?: boolean;
 }
 
 export default function Menu<T extends number | string>({
@@ -30,6 +33,7 @@ export default function Menu<T extends number | string>({
   onActiveIndex,
   hidden = false,
   center = false,
+  translateLabels = true,
 }: Props<T>) {
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -47,6 +51,7 @@ export default function Menu<T extends number | string>({
     }
 
     const onKeydown = (e: KeyboardEvent) => {
+      if (isInteractiveTextTarget(e.target)) return;
       const pressedKey = e.key.toLowerCase();
 
       if (['e', 'enter'].includes(pressedKey)) {
@@ -121,7 +126,9 @@ export default function Menu<T extends number | string>({
             }}
             role="button"
           >
-            <div className={!center ? 'pl-4' : 'text-center'}>{label}</div>
+            <div className={!center ? 'pl-4' : 'text-center'}>
+              {translateLabels ? t(label) : label}
+            </div>
           </div>
         );
       })}

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -42,7 +42,13 @@
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             ></path>
           </svg>
-          <div class="mt-8 text-white">Game is loading...</div>
+          <div
+            class="mt-8 text-white"
+            data-en="Game is loading..."
+            data-zh="游戏加载中……"
+          >
+            游戏加载中……
+          </div>
         </div>
       </div>
     </div>
@@ -52,22 +58,53 @@
       >
         <div class="grid grid-cols-12 gap-16">
           <div class="col-span-4">
-            <h2 class="text-2xl font-bold mb-4 text-green-600">Controls</h2>
+            <h2
+              class="text-2xl font-bold mb-4 text-green-600"
+              data-en="Controls"
+              data-zh="操作"
+            >
+              操作
+            </h2>
             <ul class="list-disc ml-4 leading-loose">
-              <li>WASD keys <span class="text-gray-500">movement</span></li>
               <li>
-                E, Enter or right-click
-                <span class="text-gray-500">confirm, select</span>
+                WASD
+                <span class="text-gray-500" data-en="movement" data-zh="移动"
+                  >移动</span
+                >
               </li>
-              <li>
-                Escape or left-click
-                <span class="text-gray-500">cancel, exit</span>
+              <li
+                data-en="E, Enter or left-click — confirm, select"
+                data-zh="E、Enter 或左键 — 确认、选择"
+              >
+                E、Enter 或左键 — 确认、选择
+              </li>
+              <li
+                data-en="Escape or right-click — cancel, exit"
+                data-zh="Escape 或右键 — 取消、退出"
+              >
+                Escape 或右键 — 取消、退出
               </li>
             </ul>
           </div>
           <div class="col-span-6 pr-16">
-            <h1 class="text-2xl font-bold mb-4 text-green-600">About</h1>
-            <p class="">
+            <h1
+              class="text-2xl font-bold mb-4 text-green-600"
+              data-en="About"
+              data-zh="关于"
+            >
+              关于
+            </h1>
+            <p data-locale-only="zh-CN">
+              这是
+              <a
+                class="text-sky-400 hover:text-sky-300 font-medium border-b hover:border-b-2 border-b-sky-400 hover:border-b-sky-300"
+                href="https://en.wikipedia.org/wiki/Uncharted_Waters#Uncharted_Waters:_New_Horizons"
+                >Uncharted Waters: New Horizons</a
+              >
+              的浏览器重制版。这款开放世界角色扮演游戏发行于 1994
+              年；你将在大航海时代环游世界，交易货物并与海盗交战。
+            </p>
+            <p data-locale-only="en" hidden>
               This is a remake of
               <a
                 class="text-sky-400 hover:text-sky-300 font-medium border-b hover:border-b-2 border-b-sky-400 hover:border-b-sky-300"
@@ -77,12 +114,24 @@
               the Age of Exploration, you sail around the world, trading goods
               and fighting pirates.
             </p>
-            <p class="mt-8">
-              It’s a side project of mine that I started in 2017 when I was
-              working for the game publisher Paradox Interactive. Being a web
-              developer, I decided to make a game that could run in the browser.
+            <p
+              class="mt-8"
+              data-en="It’s a side project of mine that I started in 2017 when I was working for the game publisher Paradox Interactive. Being a web developer, I decided to make a game that could run in the browser."
+              data-zh="这是我在 2017 年任职于游戏发行商 Paradox Interactive 时开始的业余项目。作为网络开发者，我想制作一款能在浏览器中运行的游戏。"
+            >
+              这是我在 2017 年任职于游戏发行商 Paradox Interactive
+              时开始的业余项目。作为网络开发者，我想制作一款能在浏览器中运行的游戏。
             </p>
-            <p class="mt-8">
+            <p class="mt-8" data-locale-only="zh-CN">
+              我会不定期在
+              <a
+                class="text-sky-400 hover:text-sky-300 font-medium border-b hover:border-b-2 border-b-sky-400 hover:border-b-sky-300"
+                href="https://johan.li"
+                >个人网站</a
+              >
+              发布进展。
+            </p>
+            <p class="mt-8" data-locale-only="en" hidden>
               Every now and then, I post updates to my
               <a
                 class="text-sky-400 hover:text-sky-300 font-medium border-b hover:border-b-2 border-b-sky-400 hover:border-b-sky-300"
@@ -106,7 +155,13 @@
                   d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
                 ></path>
               </svg>
-              <p class="mt-4">Check this project out on GitHub.</p>
+              <p
+                class="mt-4"
+                data-en="Check this project out on GitHub."
+                data-zh="在 GitHub 上查看本项目。"
+              >
+                在 GitHub 上查看本项目。
+              </p>
             </a>
           </div>
         </div>
@@ -121,21 +176,29 @@
             height="200"
             alt="Uncharted Waters: New Horizons sailing"
           />
-          <p class="text-2xl font-bold mt-8 leading-normal text-gray-500">
-            1552.
-            <br />
-            The Age of Exploration.
-            <br />
-            Six brave voyagers are each about to begin a life of adventure...
+          <p
+            class="text-2xl font-bold mt-8 leading-normal text-gray-500"
+            data-en="1522. The Age of Exploration. Six brave voyagers are each about to begin a life of adventure..."
+            data-zh="1522年。大航海时代。六位勇敢的航海家，即将各自踏上冒险之路……"
+          >
+            1522年。大航海时代。六位勇敢的航海家，即将各自踏上冒险之路……
           </p>
         </div>
         <div class="flex items-center justify-end">
           <div class="max-w-lg mr-16">
-            <div class="text-4xl font-bold text-blue-500">João Franco</div>
-            <div class="text-xl mt-8 leading-normal text-blue-200">
-              As the son of Duke Leon Franco, João sails for the glory of
-              Portugal. In his travels around the globe he hopes to discover the
-              secret of the lost land of Atlantis.
+            <div
+              class="text-4xl font-bold text-blue-500"
+              data-en="João Franco"
+              data-zh="约翰·法雷尔"
+            >
+              约翰·法雷尔
+            </div>
+            <div
+              class="text-xl mt-8 leading-normal text-blue-200"
+              data-en="As the son of Duke Leon Franco, João sails for the glory of Portugal. In his travels around the globe he hopes to discover the secret of the lost land of Atlantis."
+              data-zh="约翰是里昂公爵之子，为葡萄牙的荣耀扬帆出海。他希望在环球航行中找到失落大陆亚特兰蒂斯的秘密。"
+            >
+              约翰是里昂公爵之子，为葡萄牙的荣耀扬帆出海。他希望在环球航行中找到失落大陆亚特兰蒂斯的秘密。
             </div>
           </div>
           <div
@@ -155,21 +218,37 @@
             "
           ></div>
           <div class="max-w-lg ml-16">
-            <div class="text-4xl font-bold text-violet-500">Otto Baynes</div>
-            <div class="text-xl mt-8 leading-normal text-violet-200">
-              A Royal Knight of the British Empire, Otto is on a secret mission
-              for King Henry VIII. Sailing as a privateer, his goal is to defeat
-              the Spanish Fleet.
+            <div
+              class="text-4xl font-bold text-violet-500"
+              data-en="Otto Baynes"
+              data-zh="奥托·斯宾诺拉"
+            >
+              奥托·斯宾诺拉
+            </div>
+            <div
+              class="text-xl mt-8 leading-normal text-violet-200"
+              data-en="A Royal Knight of the British Empire, Otto is on a secret mission for King Henry VIII. Sailing as a privateer, his goal is to defeat the Spanish Fleet."
+              data-zh="英国皇家骑士奥托奉亨利八世之命执行秘密任务。他将以私掠船长的身份出海，目标是击败西班牙舰队。"
+            >
+              英国皇家骑士奥托奉亨利八世之命执行秘密任务。他将以私掠船长的身份出海，目标是击败西班牙舰队。
             </div>
           </div>
         </div>
         <div class="flex items-center justify-end">
           <div class="max-w-lg mr-8">
-            <div class="text-4xl font-bold text-red-500">Catalina Erantzo</div>
-            <div class="text-xl mt-8 leading-normal text-red-200">
-              This red-haired pirate hails from Spain. She seeks revenge on
-              Portugal for the mysterious loss of two men — her brother and her
-              beloved.
+            <div
+              class="text-4xl font-bold text-red-500"
+              data-en="Catalina Erantzo"
+              data-zh="卡特琳娜·艾兰茨"
+            >
+              卡特琳娜·艾兰茨
+            </div>
+            <div
+              class="text-xl mt-8 leading-normal text-red-200"
+              data-en="This red-haired pirate hails from Spain. She seeks revenge on Portugal for the mysterious loss of two men — her brother and her beloved."
+              data-zh="这位红发海盗来自西班牙。她的兄长与爱人神秘失踪，为此踏上向葡萄牙复仇的旅程。"
+            >
+              这位红发海盗来自西班牙。她的兄长与爱人神秘失踪，为此踏上向葡萄牙复仇的旅程。
             </div>
           </div>
           <div
@@ -189,21 +268,37 @@
             "
           ></div>
           <div class="max-w-lg ml-16">
-            <div class="text-4xl font-bold text-slate-500">Ernst von Bohr</div>
-            <div class="text-xl mt-8 leading-normal text-slate-200">
-              Ernst is a famous geographer from Holland. At the request of his
-              cartographer friend Mercator, he sets sail to plot out a detailed
-              map of the world.
+            <div
+              class="text-4xl font-bold text-slate-500"
+              data-en="Ernst von Bohr"
+              data-zh="恩斯特·洛佩斯"
+            >
+              恩斯特·洛佩斯
+            </div>
+            <div
+              class="text-xl mt-8 leading-normal text-slate-200"
+              data-en="Ernst is a famous geographer from Holland. At the request of his cartographer friend Mercator, he sets sail to plot out a detailed map of the world."
+              data-zh="恩斯特是荷兰著名的地理学家。应制图家好友墨卡托之邀，他扬帆出海，绘制详尽的世界地图。"
+            >
+              恩斯特是荷兰著名的地理学家。应制图家好友墨卡托之邀，他扬帆出海，绘制详尽的世界地图。
             </div>
           </div>
         </div>
         <div class="flex items-center justify-end">
           <div class="max-w-lg mr-8">
-            <div class="text-4xl font-bold text-orange-500">Pietro Conti</div>
-            <div class="text-xl mt-8 leading-normal text-orange-200">
-              The Conti family went bankrupt long ago, leaving Pietro a large
-              debt. But that won’t stop him from exploring the world in search
-              of treasure and exotic items.
+            <div
+              class="text-4xl font-bold text-orange-500"
+              data-en="Pietro Conti"
+              data-zh="皮耶德·康迪"
+            >
+              皮耶德·康迪
+            </div>
+            <div
+              class="text-xl mt-8 leading-normal text-orange-200"
+              data-en="The Conti family went bankrupt long ago, leaving Pietro a large debt. But that won’t stop him from exploring the world in search of treasure and exotic items."
+              data-zh="康迪家族早已破产，皮耶德也因此背负巨债。但这不会阻止他周游世界，寻找宝藏与异国奇珍。"
+            >
+              康迪家族早已破产，皮耶德也因此背负巨债。但这不会阻止他周游世界，寻找宝藏与异国奇珍。
             </div>
           </div>
           <div
@@ -223,11 +318,19 @@
             "
           ></div>
           <div class="max-w-lg ml-16">
-            <div class="text-4xl font-bold text-amber-500">Ali Vezas</div>
-            <div class="text-xl mt-8 leading-normal text-amber-200">
-              Ali has struggled to make ends meet in Istanbul since he was a
-              child. Now, with a merchant ship, he will try to make his fortune,
-              trading in foreign lands.
+            <div
+              class="text-4xl font-bold text-amber-500"
+              data-en="Ali Vezas"
+              data-zh="阿兰·维斯特"
+            >
+              阿兰·维斯特
+            </div>
+            <div
+              class="text-xl mt-8 leading-normal text-amber-200"
+              data-en="Ali has struggled to make ends meet in Istanbul since he was a child. Now, with a merchant ship, he will try to make his fortune, trading in foreign lands."
+              data-zh="阿兰自幼在伊斯坦堡艰难度日。如今他拥有一艘商船，将前往异国经商，开创自己的财富。"
+            >
+              阿兰自幼在伊斯坦堡艰难度日。如今他拥有一艘商船，将前往异国经商，开创自己的财富。
             </div>
           </div>
         </div>
@@ -243,14 +346,22 @@
             <div
               class="text-2xl font-bold leading-normal text-gray-500 mt-8 max-w-xl"
             >
-              while others are determined to stand in their way.
+              <span
+                data-en="while others are determined to stand in their way."
+                data-zh="也有人决意挡住他们的去路。"
+                >也有人决意挡住他们的去路。</span
+              >
             </div>
           </div>
           <div>
             <div
               class="text-2xl font-bold leading-normal text-gray-500 mb-8 max-w-xl"
             >
-              Some provide help and support,
+              <span
+                data-en="Some provide help and support,"
+                data-zh="有人伸出援手，"
+                >有人伸出援手，</span
+              >
             </div>
             <div
               class="w-[272px] h-[272px] ml-auto animate-blink-friends"
@@ -263,7 +374,11 @@
         </div>
         <div class="flex items-center justify-center text-gray-500">
           <div class="text-4xl font-bold leading-normal max-w-lg mr-16">
-            It’s up to you to guide them on the path to glory.
+            <span
+              data-en="It’s up to you to guide them on the path to glory."
+              data-zh="由你引领他们走向荣耀。"
+              >由你引领他们走向荣耀。</span
+            >
           </div>
           <button type="button" id="scrollToTop">
             <svg

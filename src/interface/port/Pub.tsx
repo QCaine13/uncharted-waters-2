@@ -9,6 +9,7 @@ import BuildingWrapper from './BuildingWrapper';
 import { getFirstMateId, getGold, isLisbon } from '../../state/selectors';
 import { getCrewNeeded, getPlayerFleet } from '../../state/selectorsFleet';
 import { CREW_COST, recruitCrew } from '../../state/actionsPort';
+import { t } from '../../localization';
 
 const pubOptions = [
   'Recruit Crew',
@@ -100,9 +101,13 @@ export default function Pub() {
       }
 
       characterMessage = {
-        body: `We rounded up ${count} men, at the cost of ${
-          count * CREW_COST
-        } gold pieces.`,
+        body: t(
+          'We rounded up {count} men, at the cost of {cost} gold pieces.',
+          {
+            count,
+            cost: count * CREW_COST,
+          },
+        ),
         characterId: getFirstMateId(),
         acknowledge: () => {
           recruitCrew(count);

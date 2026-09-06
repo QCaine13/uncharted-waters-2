@@ -9,6 +9,8 @@ import throttle from 'lodash.throttle';
 import Assets from '../../assets';
 import { Position } from '../../types';
 import useCancel from '../port/hooks/useCancel';
+import { t } from '../../localization';
+import { isInteractiveTextTarget } from '../../localization/dom';
 
 // e.g., if Yes is highlighted but the user clicks No
 const SUBMIT_DELAY_IF_NOT_HIGHLIGHTED = 50;
@@ -52,6 +54,7 @@ export default function Confirm({ onYes, onNo, initialPosition }: Props) {
 
   useEffect(() => {
     const onKeydown = (e: KeyboardEvent) => {
+      if (isInteractiveTextTarget(e.target)) return;
       const pressedKey = e.key.toLowerCase();
 
       if (['a', 'd', 'arrowleft', 'arrowright'].includes(pressedKey)) {
@@ -162,7 +165,11 @@ export default function Confirm({ onYes, onNo, initialPosition }: Props) {
           }}
         />
         <div
-          className="absolute top-8 left-5 w-[120px] h-16 cursor-pointer"
+          className={`absolute top-8 left-5 w-[120px] h-16 cursor-pointer flex items-center justify-center border-4 text-2xl ${
+            yesHighlighted
+              ? 'bg-orange-700 border-yellow-300 text-white'
+              : 'bg-orange-100 border-orange-100 text-black'
+          }`}
           onClick={() => {
             if (yesHighlighted) {
               setDelayedValueToSubmit(undefined);
@@ -173,10 +180,17 @@ export default function Confirm({ onYes, onNo, initialPosition }: Props) {
             }
           }}
           role="button"
+          aria-label={t('Yes')}
           data-test="confirmYes"
-        />
+        >
+          {t('Yes')}
+        </div>
         <div
-          className="absolute top-8 left-[148px] w-[120px] h-16 cursor-pointer"
+          className={`absolute top-8 left-[148px] w-[120px] h-16 cursor-pointer flex items-center justify-center border-4 text-2xl ${
+            yesHighlighted
+              ? 'bg-orange-100 border-orange-100 text-black'
+              : 'bg-orange-700 border-yellow-300 text-white'
+          }`}
           onClick={() => {
             if (!yesHighlighted) {
               setDelayedValueToSubmit(undefined);
@@ -187,8 +201,11 @@ export default function Confirm({ onYes, onNo, initialPosition }: Props) {
             }
           }}
           role="button"
+          aria-label={t('No')}
           data-test="confirmNo"
-        />
+        >
+          {t('No')}
+        </div>
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import characterData from '../../data/characterData';
 import getSailor from '../../data/sailorData';
 import { compiledStoryContent } from '../../story';
 import { characterId as toCharacterId } from '../../story/core/types';
+import { t } from '../../localization';
 
 export type Position = 1 | 2;
 
@@ -48,8 +49,8 @@ export default function CharacterMessageBox({ messageBox, position }: Props) {
             alt=""
           />
           <div className="flex-1 text-2xl pl-4">
-            <div className={classNames('text-base mb-2', color)}>{name}</div>
-            {body}
+            <div className={classNames('text-base mb-2', color)}>{t(name)}</div>
+            {t(body)}
             {acknowledge && (
               <img
                 src={Assets.images('dialogCaretDown').toDataURL()}

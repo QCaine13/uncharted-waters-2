@@ -18,6 +18,7 @@ import useBuilding from '../hooks/useBuilding';
 import { VendorMessageBoxType } from '../../quest/getMessageBoxes';
 import ShipyardShipInputName from './ShipyardShipInputName';
 import { canAfford, getUsedShips } from '../../../state/selectors';
+import { t } from '../../../localization';
 
 const shipyardOptions = [
   'New Ship',
@@ -98,9 +99,7 @@ export default function Shipyard() {
 
       if (step === 2) {
         vendorMessage = {
-          body: `I’d sell this ship for ${
-            shipData[usedShips[usedShipId]].basePrice
-          } gold pieces. What do ye say?`,
+          body: t('I’d sell this ship for {price} gold pieces. What do ye say?', { price: shipData[usedShips[usedShipId]].basePrice }),
           confirm: {
             yes: next,
             no: () => {
@@ -182,6 +181,7 @@ export default function Shipyard() {
           onCancel={back}
           level2
           hidden={step !== 0}
+          translateLabels={false}
         />
       );
 
@@ -200,9 +200,7 @@ export default function Shipyard() {
         const ship = getPlayerFleetShip(selectedShipNumberToSell);
 
         vendorMessage = {
-          body: `For this ship, I’ll give you ${
-            shipData[ship.id].basePrice * SELL_SHIP_MODIFIER
-          } gold pieces. OK?`,
+          body: t('For this ship, I’ll give you {price} gold pieces. OK?', { price: shipData[ship.id].basePrice * SELL_SHIP_MODIFIER }),
           confirm: {
             yes: () => {
               sellShipNumber(selectedShipNumberToSell);

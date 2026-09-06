@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { classNames } from '../interfaceUtils';
 import updateInterface from '../../state/updateInterface';
 import type { Landmark } from '../../data/discoveryData';
+import { t } from '../../localization';
 
 interface Props {
   hidden: boolean;
@@ -31,7 +32,11 @@ export default function DiscoveryBanner({ hidden }: Props) {
           key={landmark.id}
           className="bg-black bg-opacity-75 text-white text-xl px-6 py-2"
         >
-          {`Discovered: ${landmark.name} — +${landmark.fame} adventure fame, +${landmark.gold}g`}
+          {t('Discovered: {name} — +{fame} adventure fame, +{gold}g', {
+            name: t(landmark.name),
+            fame: landmark.fame,
+            gold: landmark.gold,
+          })}
         </div>
       ))}
     </div>

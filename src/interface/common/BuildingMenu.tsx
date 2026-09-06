@@ -2,6 +2,7 @@ import React from 'react';
 
 import MessageBox from './MessageBox';
 import Menu, { Option } from './Menu';
+import { t } from '../../localization';
 
 interface Props<T> {
   options: Option<T>[];
@@ -10,6 +11,7 @@ interface Props<T> {
   title?: string;
   level2?: boolean;
   hidden?: boolean;
+  translateLabels?: boolean;
 }
 
 export default function BuildingMenu<T extends number | string>({
@@ -19,6 +21,7 @@ export default function BuildingMenu<T extends number | string>({
   title = '',
   hidden = false,
   level2 = false,
+  translateLabels = true,
 }: Props<T>) {
   return (
     <div
@@ -29,7 +32,7 @@ export default function BuildingMenu<T extends number | string>({
         <div className={level2 ? 'w-[280px]' : 'w-[208px]'}>
           {Boolean(title) && (
             <div className="text-center text-2xl py-2 mb-4 cursor-pointer bg-orange-200">
-              {title}
+              {t(title)}
             </div>
           )}
           <Menu
@@ -38,6 +41,7 @@ export default function BuildingMenu<T extends number | string>({
             onCancel={onCancel}
             hidden={hidden}
             center={!level2}
+            translateLabels={translateLabels}
           />
         </div>
       </MessageBox>

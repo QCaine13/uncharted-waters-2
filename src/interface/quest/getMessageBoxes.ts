@@ -1,5 +1,6 @@
 import type { DialogueStep } from '../../story/core/types';
 import type { StoryFrame } from '../../story/core/runtime';
+import { getLocale, t } from '../../localization';
 
 const messagePositions = [0, 1, 2] as const;
 
@@ -34,7 +35,9 @@ export type MessageBoxes = [
 ];
 
 const interpolatePlayerName = (body: string) =>
-  body.replace('$firstName', 'João').replace('$lastName', 'Franco');
+  t(body)
+    .replace('$firstName', getLocale() === 'zh-CN' ? '约翰' : 'João')
+    .replace('$lastName', getLocale() === 'zh-CN' ? '法雷尔' : 'Franco');
 
 export const getMessageBoxesFromFrame = (
   history: readonly DialogueStep[],

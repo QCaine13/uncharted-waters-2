@@ -4,8 +4,8 @@ import React, { ChangeEvent, FormEvent, useState } from 'react';
 
 import MessageBox from './MessageBox';
 import { classNames } from '../interfaceUtils';
-import Assets from '../../assets';
 import useCancel from '../port/hooks/useCancel';
+import { t } from '../../localization';
 
 interface Props {
   limit: number;
@@ -58,12 +58,13 @@ export default function InputNumber({
           data-test="inputNumberInput"
         />
       </div>
-      <button type="submit" data-test="inputNumberButton">
-        <img
-          src={Assets.images('dialogSubmit').toDataURL()}
-          alt=""
-          className="w-[92px] h-[44px]"
-        />
+      <button
+        type="submit"
+        data-test="inputNumberButton"
+        aria-label={t('Submit')}
+        className="w-[92px] h-[44px] border-4 border-[#d34100] bg-orange-100 text-black text-lg"
+      >
+        {t('Submit')}
       </button>
     </form>
   );

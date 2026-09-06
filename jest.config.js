@@ -8,6 +8,7 @@ module.exports = {
     '\\.(png|bin|ogg|mp3|wasm)$': 'identity-obj-proxy',
   },
   testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/src/testSetup.ts'],
   testMatch: ['**/*.test.{ts,tsx}'],
   // Agent worktrees live under .claude/worktrees/ — inside the repo root, so
   // testMatch walks into them and runs a second full copy of the suite. That

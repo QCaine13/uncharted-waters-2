@@ -104,8 +104,16 @@ const moveOneTile = (key: DirectionKey, context: string) =>
         const waitUntilSettled = (
           previousMovementFrame: number,
           stableFrames: number,
+          remainingFrames = 600,
         ) => {
           window.requestAnimationFrame(() => {
+            if (remainingFrames === 0) {
+              window.document.dispatchEvent(
+                new window.KeyboardEvent('keyup', { key, bubbles: true }),
+              );
+              reject(new Error(`Movement ${key} did not settle at ${context}`));
+              return;
+            }
             const currentMovementFrame = movementFrame(canvas, from, to);
             const nextStableFrames =
               currentMovementFrame === previousMovementFrame
@@ -120,12 +128,25 @@ const moveOneTile = (key: DirectionKey, context: string) =>
               }
               return;
             }
-            waitUntilSettled(currentMovementFrame, nextStableFrames);
+            waitUntilSettled(
+              currentMovementFrame,
+              nextStableFrames,
+              remainingFrames - 1,
+            );
           });
         };
 
-        const waitUntilHandled = () => {
+        const waitUntilHandled = (remainingFrames = 600) => {
           window.requestAnimationFrame(() => {
+            if (remainingFrames === 0) {
+              window.document.dispatchEvent(
+                new window.KeyboardEvent('keyup', { key, bubbles: true }),
+              );
+              reject(
+                new Error(`Movement ${key} was not handled at ${context}`),
+              );
+              return;
+            }
             if (
               window.document.querySelector('[data-test=building]') !== null
             ) {
@@ -133,7 +154,7 @@ const moveOneTile = (key: DirectionKey, context: string) =>
               return;
             }
             if (playerFrame(canvas, from) === startingPlayerFrame) {
-              waitUntilHandled();
+              waitUntilHandled(remainingFrames - 1);
               return;
             }
             window.document.dispatchEvent(
@@ -435,10 +456,14 @@ const advanceAtHarborUntilNight = (remaining = 20): Cypress.Chainable<void> => {
   });
 };
 
-const finishHouseFarewellAtNight = (remaining = 40): Cypress.Chainable<void> =>
+const finishHouseFarewellAtNight = (
+  availableText = 'Oh João, I just can’t understand',
+  blockedText = 'the Duke’s orders were quite specific',
+  remaining = 40,
+): Cypress.Chainable<void> =>
   cy.get('[data-test=building]').then(($building) => {
     const text = $building.text();
-    if (text.includes('Oh João, I just can’t understand')) {
+    if (text.includes(availableText)) {
       finishExitingStoryEvent('houseAfterQuestAndPub');
       return;
     }
@@ -446,7 +471,7 @@ const finishHouseFarewellAtNight = (remaining = 40): Cypress.Chainable<void> =>
       throw new Error(
         'House farewell did not become available before midnight',
       );
-    expect(text).to.include('the Duke’s orders were quite specific');
+    expect(text).to.include(blockedText);
     cy.wrap($building).click();
     cy.get('[data-test=building]')
       .should('not.exist')
@@ -457,7 +482,7 @@ const finishHouseFarewellAtNight = (remaining = 40): Cypress.Chainable<void> =>
       expect((saved.timePassed ?? 0) % 1440).to.be.lessThan(1440);
     });
     enterAdjacentBuilding('w');
-    finishHouseFarewellAtNight(remaining - 1);
+    finishHouseFarewellAtNight(availableText, blockedText, remaining - 1);
   });
 
 describe('Structured story architecture through production assets', () => {
@@ -730,6 +755,129 @@ describe('Structured story architecture through production assets', () => {
       expectSaveV2LegacyOnly(saved);
       expectSerializedNullMateRoles(saved);
       expect(saved.quests).to.include('harborFinal');
+    });
+  });
+
+  it('plays the complete real Lisbon tutorial and departs in Chinese', () => {
+    cy.visit('', {
+      onBeforeLoad(window) {
+        window.localStorage.setItem('uw2.e2e.locale', 'zh-CN');
+        window.localStorage.setItem('uw2.locale', 'zh-CN');
+        window.localStorage.removeItem(SAVED_STATE_KEY);
+      },
+    });
+    cy.contains('游戏加载中……').should('not.exist');
+    cy.contains('里斯本').should('exist');
+    cy.then(() => {
+      modeledPosition = { x: 54, y: 68 };
+    });
+
+    enterAdjacentBuilding('w');
+    cy.get('[data-test=building]').should('include.text', '遇到难题就去酒馆吧');
+    advanceAtHarborUntilNight();
+
+    enterBuilding(spawnToPub, '约翰少爷，真是稀客。');
+    finishExitingStoryEvent('pubBeforeQuest');
+    enterBuilding(pubToChurch, '法雷尔公爵府上可有人能出趟远门？');
+    finishExitingStoryEvent('churchBeforeQuest');
+    enterBuilding(churchToHouse, '父亲，您找我吗？');
+    cy.get('#game').screenshot('chinese-duke-dialogue');
+    finishExitingStoryEvent('houseBeforeQuest');
+    enterBuilding(houseToPub, '约翰少爷，出什么事了？');
+    finishExitingStoryEvent('pubAfterQuest');
+
+    readSavedState().then((saved) => {
+      expectSaveV2LegacyOnly(saved);
+      expect(saved.gold).to.equal(1000);
+      expect(saved.quests).to.have.length(4);
+    });
+
+    cy.reload();
+    cy.contains('里斯本').should('exist');
+    cy.then(() => {
+      modeledPosition = { x: 54, y: 68 };
+    });
+    enterBuilding(spawnToHouse);
+    finishHouseFarewellAtNight(
+      '约翰，我真不明白你父亲为何不准你回家',
+      '公爵严令不准您进府',
+    );
+    enterBuilding(houseToItemShop, '欢迎，约翰少爷。我有东西要交给您。');
+    finishStoryEventToMenu('itemShopAfterQuest');
+    exitCurrentBuilding();
+    enterBuilding(itemShopToShipyard, '喂，我们的船造好了吗？');
+    finishExitingStoryEvent('shipyardAfterQuest');
+    enterBuilding(shipyardToChurch, '约翰少爷，很高兴您能来。');
+    finishStoryEventToMenu('churchAfterQuest');
+    exitCurrentBuilding('愿上帝保佑您的旅途！');
+    enterAdjacentBuilding('w');
+    cy.get('[data-test=building]').should(
+      'include.text',
+      '多谢您答应带恩里克神父同行',
+    );
+    finishStoryEventToMenu('churchAfterEnrico');
+    exitCurrentBuilding('愿上帝保佑您的旅途！');
+    ensureNightOutsideAdjacentBuilding('愿上帝保佑您的旅途！');
+    enterBuilding(churchToHarbor, '那接下来怎么行动？');
+    advanceStoryUntil(
+      (document) => document.querySelector('[data-test=confirmYes]') !== null,
+    );
+    cy.get('#game').screenshot('chinese-yes-no-choice');
+    cy.get('[data-test=confirmYes]').click();
+    finishStoryEventToMenu('harborFinal');
+
+    readSavedState().then((saved) => {
+      expectSaveV2LegacyOnly(saved);
+      expect(saved.gold).to.equal(2000);
+      expect(saved.items).to.deep.equal(['53', '4']);
+      expect(saved.fleets?.['1'].ships[0]).to.deep.include({
+        id: '6',
+        name: 'Hermes II',
+      });
+      expect(saved.quests).to.have.length(10);
+    });
+
+    exitCurrentBuilding();
+    enterBuilding(spawnToPub, '约翰，要来杯朗姆酒吗？');
+    finishStoryEventToMenu();
+    clickMenu('招募水手');
+    characterMessageIncludes('要为舰队招募一些水手吗？', 2);
+    cy.get('[data-test=confirmYes]').click();
+    clickCharacterLine('有哪位好手愿意加入我们的舰队？', 2);
+    clickCharacterLine('招募到 10 名水手，共花费 400 金币。', 2);
+    exitCurrentBuilding();
+    ensureNightOutsideAdjacentBuilding();
+    enterBuilding(pubToHarbor, '喂，伙计，要出航了吗？');
+    clickMenu('补给');
+    cy.get('[data-test=harborSupply]').contains(/^0$/).first().click();
+    cy.get('#game').screenshot('chinese-provision-input');
+    cy.get('[data-test=inputNumberInput]').type('10{enter}');
+    cy.get('[data-test=harborSupply]').contains(/^0$/).first().click();
+    cy.get('[data-test=inputNumberInput]').type('10{enter}');
+    readSavedState().then((saved) => {
+      expect(saved.gold).to.equal(1400);
+      expect(saved.fleets?.['1'].ships[0].cargo).to.deep.equal([
+        { type: 'water', quantity: 10 },
+        { type: 'food', quantity: 10 },
+      ]);
+    });
+    cy.get('[data-test=building]').rightclick();
+    clickMenu('出航');
+    characterMessageIncludes('补给可供航行 10 天。要出航吗？', 2);
+    cy.get('[data-test=confirmYes]').click();
+    cy.get('[data-test=building]').should('not.exist');
+    cy.contains('里斯本').should('not.exist');
+    cy.get('#game').screenshot('chinese-sea-hud');
+
+    readSavedState().then((saved) => {
+      expectSaveV2LegacyOnly(saved);
+      expect(saved.portId).to.be.null;
+      expect(saved.gold).to.equal(1400);
+      expect(saved.fleets?.['1'].ships[0]).to.deep.include({
+        name: 'Hermes II',
+        crew: 10,
+      });
+      expect(saved.quests).to.have.length(10);
     });
   });
 });

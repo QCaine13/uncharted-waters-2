@@ -19,6 +19,8 @@ import Mates from './Mates';
 import System from './System';
 import Discoveries from './Discoveries';
 import FameReadout from './FameReadout';
+import { t } from '../localization';
+import useLocale from '../localization/useLocale';
 
 interface Props {
   portId: string | null;
@@ -35,6 +37,7 @@ export default function Left({
   gold,
   children = null,
 }: Props) {
+  const locale = useLocale();
   const [dayAtSea, setDayAtSea] = useState(state.dayAtSea);
 
   updateInterface.dayAtSea = (d) => {
@@ -56,11 +59,19 @@ export default function Left({
         the warnings themselves in view — it is the rows underneath that go.
        */}
       <div className="p-5 min-h-0 overflow-y-auto" data-test="hudReadouts">
-        <div className="text-2xl font-bold whitespace-nowrap">
+        <div
+          className={classNames(
+            'font-bold whitespace-nowrap',
+            locale === 'zh-CN' ? 'text-xl tracking-tighter' : 'text-2xl',
+          )}
+          data-test="calendarDate"
+        >
           {getDate(timePassed)}
         </div>
         <div className="mb-8" data-test="dayAtSea">
-          {inPort ? getHoursMinutes(timePassed) : `Day ${dayAtSea}`}
+          {inPort
+            ? getHoursMinutes(timePassed)
+            : t('Day {day}', { day: dayAtSea })}
         </div>
         <div className="mb-4">
           <HudReadout label="Ingots" value={getIngots(gold)} />

@@ -1,4 +1,5 @@
 import { CardinalDirection, Direction, OrdinalDirection } from './types';
+import { isInteractiveTextTarget } from './localization/dom';
 
 type Wasd = 'w' | 'a' | 's' | 'd';
 
@@ -46,6 +47,7 @@ const PRESSED_E_TIME_MARGIN = 250;
 let pressedETimeoutId: number;
 
 const onKeydown = (e: KeyboardEvent) => {
+  if (isInteractiveTextTarget(e.target)) return;
   const pressedKey = e.key.toLowerCase();
 
   if (isWasd(pressedKey) && !pressedWasd.includes(pressedKey)) {
@@ -60,7 +62,7 @@ const onKeyup = (e: KeyboardEvent) => {
     pressedWasd = pressedWasd.filter((key) => key !== pressedKey);
   }
 
-  if (pressedKey === 'e') {
+  if (pressedKey === 'e' && !isInteractiveTextTarget(e.target)) {
     pressedE = true;
 
     window.clearTimeout(pressedETimeoutId);

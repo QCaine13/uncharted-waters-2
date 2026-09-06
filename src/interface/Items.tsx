@@ -5,6 +5,7 @@ import { itemData } from '../data/itemData';
 import MessageBox from './common/MessageBox';
 import ItemInfo from './common/ItemInfo';
 import Menu from './common/Menu';
+import { t } from '../localization';
 
 export default function Items() {
   const items = getPlayerItems();
@@ -15,7 +16,7 @@ export default function Items() {
     return (
       <MessageBox>
         <div className="text-2xl px-4 py-2 text-black w-64">
-          You have no items.
+          {t('You have no items.')}
         </div>
       </MessageBox>
     );

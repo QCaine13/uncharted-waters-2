@@ -11,6 +11,7 @@ import Assets from '../../assets';
 import updateInterface from '../../state/updateInterface';
 import { State } from '../../state/state';
 import { classNames } from '../interfaceUtils';
+import { t } from '../../localization';
 
 const indicatorClass = 'flex items-center';
 const speedClass = 'flex-1 text-right text-4xl';
@@ -56,26 +57,26 @@ export default function Indicators({ hidden }: Props) {
     >
       <div className="w-full">
         <div>
-          <div className="text-sm mb-4">Wind</div>
+          <div className="text-sm mb-4">{t('Wind')}</div>
           <div className={indicatorClass}>
             <img className="w-20 h-20" ref={windDirectionRef} alt="" />
             <div className={speedClass} ref={windSpeedRef} />
           </div>
         </div>
         <div className="mt-8">
-          <div className="text-sm mb-4">Current</div>
+          <div className="text-sm mb-4">{t('Current')}</div>
           <div className={indicatorClass}>
             <img className="w-20 h-20" ref={currentDirectionRef} alt="" />
             <div className={speedClass} ref={currentSpeedRef} />
           </div>
         </div>
         <div className="mt-20">
-          <div className="text-sm mb-4">Your fleet</div>
+          <div className="text-sm mb-4">{t('Your fleet')}</div>
           <div className={indicatorClass}>
             <img className="w-20 h-20" ref={playerFleetDirectionRef} alt="" />
             <div className={speedClass}>
               <div ref={playerFleetSpeedRef} />
-              <div className="text-xs mt-1 -mb-2">knots</div>
+              <div className="text-xs mt-1 -mb-2">{t('knots')}</div>
             </div>
           </div>
         </div>

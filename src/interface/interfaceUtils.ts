@@ -1,4 +1,5 @@
 import { START_DATE } from '../constants';
+import { getLocale } from '../localization';
 
 export const classNames = (...classes: string[]): string =>
   classes.filter(Boolean).join(' ');
@@ -14,6 +15,10 @@ export const hudClass = 'w-[180px] h-[800px] text-[#aaaaaa] text-lg';
 export const getDate = (timePassed: number) => {
   const date = new Date(START_DATE);
   date.setMinutes(date.getMinutes() + timePassed);
+
+  if (getLocale() === 'zh-CN') {
+    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+  }
 
   return `${date.toLocaleString('en-us', {
     month: 'short',
@@ -35,6 +40,10 @@ export const getHoursMinutes = (timePassed: number) => {
   }
 
   const minutes = timePassed % 60;
+
+  if (getLocale() === 'zh-CN') {
+    return `${period === 'AM' ? '上午' : '下午'} ${hours}:${String(minutes).padStart(2, '0')}`;
+  }
 
   if (minutes < 10) {
     return `${hours}:0${minutes} ${period}`;

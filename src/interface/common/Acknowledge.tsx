@@ -2,6 +2,7 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 
 import React, { useEffect } from 'react';
+import { isInteractiveTextTarget } from '../../localization/dom';
 
 interface Props {
   onAcknowledge: (() => void) | undefined;
@@ -14,6 +15,7 @@ export default function Acknowledge({ onAcknowledge }: Props) {
     }
 
     const onKeydown = (e: KeyboardEvent) => {
+      if (isInteractiveTextTarget(e.target)) return;
       const pressedKey = e.key.toLowerCase();
 
       if (['e', 'enter', 'escape'].includes(pressedKey)) {

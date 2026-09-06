@@ -82,6 +82,18 @@ interface Props {
   buildingId: string | null;
 }
 
+export const playAudio = async (audio: HTMLAudioElement) => {
+  try {
+    await audio.play();
+  } catch (error) {
+    // Changing tracks cancels an in-flight play request in Chromium. That
+    // cancellation is expected; every other playback failure remains visible.
+    if (!(error instanceof DOMException) || error.name !== 'AbortError') {
+      throw error;
+    }
+  }
+};
+
 export default function Sound({ portId, buildingId }: Props) {
   const audioRef = useRef(getAudioElement());
 
@@ -89,7 +101,7 @@ export default function Sound({ portId, buildingId }: Props) {
   const [soundOn, setSoundOn] = useState(true);
 
   const triggerAutoplay = () => {
-    audioRef.current.play();
+    playAudio(audioRef.current);
     setHasPlayed(true);
   };
 

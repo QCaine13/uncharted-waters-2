@@ -9,6 +9,7 @@ import { provisions } from '../../../game/world/fleets';
 import HarborSupplyInput, { ShipProvision } from './HarborSupplyInput';
 import { classNames } from '../../interfaceUtils';
 import useCancel from '../hooks/useCancel';
+import { t } from '../../../localization';
 
 interface Props {
   back: () => void;
@@ -25,12 +26,12 @@ export default function HarborSupply({ back }: Props) {
         <MessageBox>
           <div className="px-4 py-2">
             <div className="flex items-center">
-              <div className="w-64 text-green-600">Ship</div>
-              <div className="w-24 text-[#d34100]">Load</div>
-              <div className="w-24 text-blue-600 text-right">Water</div>
-              <div className="w-24 text-blue-600 text-right">Food</div>
-              <div className="w-24 text-blue-600 text-right">Lumber</div>
-              <div className="w-24 text-blue-600 text-right">Shot</div>
+              <div className="w-64 text-green-600">{t('Ship')}</div>
+              <div className="w-24 text-[#d34100]">{t('Cargo Load')}</div>
+              <div className="w-24 text-blue-600 text-right">{t('Water')}</div>
+              <div className="w-24 text-blue-600 text-right">{t('Food')}</div>
+              <div className="w-24 text-blue-600 text-right">{t('Lumber')}</div>
+              <div className="w-24 text-blue-600 text-right">{t('Shot')}</div>
             </div>
             {getPlayerFleet().map((ship, i) => {
               const loadPercent = getLoadPercent(i);

@@ -2,10 +2,10 @@
 
 import React, { ChangeEvent, FormEvent, useState } from 'react';
 
-import Assets from '../../../assets';
 import MessageBox from '../../common/MessageBox';
 import { classNames } from '../../interfaceUtils';
 import useCancel from '../hooks/useCancel';
+import { t } from '../../../localization';
 
 interface Props {
   onSubmit: (name: string) => void;
@@ -21,7 +21,7 @@ export default function ShipyardShipInputName({ onSubmit, onCancel }: Props) {
     <div className="absolute top-[500px] left-[96px]">
       <MessageBox>
         <div className="w-[450px] text-2xl p-4">
-          <div className="mb-4">Ship name?</div>
+          <div className="mb-4">{t('Ship name?')}</div>
           <form
             className="flex items-end mt-4"
             onSubmit={(e: FormEvent) => {
@@ -46,12 +46,12 @@ export default function ShipyardShipInputName({ onSubmit, onCancel }: Props) {
                 data-test="inputNameInput"
               />
             </div>
-            <button type="submit">
-              <img
-                src={Assets.images('dialogSubmit').toDataURL()}
-                alt=""
-                className="w-[92px] h-[44px]"
-              />
+            <button
+              type="submit"
+              aria-label={t('Submit')}
+              className="w-[92px] h-[44px] border-4 border-[#d34100] bg-orange-100 text-black text-lg"
+            >
+              {t('Submit')}
             </button>
           </form>
         </div>

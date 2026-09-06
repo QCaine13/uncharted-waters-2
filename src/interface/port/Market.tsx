@@ -12,6 +12,7 @@ import {
 } from '../../state/actionsMarket';
 import { getGold } from '../../state/selectors';
 import { goodData, GoodId } from '../../data/goodsData';
+import { getLocale, t } from '../../localization';
 
 const marketOptions = ['Buy Goods', 'Sell Goods', 'Market Rate'] as const;
 type MarketOption = typeof marketOptions[number];
@@ -81,7 +82,7 @@ export default function Market() {
       };
     } else if (cargoSpace <= 0) {
       vendorMessage = {
-        body: "Your ships have no cargo space available.",
+        body: 'Your ships have no cargo space available.',
         acknowledge: back,
       };
     } else {
@@ -97,7 +98,7 @@ export default function Market() {
         <BuildingMenu
           title="Buy"
           options={goods.map((good) => ({
-            label: `${good.name} (${good.buyPrice}g) ${formatPriceIndex(
+            label: `${t(good.name)} (${good.buyPrice}g) ${formatPriceIndex(
               good.index,
             )}${good.isSupply ? ' *' : ''}`,
             value: good.id,
@@ -112,6 +113,7 @@ export default function Market() {
           onCancel={back}
           level2
           hidden={step !== 0}
+          translateLabels={false}
         />
       );
 
@@ -121,7 +123,10 @@ export default function Market() {
         const qtyOptions = getQuantityOptions(maxCanBuy);
 
         vendorMessage = {
-          body: `${goodData[selectedGoodId].name} at ${selectedGoodPrice}g each. How many?`,
+          body: t('{name} at {price}g each. How many?', {
+            name: t(goodData[selectedGoodId].name),
+            price: selectedGoodPrice,
+          }),
         };
 
         menu2 = (
@@ -149,9 +154,11 @@ export default function Market() {
         const totalCost = selectedBuyQty * selectedGoodPrice;
 
         vendorMessage = {
-          body: `${selectedBuyQty} ${
-            goodData[selectedGoodId].name
-          } for ${totalCost}g. Deal?`,
+          body: t('{quantity} {name} for {total}g. Deal?', {
+            quantity: selectedBuyQty,
+            name: t(goodData[selectedGoodId].name),
+            total: totalCost,
+          }),
           confirm: {
             yes: () => {
               const success = buyGood(selectedGoodId, selectedBuyQty);
@@ -189,16 +196,14 @@ export default function Market() {
       };
     } else {
       vendorMessage = {
-        body: !hasSold.current
-          ? "What are you selling?"
-          : 'Got anything else?',
+        body: !hasSold.current ? 'What are you selling?' : 'Got anything else?',
       };
 
       menu2 = (
         <BuildingMenu
           title="Sell"
           options={cargoGoods.map((good) => ({
-            label: `${good.name} x${good.quantity} (${
+            label: `${t(good.name)} x${good.quantity} (${
               good.sellPrice
             }g) ${formatPriceIndex(good.index)}`,
             value: cargoGoods.indexOf(good),
@@ -213,6 +218,7 @@ export default function Market() {
           onCancel={back}
           level2
           hidden={step !== 0}
+          translateLabels={false}
         />
       );
 
@@ -226,7 +232,10 @@ export default function Market() {
         const qtyOptions = getQuantityOptions(maxQty);
 
         vendorMessage = {
-          body: `${cargoGood?.name ?? 'Goods'} at ${selectedSellPrice}g each. How many?`,
+          body: t('{name} at {price}g each. How many?', {
+            name: cargoGood ? t(cargoGood.name) : t('Goods'),
+            price: selectedSellPrice,
+          }),
         };
 
         menu2 = (
@@ -259,9 +268,11 @@ export default function Market() {
         );
 
         vendorMessage = {
-          body: `${selectedSellQty} ${
-            cargoGood?.name ?? 'goods'
-          } for ${totalRevenue}g. Deal?`,
+          body: t('{quantity} {name} for {total}g. Deal?', {
+            quantity: selectedSellQty,
+            name: cargoGood ? t(cargoGood.name) : t('goods'),
+            total: totalRevenue,
+          }),
           confirm: {
             yes: () => {
               const success = sellGood(
@@ -294,13 +305,17 @@ export default function Market() {
     const supplyGoods = goods.filter((g) => g.isSupply);
     const demandGoods = goods.filter((g) => g.isDemand);
 
+    const separator = getLocale() === 'zh-CN' ? '、' : ', ';
     const supplyNames =
-      supplyGoods.map((g) => g.name).join(', ') || 'None';
+      supplyGoods.map((g) => t(g.name)).join(separator) || t('None');
     const demandNames =
-      demandGoods.map((g) => g.name).join(', ') || 'None';
+      demandGoods.map((g) => t(g.name)).join(separator) || t('None');
 
     vendorMessage = {
-      body: `Abundant (cheap): ${supplyNames}\nScarce (expensive): ${demandNames}`,
+      body: t('Abundant (cheap): {supply}\nScarce (expensive): {demand}', {
+        supply: supplyNames,
+        demand: demandNames,
+      }),
       acknowledge: back,
     };
   }

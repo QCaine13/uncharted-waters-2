@@ -8,6 +8,7 @@ import ProgressBar from './common/ProgressBar';
 import { classNames } from './interfaceUtils';
 import { sailorSkills } from '../data/sailorData';
 import characterData from '../data/characterData';
+import { t } from '../localization';
 
 export default function Mates() {
   const mates = getMates();
@@ -49,12 +50,12 @@ export default function Mates() {
             />
             <div className="pl-8">
               <div className={classNames('text-4xl font-bold', color)}>
-                {name}
+                {t(name)}
               </div>
-              <div className="text-lg text-gray-500">Age {age}</div>
+              <div className="text-lg text-gray-500">{t('Age {age}', { age })}</div>
               <div className="mt-4">
                 <div>{getRoleDisplay(role)}</div>
-                <div>Loyal to Portugal</div>
+                <div>{t('Loyal to Portugal')}</div>
               </div>
             </div>
           </div>
@@ -62,40 +63,40 @@ export default function Mates() {
             <div className="w-72 mr-8 pr-8 space-y-8">
               {sailorId === '1' && (
                 <div className="flex justify-between">
-                  <div>Rank</div>
-                  <div>None</div>
+                  <div>{t('Rank')}</div>
+                  <div>{t('None')}</div>
                 </div>
               )}
               {sailorId !== '1' && (
                 <div className="flex justify-between">
-                  <div>Wages</div>
+                  <div>{t('Wages')}</div>
                   <div>10</div>
                 </div>
               )}
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div>Navigation Level</div>
+                    <div>{t('Navigation Level')}</div>
                     <div>{navigationLevel}</div>
                   </div>
                   <div className="flex items-center justify-between text-gray-500 text-lg mt-2 pl-4">
-                    <div>Experience</div>
+                    <div>{t('Experience')}</div>
                     <div>0</div>
                   </div>
                 </div>
                 <div>
                   <div className="flex items-center justify-between">
-                    <div>Battle Level</div>
+                    <div>{t('Battle Level')}</div>
                     <div>{battleLevel}</div>
                   </div>
                   <div className="flex items-center justify-between text-gray-500 text-lg mt-2 pl-4">
-                    <div>Experience</div>
+                    <div>{t('Experience')}</div>
                     <div>0</div>
                   </div>
                 </div>
               </div>
               <div>
-                <div>Skills</div>
+                <div>{t('Skills')}</div>
                 <div className="space-y-2 pl-4 text-lg mt-2">
                   {sailorSkills.map((skill) => (
                     <div
@@ -107,7 +108,7 @@ export default function Mates() {
                       )}
                       key={skill}
                     >
-                      {skill}
+                      {t(skill)}
                     </div>
                   ))}
                 </div>
@@ -122,7 +123,7 @@ export default function Mates() {
                     key={key}
                   >
                     <div className="w-36">
-                      <div className="text-lg capitalize mb-2">{key}</div>
+                      <div className="text-lg capitalize mb-2">{t(key)}</div>
                       <ProgressBar percent={value} />
                     </div>
                     <div className="flex text-right">{value}</div>

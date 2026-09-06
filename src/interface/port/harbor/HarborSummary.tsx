@@ -3,6 +3,7 @@ import MessageBox from '../../common/MessageBox';
 import { getLoadPercent, getPlayerFleet } from '../../../state/selectorsFleet';
 import ProgressBar from '../../common/ProgressBar';
 import { provisions } from '../../../game/world/fleets';
+import { t } from '../../../localization';
 
 export default function HarborSummary() {
   return (
@@ -10,11 +11,11 @@ export default function HarborSummary() {
       <MessageBox>
         <div className="px-4 py-2">
           <div className="flex items-center">
-            <div className="w-64 text-green-600">Ship</div>
-            <div className="w-36 text-purple-600 text-right pr-12">Crew</div>
-            <div className="w-24 text-[#d34100]">Load</div>
-            <div className="w-24 text-blue-600 text-right">Water</div>
-            <div className="w-24 text-blue-600 text-right">Food</div>
+            <div className="w-64 text-green-600">{t('Ship')}</div>
+            <div className="w-36 text-purple-600 text-right pr-12">{t('Crew')}</div>
+            <div className="w-24 text-[#d34100]">{t('Cargo Load')}</div>
+            <div className="w-24 text-blue-600 text-right">{t('Water')}</div>
+            <div className="w-24 text-blue-600 text-right">{t('Food')}</div>
           </div>
           {getPlayerFleet().map((ship, i) => {
             const loadPercent = getLoadPercent(i);

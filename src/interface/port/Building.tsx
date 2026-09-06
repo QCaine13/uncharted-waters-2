@@ -57,7 +57,8 @@ export default function Building({ buildingId }: Props) {
   const menu = (
     <BuildingMenu
       options={options.map((option) => ({
-        label: option,
+        label:
+          buildingId === '6' && option === 'Gold' ? 'Gold Funding' : option,
         value: option,
         disabled: option !== 'Sail',
       }))}

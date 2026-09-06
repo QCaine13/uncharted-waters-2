@@ -7,6 +7,10 @@ import createPort from './game/port/port';
 import state from './state/state';
 import { updateGeneral } from './state/actionsPort';
 import { setDockedFleetPositions } from './state/actionsWorld';
+import { localizeDocument, subscribeLocale } from './localization';
+
+localizeDocument();
+subscribeLocale(localizeDocument);
 
 const start = async () => {
   await Assets.load();

@@ -8,6 +8,7 @@ import createMap from '../map';
 import { applyPositionDelta } from '../utils';
 import getSailor from '../data/sailorData';
 import { Landmark, landmarks } from '../data/discoveryData';
+import { t } from '../localization';
 
 export const getTimeOfDay = () => state.timePassed % 1440;
 
@@ -145,28 +146,28 @@ export const getRoleDisplay = (role: Role) => {
   const flagshipName = fleet[0].name;
 
   if (role === null) {
-    return `Navigator of ${flagshipName}`;
+    return t('Navigator of {ship}', { ship: flagshipName });
   }
 
   if (role === 'firstMate') {
-    return `First Mate of ${flagshipName}`;
+    return t('First Mate of {ship}', { ship: flagshipName });
   }
 
   if (role === 'bookKeeper') {
-    return `Bookkeeper of ${flagshipName}`;
+    return t('Bookkeeper of {ship}', { ship: flagshipName });
   }
 
   if (role === 'chiefNavigator') {
-    return `Chief Navigator of ${flagshipName}`;
+    return t('Chief Navigator of {ship}', { ship: flagshipName });
   }
 
   if (role === 0) {
-    return `Commodore of ${flagshipName}`;
+    return t('Commodore of {ship}', { ship: flagshipName });
   }
 
   const shipName = fleet[role].name;
 
-  return `Captain of ${shipName}`;
+  return t('Captain of {ship}', { ship: shipName });
 };
 
 // TODO needs to be implemented
