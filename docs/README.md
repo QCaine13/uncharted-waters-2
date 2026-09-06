@@ -47,18 +47,19 @@
 
 ## 当前执行入口
 
-2026-09-06：用户已授权接手与分阶段开发。请先读 [中文交付方案](superpowers/specs/2026-09-06-chinese-playable-release-design.md)、[M0 实施计划](superpowers/plans/2026-09-06-chinese-foundation.md)和[中文资料基线](1-baseline/chinese-reference-baseline.md)。M0 正在执行，尚不代表约翰完整路线已经完成。
+2026-09-06：用户已授权接手与分阶段开发。请先读 [中文交付方案](superpowers/specs/2026-09-06-chinese-playable-release-design.md)、[M0 实施计划](superpowers/plans/2026-09-06-chinese-foundation.md)和[中文资料基线](1-baseline/chinese-reference-baseline.md)。M0 功能已验收，正在完成全分支审查；约翰完整路线尚未完成。
 
 ## 当前状态面板
 
-> 2026-07-11 verified against the checked-out code.
+> 2026-09-06 更新；M0 功能回归、人工检查与独立任务审查已通过，全分支审查进行中，详见[验收记录](superpowers/verification/2026-09-06-chinese-foundation.md)。
 
 | 系统                                           | 状态                                     | 说明                                                                                                                                                                                                                       |
 | ---------------------------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 世界航行 / 港口行走 / 建筑                     | ✅ 已实现                                | 基础骨架                                                                                                                                                                                                                   |
 | **海上每日补给消耗 + 断粮惩罚**                 | ✅ 已实现                                | 舰队共享水/食物，按总船员向上取整每日扣减；≤3 天橙色、耗尽红色。断粮**逐日**减员（10%，两缺翻倍），归零则拖回最近港口，见 [D11](DECISIONS.md) 与 [设计](superpowers/specs/2026-08-13-starvation-penalty-design.md) |
 | 港口建筑（港务/酒馆/旅馆/银行/商店/教堂/船厂） | ✅ 已实现                                | UI 完成，部分逻辑待深化                                                                                                                                                                                                    |
-| **存档 / 读档 / 重置**                         | ✅ MVP + version 2 migration implemented | [`src/state/saveLoad.ts`](../src/state/saveLoad.ts)                                                                                                                                                                        |
+| **存档 / 读档 / 重置**                         | ✅ Save v4，保留旧档迁移 | [`src/state/saveLoad.ts`](../src/state/saveLoad.ts)；海上冷启动的风与洋流初始化已修复                                                                                                                                                                        |
+| **简体中文 / 英文显示**                       | ✅ 已实现并通过功能验收 | 默认简体中文、独立语言偏好、现有界面/专名/里斯本开场翻译；[验收记录](superpowers/verification/2026-09-06-chinese-foundation.md) |
 | **贸易 / 市场**                                | ✅ MVP + 价格动态已实现                  | 相场指数（每市场×商品）、交易冲击、惰性回归、Save v3；同港套利已由结构性价差消除。见 [D10](DECISIONS.md) 与 [设计](superpowers/specs/2026-08-13-market-price-dynamics-design.md)。税 / 商业投资仍待做                     |
 | 名声（冒险/海盗/贸易）                         | 🔶 冒险名声已激活并显示                  | 发现地标授予冒险名声，三条均在 HUD 显示（[D12](DECISIONS.md) / [D13](DECISIONS.md)）；海盗 / 贸易名声仍无来源                                                                                                              |
 | **探索发现**                                   | ✅ 已实现（含界面）                      | 14 条史实地标，坐标由真实经纬度经投影推导；发现横幅、发现列表、Save v4 记录。见 [D12](DECISIONS.md)、[D13](DECISIONS.md) 与设计 [MVP](superpowers/specs/2026-08-14-discovery-mvp-design.md) / [UI](superpowers/specs/2026-08-14-discovery-ui-design.md) |

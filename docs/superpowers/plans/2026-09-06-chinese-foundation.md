@@ -59,7 +59,7 @@ updateWorldStatus();
 ### Task 2: Chinese-first locale infrastructure and existing game presentation
 
 **Files:**
-- Create: `src/localization/index.ts`, `src/localization/useLocale.ts`, `src/localization/ui.ts`, `src/localization/terms.ts`, `src/localization/dialogue.ts`（汇总入口）、`src/localization/dialogue/joao-lisbon.ts`（章节文本）、`src/localization/localization.test.ts`
+- Create: `src/localization/index.ts`, `src/localization/useLocale.ts`, `src/localization/ui.ts`, `src/localization/terms.ts`, `src/localization/dialogue.ts`（汇总入口）、`src/localization/dialogue/joaoLisbon.ts`（章节文本）、`src/localization/localization.test.ts`
 - Modify: `src/interface/**` presentation files, `src/homepage/index.html`, `src/app.ts`, display helper call sites in `src/state/selectors.ts` as needed.
 - Test: existing presentation tests, dedicated Chinese interface tests, `tests/e2e/localization.cy.ts`, test setup/helpers for explicitly selecting English in the existing regression suite.
 
@@ -69,7 +69,7 @@ updateWorldStatus();
 - Root Interface subscribes to locale changes without remounting gameplay. Language selector belongs to System and must be reachable immediately. HTML loading/help copy is localized consistently on startup and switch.
 - Dialogue lookup uses untouched canonical English body text before `$firstName/$lastName` interpolation; Chinese names use 约翰 / 法雷尔. Choice IDs and effects stay unchanged.
 
-- [ ] Write behavior tests for default Chinese, persisted English, invalid locale fallback, storage failure, parameter interpolation and language changes preserving savedState. Establish English locale explicitly for legacy tests without weakening their assertions.
+- [x] Write behavior tests for default Chinese, persisted English, invalid locale fallback, storage failure, parameter interpolation and language changes preserving savedState. Establish English locale explicitly for legacy tests without weakening their assertions.
 
 ```ts
 setLocale('zh-CN');
@@ -79,14 +79,14 @@ setLocale('en');
 expect(t('System')).toBe('System');
 ```
 
-- [ ] Implement locale state/listeners and dictionaries, e.g. `const ui: Record<string, string> = { System: '系统', Save: '保存', Load: '读取', 'Day {day}': '航海第 {day} 天' };`. Storage write failure must not prevent an in-memory language switch.
-- [ ] Convert rendering call sites while preserving action values. Example: `options.map(value => ({label: t(value), value}))`; replace dynamic English interpolation at its producer with a dictionary template and named parameters.
-- [ ] Populate all existing UI/building messages, data display names (130 ports, all live goods/items/ships/characters and nationalities), discovery names/details, roles and dates. Use the spec's verified Chinese protagonist names; preserve runtime data records and IDs. Separate terms from UI prose for maintainability.
-- [ ] Populate Chinese opening dialogue against all canonical Lisbon body/prompt/choice text. Keep English content unchanged and verify every reachable story string has a Chinese entry, all placeholders are preserved and translations do not alter effects.
-- [ ] Localize image-based yes/no/submit labels using accessible HTML controls or text overlays with equivalent interaction behavior; preserve keyboard, click and drag support.
-- [ ] Translate loading/help/homepage content and adapt CJK font/line height/overflow to fit the existing 800px frame without clipping choices. Render text at display time so open dialogs reflect language switches without resetting state.
-- [ ] Add Chinese browser coverage: first launch Chinese, System language switch preserves current game state, page reload persists locale, open one real building, show Chinese dialogue and complete a buy/sell or provision transaction, reload a sea save.
-- [ ] Run focused tests during development, then full Jest/typecheck/lint/build and Chinese plus English E2E. Self-review and commit owned files, recording remaining uncertainty precisely.
+- [x] Implement locale state/listeners and dictionaries, e.g. `const ui: Record<string, string> = { System: '系统', Save: '保存', Load: '读取', 'Day {day}': '航海第 {day} 天' };`. Storage write failure must not prevent an in-memory language switch.
+- [x] Convert rendering call sites while preserving action values. Example: `options.map(value => ({label: t(value), value}))`; replace dynamic English interpolation at its producer with a dictionary template and named parameters.
+- [x] Populate all existing UI/building messages, data display names (130 ports, all live goods/items/ships/characters and nationalities), discovery names/details, roles and dates. Use the spec's verified Chinese protagonist names; preserve runtime data records and IDs. Separate terms from UI prose for maintainability.
+- [x] Populate Chinese opening dialogue against all canonical Lisbon body/prompt/choice text. Keep English content unchanged and verify every reachable story string has a Chinese entry, all placeholders are preserved and translations do not alter effects.
+- [x] Localize image-based yes/no/submit labels using accessible HTML controls or text overlays with equivalent interaction behavior; preserve keyboard, click and drag support.
+- [x] Translate loading/help/homepage content and adapt CJK font/line height/overflow to fit the existing 800px frame without clipping choices. Render text at display time so open dialogs reflect language switches without resetting state.
+- [x] Add Chinese browser coverage: first launch Chinese, System language switch preserves current game state, page reload persists locale, open one real building, show Chinese dialogue and complete a buy/sell or provision transaction, reload a sea save.
+- [x] Run focused tests during development, then full Jest/typecheck/lint/build and Chinese plus English E2E. Self-review and commit owned files, recording remaining uncertainty precisely.
 
 ### Task 3: Integration, playthrough, reference records and handoff
 
@@ -97,8 +97,8 @@ expect(t('System')).toBe('System');
 
 **Interfaces:** Consumes Tasks 1-2, produces verified M0 acceptance results and an explicit next-M1 handoff.
 
-- [ ] Run `npm run verify:full` (Cypress may use installed Edge locally while CI retains Chrome); resolve failures rather than disabling checks.
-- [ ] Manually play through a fresh Chinese Lisbon opening using the actual controls, buy/sell goods, provision, sail, save/reload and switch languages. Check screenshot evidence for dialog and HUD clipping at the supported desktop viewport.
-- [ ] Document tested behavior, commands/results, supported viewport/runtime and any unmet requirements; M0 is complete only if its acceptance criteria are met.
-- [ ] Record D15: user authorized phased development, canonical Chinese names, default zh-CN, first complete route John/João. Supersede stale roadmap framing; retain previous decisions as history.
+- [x] Run the full verification stages (`npm run verify` plus the complete installed-Edge Cypress suite locally; CI retains Chrome). After a narrow integration fix, rerun its covering tests and preserve the version distinction in the acceptance record; resolve failures rather than disabling checks.
+- [x] Play through a fresh Chinese Lisbon opening using the actual controls, buy/sell goods, provision, sail, save/reload and switch languages. Use the existing Cypress held-key journey for the complete route, plus manual UI interaction and inspection of captured dialogue/HUD screenshots; distinguish the methods in the acceptance record. The in-app browser's brief press API does not reliably exercise the game's frame-polled movement, and its viewport override is not holding the requested dimensions.
+- [x] Document tested behavior, commands/results, supported viewport/runtime and any unmet requirements; M0 is complete only if its acceptance criteria are met.
+- [x] Record D15: user authorized phased development, canonical Chinese names, default zh-CN, first complete route John/João. Supersede stale roadmap framing; retain previous decisions as history.
 - [ ] Produce a whole-branch review package and resolve important findings. Deliver the local preview and paths to the plan/review without claiming later milestones complete.

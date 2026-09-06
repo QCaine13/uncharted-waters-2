@@ -18,6 +18,11 @@
 | 补给港 | Supply port | 補給港 | 港口类型 |
 | 特产 | Specialty good | 特産品 | 港口经济属性 |
 | 投资 | Investment | 投資 | 解锁商品 / 船 / 武器 |
+| 助手 | First Mate | — | 中文版岗位名称；对话与船员界面一致 |
+| 会计 | Bookkeeper / Accounting | — | 分别为岗位与技能，按字段区分 |
+| 水手长 | Chief Navigator | — | 采用旧中文版岗位名 |
+| 测量 | Celestial Navigation | — | 航海士技能名 |
+| 绘图 | Cartography | — | 航海士技能名 |
 
 ## 2. 六主角与同伴
 

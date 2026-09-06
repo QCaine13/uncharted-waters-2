@@ -16,6 +16,14 @@ baseline are being strengthened incrementally.
   Screenshots of the original game
 </p>
 
+## 中文版开发进度
+
+首批中文可玩基础已实现并通过功能验收：默认简体中文、中英显示切换、现有里斯本开场与界面汉化，以及海上读档修复。当前可玩内容是里斯本开场、航海、贸易、补给和探索；约翰后续章节、战斗与结局仍在路线图中。
+
+首个完整交付目标是 **约翰·法雷尔全线通关**。后续按独立章节继续加入其他主角及扩展剧情，沿用稳定内容ID、声明式条件/奖励和兼容旧存档的迁移。参见[交付方案](docs/superpowers/specs/2026-09-06-chinese-playable-release-design.md)、[实施计划](docs/superpowers/plans/2026-09-06-chinese-foundation.md)、[中文资料基线](docs/1-baseline/chinese-reference-baseline.md)及[验收记录](docs/superpowers/verification/2026-09-06-chinese-foundation.md)。
+
+使用 WASD 移动，E、Enter 或鼠标左键确认，Escape 或鼠标右键取消。左侧「系统」提供保存、读取、重置及中英切换；语言偏好独立保存。新增剧情前请阅读[剧情编写指南](docs/story/authoring-guide.md)中的章节、中文文本和存档约束。
+
 ## Features
 
 - Walking around in any of the 130 ports and entering their buildings.
@@ -39,9 +47,14 @@ npm ci
 npm start
 ```
 
-`npm run verify` runs the asset preflight, Jest tests, TypeScript checks,
+`npm run verify` runs the asset preflight, story-content validation, Jest tests, TypeScript checks,
 ESLint, and the production build. `npm run verify:full` adds the Chrome E2E
-suite.
+suite. For local verification with an installed Microsoft Edge, run
+`npm run verify`, serve `build/` with `npm run serve:build`, then run
+`npx cypress run --browser edge` in another terminal.
+
+The current game uses a fixed 1640×800 desktop layout; browser acceptance is
+performed at 1700×1000. A smaller window can scroll horizontally.
 
 ## Architecture
 
