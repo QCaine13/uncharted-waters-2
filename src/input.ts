@@ -57,6 +57,7 @@ const onKeydown = (e: KeyboardEvent) => {
     suppressedUntilRelease.add(pressedKey);
     return;
   }
+  if (suppressedUntilRelease.has(pressedKey)) return;
 
   if (isWasd(pressedKey) && !pressedWasd.includes(pressedKey)) {
     pressedWasd.unshift(pressedKey);

@@ -67,7 +67,7 @@ export default function Popover({ label, children }: Props) {
       </Transition>
       <div
         className={classNames(
-          'cursor-pointer p-5 hover:bg-gray-800',
+          'cursor-pointer px-5 py-3 hover:bg-gray-800',
           active ? 'bg-gray-800' : '',
         )}
         onClick={() => setActive(true)}

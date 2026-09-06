@@ -1,5 +1,5 @@
 import { SAVED_STATE_KEY, type State } from '../../src/state/state';
-import { clickMenu, setState } from '../utils';
+import { clickMenu, clickMenu2, setState } from '../utils';
 import {
   closeSidebar,
   finishSeaEncounter,
@@ -244,6 +244,68 @@ describe('First voyage chapter compatibility and choices', () => {
       cy.reload();
       toMenu();
       saveFromSystem().then((saved) => expect(saved.gold).to.equal(1400));
+    },
+  );
+
+  branchTest(
+    'buys and displays a fourth ship with Domingo as its captain',
+    () => {
+      fixture({
+        portId: '2',
+        buildingId: '3',
+        gold: 2000,
+        usedShipsAtPort: { '2': { 'balsa-1': '1' } },
+        mates: [
+          { sailorId: '1', role: 0 },
+          { sailorId: '32', role: 1 },
+          { sailorId: '33', role: 2 },
+          { sailorId: '34', role: null },
+        ],
+        fleets: {
+          '1': {
+            position: undefined,
+            ships: ['Flagship', 'Second', 'Third'].map((name) => ({
+              id: '6',
+              name,
+              crew: 10,
+              cargo: [],
+              durability: 25,
+            })),
+          },
+        },
+      });
+      cy.visit('', {
+        onBeforeLoad(window) {
+          window.localStorage.setItem('uw2.locale', 'en');
+          window.localStorage.setItem('uw2.e2e.locale', 'en');
+        },
+      });
+      clickMenu('Used Ship');
+      clickMenu2('Balsa');
+      cy.get('[data-test=building]').click();
+      cy.get('[data-test=confirmYes]').click();
+      cy.get('[data-test=inputNameInput]').type('Fourth{enter}');
+      readVoyageSave().then((saved) => {
+        expect(saved.gold).to.equal(800);
+        expect(saved.fleets['1'].ships).to.have.length(4);
+        expect(
+          saved.mates.find(({ sailorId }) => sailorId === '34')!.role,
+        ).to.equal(3);
+      });
+      cy.contains('[data-test=left] div', /^Fleet$/).click();
+      cy.get('[data-test=fleet] img')
+        .should('have.length', 4)
+        .each(($ship) => {
+          expect(($ship[0] as HTMLImageElement).naturalWidth).to.be.greaterThan(
+            0,
+          );
+          const ship = $ship[0].getBoundingClientRect();
+          const game = $ship[0].closest('#game')!.getBoundingClientRect();
+          expect(ship.top).to.be.at.least(game.top);
+          expect(ship.bottom).to.be.at.most(game.bottom);
+        });
+      cy.get('[data-test=fleet] img[alt=Fourth]').should('be.visible');
+      cy.get('#game').screenshot('m1-four-ship-fleet');
     },
   );
 

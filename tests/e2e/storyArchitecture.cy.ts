@@ -4,7 +4,6 @@ import { closeSidebar, readVoyageSave, saveFromSystem, sailLisbonToGibraltar, sa
 import {
   characterMessageIncludes,
   clickMenu,
-  setState,
   vendorMessageIncludes,
 } from '../utils';
 
@@ -23,11 +22,20 @@ type MapPosition = { x: number; y: number };
 
 let modeledPosition: MapPosition = { x: 54, y: 68 };
 
+const setLegacyState = (state: Partial<State>) =>
+  window.localStorage.setItem(SAVED_STATE_KEY, JSON.stringify({ version: 2, ...state }));
+
 const readSavedState = () =>
   cy.window().then((window) => {
     const raw = window.localStorage.getItem(SAVED_STATE_KEY);
     expect(raw).not.to.be.null;
-    return JSON.parse(raw as string) as SavedState;
+    const saved = JSON.parse(raw as string) as SavedState;
+    if (saved.version === SAVE_VERSION) return saved;
+    // Inspect a real v5 save after the UI loads and migrates the v2 fixture.
+    return saveFromSystem().then((upgraded) => {
+      closeSidebar();
+      return cy.wrap(upgraded, { log: false });
+    });
   });
 
 const expectCompatibleSemanticSave = (saved: SavedState) => {
@@ -275,9 +283,10 @@ const ensureNightOutsideAdjacentBuilding = (
 };
 
 const finishStoryEventToMenu = (legacyKey?: string) => {
-  advanceStoryUntil(
-    (document) => document.querySelector('[data-test=menu]') !== null,
-  );
+  advanceStoryUntil((document) => {
+    const menu = document.querySelector('[data-test=menu]');
+    return !!menu && !menu.classList.contains('hidden');
+  });
   if (legacyKey)
     readSavedState().then((saved) =>
       expect(saved.quests).to.include(legacyKey),
@@ -434,7 +443,7 @@ const harborPrelude = [
 ] as const;
 
 const harborFixture = () => {
-  setState({
+  setLegacyState({
     portId: '1',
     buildingId: '4',
     quests: [
@@ -511,9 +520,11 @@ const finishHouseFarewellAtNight = (
   });
 
 const regressionTest = Cypress.env('m1Only') ? it.skip : it;
+const openingJourneyTest = Cypress.env('m1FixturesOnly') ? it.skip : regressionTest;
+const firstVoyageJourneyTest = Cypress.env('m1FixturesOnly') ? it.skip : it;
 
 describe('Structured story architecture through production assets', () => {
-  regressionTest('plays a real new game through the complete Lisbon tutorial and departs', () => {
+  openingJourneyTest('plays a real new game through the complete Lisbon tutorial and departs', () => {
     cy.visit('');
     cy.contains('System').click();
     cy.contains('button', 'Reset').click();
@@ -621,6 +632,7 @@ describe('Structured story architecture through production assets', () => {
     });
 
     exitCurrentBuilding();
+    ensureNightOutsideAdjacentBuilding();
     enterBuilding(spawnToPub, 'Hello João');
     finishStoryEventToMenu();
     clickMenu('Recruit Crew');
@@ -677,7 +689,7 @@ describe('Structured story architecture through production assets', () => {
   });
 
   regressionTest('starts a new Save v2 at the exact João opening line', () => {
-    setState({ portId: '1', buildingId: '8' });
+    setLegacyState({ portId: '1', buildingId: '8' });
     cy.visit('');
 
     cy.contains('Game is loading...').should('not.exist');
@@ -686,7 +698,7 @@ describe('Structured story architecture through production assets', () => {
   });
 
   regressionTest('continues a partial Save v2 at the next Lisbon event without repeating it after reload', () => {
-    setState({
+    setLegacyState({
       portId: '1',
       buildingId: '10',
       quests: ['houseBeforeQuest', 'pubAfterQuest'],
@@ -785,7 +797,7 @@ describe('Structured story architecture through production assets', () => {
     });
   });
 
-  it('plays a fresh Chinese game through the opening and first voyage chapter', () => {
+  firstVoyageJourneyTest('plays a fresh Chinese game through the opening and first voyage chapter', () => {
     cy.visit('', {
       onBeforeLoad(window) {
         window.localStorage.setItem('uw2.e2e.locale', 'zh-CN');
@@ -865,6 +877,7 @@ describe('Structured story architecture through production assets', () => {
     });
 
     exitCurrentBuilding();
+    ensureNightOutsideAdjacentBuilding();
     enterBuilding(spawnToPub, '约翰，要来杯朗姆酒吗？');
     finishStoryEventToMenu();
     clickMenu('招募水手');
@@ -903,6 +916,7 @@ describe('Structured story architecture through production assets', () => {
       ),
     );
     exitCurrentBuilding();
+    ensureNightOutsideAdjacentBuilding();
     enterBuilding(guildToHarbor, '喂，伙计，要出航了吗？');
     clickMenu('出航');
     characterMessageIncludes('补给可供航行 30 天。要出航吗？', 2);

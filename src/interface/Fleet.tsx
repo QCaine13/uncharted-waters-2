@@ -18,6 +18,8 @@ const positions: Position[] = [
 const TILESET_OFFSET = 27;
 
 export default function Fleet() {
+  const ships = getPlayerFleet();
+  const expanded = ships.length > positions.length;
   const backgroundImage = useMemo(() => {
     const canvas = document.createElement('canvas');
     canvas.width = TILE_SIZE;
@@ -43,15 +45,24 @@ export default function Fleet() {
   return (
     <MessageBox>
       <div
-        className="w-[1280px] h-[608px]"
+        className={`w-[1280px] h-[608px] overflow-y-auto ${
+          expanded
+            ? 'grid grid-cols-4 gap-8 p-8 justify-items-center content-start'
+            : ''
+        }`}
         style={{ background: `url('${backgroundImage}')` }}
+        data-test="fleet"
       >
-        {getPlayerFleet().map((ship, i) => (
+        {ships.map((ship, i) => (
           <img
             src={Assets.ships(ship.id)}
-            alt=""
-            className="absolute w-64 h-48"
-            style={{ top: `${positions[i].y}px`, left: `${positions[i].x}px` }}
+            alt={ship.name}
+            className={`${expanded ? '' : 'absolute'} w-64 h-48`}
+            style={
+              expanded
+                ? undefined
+                : { top: `${positions[i].y}px`, left: `${positions[i].x}px` }
+            }
             key={i}
           />
         ))}

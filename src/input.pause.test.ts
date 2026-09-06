@@ -44,3 +44,15 @@ test('losing focus during a held dialog key does not latch the next sailing dire
   key('keyup', 'w');
   expect(Input.getDirection({ includeOrdinal: true })).toBe('');
 });
+
+test('a held overlay key cannot autorepeat into navigation after mouse dismissal', () => {
+  const release = Input.suspend();
+  key('keydown', 'w');
+  release();
+  key('keydown', 'w');
+  key('keyup', 'w');
+  expect(Input.getDirection({ includeOrdinal: true })).toBe('');
+  key('keydown', 'w');
+  expect(Input.getDirection({ includeOrdinal: true })).toBe('n');
+  key('keyup', 'w');
+});
