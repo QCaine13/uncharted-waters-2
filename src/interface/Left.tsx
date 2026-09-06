@@ -19,6 +19,7 @@ import Mates from './Mates';
 import System from './System';
 import Discoveries from './Discoveries';
 import FameReadout from './FameReadout';
+import QuestJournal from './QuestJournal';
 import { t } from '../localization';
 import useLocale from '../localization/useLocale';
 
@@ -99,6 +100,9 @@ export default function Left({
         specs load straight into a sea save and expect it reachable there.
       */}
       <div className="select-none shrink-0">
+        <Popover label="Journal">
+          <QuestJournal />
+        </Popover>
         <Popover label="Discoveries">
           <Discoveries />
         </Popover>

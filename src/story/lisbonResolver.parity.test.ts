@@ -3,10 +3,23 @@ import fs from 'fs';
 import path from 'path';
 
 import { legacyLisbonSnapshot } from './__fixtures__/legacyLisbonSnapshot';
-import { compiledStoryContent } from '.';
+import { compileStoryContent } from './core/registry';
 import { resolveStoryEvent } from './core/resolver';
 import { storyEventId, type StoryContext } from './core/types';
 import { legacyToSemanticEvent } from './legacy/lisbonCompletionKeys';
+import { joaoLisbonOpening } from './content/arcs/joao/lisbon-opening';
+import { storyCharacters } from './content/characters';
+import { storyRelationships } from './content/relationships';
+
+const compiledLisbonOpening = compileStoryContent(
+  {
+    characters: storyCharacters,
+    relationships: storyRelationships,
+    arcs: [joaoLisbonOpening.arc],
+    events: joaoLisbonOpening.events,
+  },
+  'strict',
+);
 
 const gatingKeys = [
   'houseBeforeQuest',
@@ -95,7 +108,7 @@ describe('Lisbon resolver legacy-oracle parity', () => {
                   discoveries: new Set(),
                   reportedDiscoveries: new Set(),
                 } as StoryContext,
-                compiledStoryContent,
+                compiledLisbonOpening,
                 (candidates) => {
                   randomCandidates = candidates.map(({ id }) => id);
                   return candidates[0];

@@ -140,14 +140,14 @@ describe('world provision settlement', () => {
       updateInterface.fame = jest.fn();
     });
 
-    test('sailing into a landmark adds its fame and gold once and saves', () => {
+    test('sailing into a landmark adds fame but defers gold until reporting', () => {
       state.fleets['1'].position = { ...gibraltar.position };
 
       worldTimeTick();
 
       expect(state.discoveries).toEqual([gibraltar.id]);
       expect(state.fame.adventure).toBe(gibraltar.fame);
-      expect(state.gold).toBe(gibraltar.gold);
+      expect(state.gold).toBe(0);
       expect(mockedSave).toHaveBeenCalledTimes(1);
       expect(updateInterface.discovery).toHaveBeenCalledTimes(1);
       expect(updateInterface.discovery).toHaveBeenCalledWith([gibraltar]);
@@ -171,7 +171,7 @@ describe('world provision settlement', () => {
 
       expect(state.discoveries).toEqual([gibraltar.id]);
       expect(state.fame.adventure).toBe(gibraltar.fame);
-      expect(state.gold).toBe(gibraltar.gold);
+      expect(state.gold).toBe(0);
       expect(mockedSave).not.toHaveBeenCalled();
       expect(updateInterface.discovery).not.toHaveBeenCalled();
       expect(updateInterface.fame).not.toHaveBeenCalled();

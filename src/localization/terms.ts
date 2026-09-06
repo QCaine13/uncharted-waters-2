@@ -194,6 +194,8 @@ export const terms: Record<string, string> = {
   'Butler Marco': '管家马可',
   'Carlotta, Owner of the Pub': '酒吧老板卡洛塔',
   'Lucia the Waitress': '女侍路琪亚',
+  Domingo: '多明戈',
+  'Domingo Manana': '多明戈',
   'Strait of Gibraltar': '直布罗陀海峡',
   'The Azores': '亚速尔群岛',
   'Cape Bojador': '博哈多尔角',

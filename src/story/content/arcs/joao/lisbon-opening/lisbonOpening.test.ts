@@ -495,18 +495,20 @@ describe('João Lisbon opening declarative content', () => {
       lisbonOpeningEvents.map(({ id }) => id),
     );
     expect(joaoLisbonOpening.events).toBe(lisbonOpeningEvents);
-    expect(storyContentSource).toEqual({
-      characters: storyCharacters,
-      relationships: storyRelationships,
-      arcs: [joaoLisbonOpening.arc],
-      events: lisbonOpeningEvents,
-    });
-    expect(compiledStoryContent.diagnostics).toEqual([]);
-    expect(compiledStoryContent.eventsById.size).toBe(
-      lisbonOpeningEvents.length,
+    expect(storyContentSource.characters).toBe(storyCharacters);
+    expect(storyContentSource.relationships).toBe(storyRelationships);
+    expect(storyContentSource.arcs).toContain(joaoLisbonOpening.arc);
+    expect(storyContentSource.events).toEqual(
+      expect.arrayContaining(lisbonOpeningEvents),
     );
-    expect(compiledStoryContent.charactersById.size).toBe(
-      storyCharacters.length,
+    expect(compiledStoryContent.diagnostics).toEqual([]);
+    lisbonOpeningEvents.forEach((event) =>
+      expect(compiledStoryContent.eventsById.get(event.id)).toBe(event),
+    );
+    storyCharacters.forEach((character) =>
+      expect(compiledStoryContent.charactersById.get(character.id)).toBe(
+        character,
+      ),
     );
   });
 });

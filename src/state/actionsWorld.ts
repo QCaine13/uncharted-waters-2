@@ -16,10 +16,7 @@ import {
   getWind,
 } from '../game/world/windCurrent';
 import { START_DATE } from '../constants';
-import {
-  positionAdjacentToPort,
-  shouldUpdateWorldStatus,
-} from './selectors';
+import { positionAdjacentToPort, shouldUpdateWorldStatus } from './selectors';
 import { Position } from '../types';
 import { getNewlyDiscoveredLandmarks } from '../data/discoveryData';
 
@@ -103,16 +100,12 @@ export const worldTimeTick = (minutes = 20) => {
   const { position } = state.fleets['1'];
 
   if (state.portId === null && position) {
-    const discovered = getNewlyDiscoveredLandmarks(
-      position,
-      state.discoveries,
-    );
+    const discovered = getNewlyDiscoveredLandmarks(position, state.discoveries);
 
     if (discovered.length > 0) {
       discovered.forEach((landmark) => {
         state.discoveries.push(landmark.id);
         state.fame.adventure += landmark.fame;
-        state.gold += landmark.gold;
       });
 
       updateGeneral();

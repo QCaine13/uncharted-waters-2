@@ -37,6 +37,7 @@ describe('formatLongitude', () => {
 describe('Discoveries', () => {
   test('shows the empty state when nothing has been discovered', () => {
     state.discoveries = [];
+    state.reportedDiscoveries = [];
 
     const container = document.createElement('div');
     const root = createRoot(container);
@@ -52,6 +53,7 @@ describe('Discoveries', () => {
     // Deliberately not the landmarkSeeds table order, so this also catches a
     // bug that iterated the landmark table instead of state.discoveries.
     state.discoveries = ['cape-of-good-hope', 'strait-of-gibraltar'];
+    state.reportedDiscoveries = [];
 
     const container = document.createElement('div');
     const root = createRoot(container);
@@ -63,7 +65,10 @@ describe('Discoveries', () => {
     );
 
     expect(labels).toEqual(['Cape of Good Hope', 'Strait of Gibraltar']);
-    expect(container.textContent).toContain('+150 adventure fame, +1500g');
+    expect(container.textContent).toContain('+150 adventure fame');
+    expect(container.textContent).toContain(
+      'Unreported — 1500g pending at Lisbon Guild',
+    );
     expect(container.textContent).toContain('34.4° S, 18.5° E');
 
     act(() => root.unmount());
@@ -71,6 +76,7 @@ describe('Discoveries', () => {
 
   test('switches the detail pane to whichever discovery is selected', () => {
     state.discoveries = ['cape-of-good-hope', 'strait-of-gibraltar'];
+    state.reportedDiscoveries = ['strait-of-gibraltar'];
 
     const container = document.createElement('div');
     const root = createRoot(container);
@@ -87,7 +93,8 @@ describe('Discoveries', () => {
     // proves selection actually swapped which landmark is shown, not just
     // that Gibraltar's name is present somewhere (it already is, in the
     // menu).
-    expect(container.textContent).toContain('+30 adventure fame, +300g');
+    expect(container.textContent).toContain('+30 adventure fame');
+    expect(container.textContent).toContain('Reported — 300g paid');
     expect(container.textContent).not.toContain('+150 adventure fame');
 
     act(() => root.unmount());

@@ -13,6 +13,11 @@ export const ui: Record<string, string> = {
   Fleet: '舰队',
   Items: '物品',
   Discoveries: '发现',
+  Journal: '日志',
+  'Voyage Journal': '航海日志',
+  Complete: '已完成',
+  'Current objective': '当前目标',
+  'Upcoming objective': '后续目标',
   Adventure: '冒险名声',
   Pirate: '海盗名声',
   Trade: '贸易名声',
@@ -63,6 +68,7 @@ export const ui: Record<string, string> = {
   Ship: '船只',
   'Job Assignment': '接受任务',
   'Country Info': '国家情报',
+  'Report Discoveries': '上报发现',
   Deposit: '存款',
   Withdraw: '取款',
   Borrow: '借款',
@@ -113,8 +119,14 @@ export const ui: Record<string, string> = {
   'You have no items.': '你没有任何物品。',
   'You have no discoveries.': '你还没有任何发现。',
   '+{fame} adventure fame, +{gold}g': '冒险名声 +{fame}，金币 +{gold}',
+  '+{fame} adventure fame': '冒险名声 +{fame}',
+  'Reported — {gold}g paid': '已上报 — 已领取 {gold} 金币',
+  'Unreported — {gold}g pending at Lisbon Guild':
+    '未上报 — 可在里斯本工会领取 {gold} 金币',
   'Discovered: {name} — +{fame} adventure fame, +{gold}g':
     '发现：{name} — 冒险名声 +{fame}，金币 +{gold}',
+  'Discovered: {name} — +{fame} adventure fame; report for {gold}g':
+    '发现：{name} — 冒险名声 +{fame}；上报可得 {gold} 金币',
   N: '北',
   S: '南',
   E: '东',
@@ -126,6 +138,46 @@ export const ui: Record<string, string> = {
   'Click Reset again to confirm.': '再次点击“重置”以确认。',
   'This feature is not implemented yet. Press ESC to exit this building.':
     '此功能尚未实现。按 ESC 键离开这座建筑。',
+  'Welcome to the Guild. What can I do for you?':
+    '欢迎来到工会。需要办理什么？',
+  'Reported {count} discovery. The Guild pays {gold}g.':
+    '已上报 {count} 项发现。工会支付 {gold} 金币。',
+  'Reported {count} discoveries. The Guild pays {gold}g.':
+    '已上报 {count} 项发现。工会支付 {gold} 金币。',
+  'Meet your father': '去见父亲',
+  'Visit your father at the Franco house in Lisbon.':
+    '前往里斯本法雷尔宅邸见父亲。',
+  'Say farewell': '向朋友道别',
+  'Visit Carlotta at the Lisbon pub.': '前往里斯本酒吧见卡洛塔。',
+  'Collect your ship': '领取船只',
+  'Collect Hermes II at the Lisbon shipyard.':
+    '前往里斯本船厂领取赫尔墨斯II号。',
+  'Recruit Enrico': '邀请恩里克',
+  'Meet Father Felippe and Enrico at the Lisbon church.':
+    '前往里斯本教堂见菲利普神父与恩里克。',
+  'Meet your mother': '去见母亲',
+  'Return to your mother at the Franco house from 22:00 to midnight.':
+    '22:00至午夜返回法雷尔宅邸见母亲。',
+  'Set sail': '准备出航',
+  'Finish preparations with Rocco at the Lisbon harbor.':
+    '前往里斯本港口，与洛克完成出航准备。',
+  'First voyage commission': '首次航海委托',
+  'Accept the first-voyage commission at the Lisbon Guild.':
+    '前往里斯本工会接受首次航海委托。',
+  Domingo: '多明戈',
+  'Sail for 3 consecutive days to meet the sailor following your wake.':
+    '连续航海3天，见一见尾随舰队的水手。',
+  'Reconsider Domingo’s offer at the Lisbon Guild.':
+    '前往里斯本工会重新考虑多明戈的提议。',
+  'Chart Gibraltar': '绘制直布罗陀海图',
+  'Sail east along the south Iberian coast toward Seville and Ceuta; chart Gibraltar near 864.4, 377.9.':
+    '沿伊比利亚南岸向东驶向塞维尔与休达；在864.4、377.9附近绘制海图。',
+  'Report Gibraltar': '上报直布罗陀海峡',
+  'Return to the Lisbon Guild and report the Strait of Gibraltar.':
+    '返回里斯本工会上报直布罗陀海峡。',
+  'Complete the chapter': '完成本章',
+  'Collect the 500g commission reward at the Lisbon Guild.':
+    '前往里斯本工会领取500金币委托报酬。',
   Goods: '商品',
   goods: '商品',
   '{name} at {price}g each. How many?': '{name}每份 {price} 金币。要多少？',

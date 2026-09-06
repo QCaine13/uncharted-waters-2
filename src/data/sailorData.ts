@@ -77,6 +77,23 @@ export const sailorData: { [key: string]: Sailor } = {
     battleLevel: 1,
     skills: ['Accounting'],
   },
+  '34': {
+    name: 'Domingo Manana',
+    age: 17,
+    stats: {
+      leadership: 60,
+      seamanship: 68,
+      knowledge: 58,
+      intuition: 62,
+      courage: 81,
+      swordplay: 76,
+      charm: 90,
+      luck: 100,
+    },
+    navigationLevel: 1,
+    battleLevel: 1,
+    skills: ['Negotiation'],
+  },
 };
 
 const getSailor = (id: string) => sailorData[id];

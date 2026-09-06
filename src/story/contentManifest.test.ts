@@ -181,23 +181,33 @@ describe('story content manifest', () => {
 
   test('prints story content report', () => {
     const report = getStoryContentReport();
-    const allEventIds = storyContentSource.events
+    const lisbonEventIds = storyContentSource.events
+      .filter(({ arcId }) => String(arcId) === 'joao.lisbon-opening')
       .map(({ id }) => String(id))
       .sort();
 
     expect(report.counts).toEqual({
-      characters: 8,
-      relationships: 7,
-      arcs: 1,
-      events: 48,
+      characters: 9,
+      relationships: 8,
+      arcs: 2,
+      events: 52,
     });
     expect(report.arcs).toEqual([
       {
+        id: 'joao.first-voyage',
+        entryEvents: [
+          'joao.first-voyage.commission-accepted',
+          'joao.first-voyage.domingo-met',
+        ],
+        terminalEvents: ['joao.first-voyage.chapter-complete'],
+        crossArcDependencies: ['joao.lisbon-opening'],
+      },
+      {
         id: 'joao.lisbon-opening',
-        entryEvents: allEventIds.filter(
+        entryEvents: lisbonEventIds.filter(
           (id) => id !== 'joao.lisbon-opening.house-mother-farewell',
         ),
-        terminalEvents: allEventIds.filter(
+        terminalEvents: lisbonEventIds.filter(
           (id) => id !== 'joao.lisbon-opening.pub-farewell',
         ),
         crossArcDependencies: [],
@@ -227,7 +237,7 @@ describe('story content manifest', () => {
 
     const formatted = formatStoryContentReport(report);
     expect(formatted).toContain(
-      'Story content: 8 characters, 7 relationships, 1 arc, 48 events',
+      'Story content: 9 characters, 8 relationships, 2 arcs, 52 events',
     );
     expect(formatted).toContain(
       'Legacy compatibility: 10/10 once events mapped (complete)',

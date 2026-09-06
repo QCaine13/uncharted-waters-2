@@ -25,7 +25,7 @@ describe('DiscoveryBanner', () => {
     act(() => root.unmount());
   });
 
-  test('renders the landmark name and reward for a single discovery', () => {
+  test('renders sighting fame and the pending Guild report reward', () => {
     const container = document.createElement('div');
     const root = createRoot(container);
 
@@ -37,7 +37,9 @@ describe('DiscoveryBanner', () => {
 
     expect(
       container.querySelector('[data-test=discoveryBanner]')?.textContent,
-    ).toBe('Discovered: Strait of Gibraltar — +30 adventure fame, +300g');
+    ).toBe(
+      'Discovered: Strait of Gibraltar — +30 adventure fame; report for 300g',
+    );
 
     act(() => root.unmount());
   });
@@ -57,10 +59,10 @@ describe('DiscoveryBanner', () => {
     )?.textContent;
 
     expect(text).toContain(
-      'Discovered: Strait of Gibraltar — +30 adventure fame, +300g',
+      'Discovered: Strait of Gibraltar — +30 adventure fame; report for 300g',
     );
     expect(text).toContain(
-      'Discovered: The Azores — +50 adventure fame, +500g',
+      'Discovered: The Azores — +50 adventure fame; report for 500g',
     );
 
     act(() => root.unmount());
@@ -95,7 +97,7 @@ describe('DiscoveryBanner', () => {
 
     expect(
       container.querySelector('[data-test=discoveryBanner]')?.textContent,
-    ).toBe('Discovered: The Azores — +50 adventure fame, +500g');
+    ).toBe('Discovered: The Azores — +50 adventure fame; report for 500g');
 
     act(() => root.unmount());
   });
