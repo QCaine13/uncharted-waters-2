@@ -307,6 +307,8 @@ export const terms: Record<string, string> = {
   'Curved Sword': '弯刀',
   'Heavy Sword': '重剑',
   Armor: '防具',
+  Attack: '攻击力',
+  Defense: '防御力',
   'Measuring Instrument': '测量仪器',
   'Voyager’s Aid': '航海用品',
   'Emergency Item': '应急用品',
