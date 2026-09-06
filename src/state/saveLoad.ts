@@ -23,6 +23,10 @@ interface SaveData {
   discoveries: State['discoveries'];
   storyEvents: State['storyEvents'];
   reportedDiscoveries: State['reportedDiscoveries'];
+  equipment: State['equipment'];
+  mateProgress: State['mateProgress'];
+  combatResults: State['combatResults'];
+  activeCombat: State['activeCombat'];
 }
 
 export const save = (): void => {
@@ -45,6 +49,13 @@ export const save = (): void => {
     discoveries: [...state.discoveries],
     storyEvents: [...(state.storyEvents ?? [])],
     reportedDiscoveries: [...(state.reportedDiscoveries ?? [])],
+    equipment: { ...state.equipment },
+    mateProgress: JSON.parse(JSON.stringify(state.mateProgress)),
+    combatResults: { ...state.combatResults },
+    activeCombat:
+      state.activeCombat === null
+        ? null
+        : JSON.parse(JSON.stringify(state.activeCombat)),
   };
 
   window.localStorage.setItem(SAVED_STATE_KEY, JSON.stringify(saveData));
@@ -95,6 +106,13 @@ export const load = (): boolean => {
   state.reportedDiscoveries = Array.isArray(saveData.reportedDiscoveries)
     ? [...saveData.reportedDiscoveries]
     : [];
+  state.equipment = { ...saveData.equipment };
+  state.mateProgress = JSON.parse(JSON.stringify(saveData.mateProgress));
+  state.combatResults = { ...saveData.combatResults };
+  state.activeCombat =
+    saveData.activeCombat === null
+      ? null
+      : JSON.parse(JSON.stringify(saveData.activeCombat));
 
   // Clear non-serializable objects so game loop recreates them
   state.world = undefined as unknown as State['world'];

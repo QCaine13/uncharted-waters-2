@@ -6,6 +6,12 @@ import type { LegacyQuestCompletionKey } from '../story/legacy/lisbonCompletionK
 import { ItemId } from '../data/itemData';
 import type { MarketPriceEntry } from '../data/marketPricing';
 import { migrate } from './saveMigrations';
+import type {
+  CombatOutcome,
+  CombatState,
+  Equipment,
+  MateProgress,
+} from '../combat/types';
 
 export type Stage = 'world' | 'port' | 'building';
 
@@ -71,6 +77,10 @@ export interface State {
   storyEvents: string[];
   // Discovery ids whose one-time port report reward has already been paid.
   reportedDiscoveries: string[];
+  equipment: Equipment;
+  mateProgress: MateProgress;
+  combatResults: Record<string, CombatOutcome>;
+  activeCombat: CombatState | null;
 }
 
 export const SAVED_STATE_KEY = 'savedState';
@@ -119,6 +129,10 @@ const state = {
   reportedDiscoveries: Array.isArray(savedState.reportedDiscoveries)
     ? savedState.reportedDiscoveries
     : [],
+  equipment: savedState.equipment ?? { weaponId: null, armorId: null },
+  mateProgress: savedState.mateProgress ?? {},
+  combatResults: savedState.combatResults ?? {},
+  activeCombat: savedState.activeCombat ?? null,
 } as State;
 
 export default state;

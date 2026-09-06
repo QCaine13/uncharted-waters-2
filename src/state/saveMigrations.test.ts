@@ -71,11 +71,34 @@ describe('save migrations (D6)', () => {
     expect(upgraded?.gold).toBe(900);
   });
 
+  it('upgrades v5 to v6 combat defaults without changing possessions or progress', () => {
+    const old = {
+      version: 5,
+      items: ['4', 'future-item'],
+      mates: [{ sailorId: '1', role: 0 }],
+      storyEvents: ['future.event'],
+      futureProgress: { retained: true },
+    };
+
+    expect(migrate(old)).toEqual({
+      ...old,
+      version: 6,
+      equipment: { weaponId: null, armorId: null },
+      mateProgress: {},
+      combatResults: {},
+      activeCombat: null,
+    });
+  });
+
   it('leaves a current-version save unchanged', () => {
     const current = {
       version: SAVE_VERSION,
       gold: 1,
       fame: { adventure: 9, pirate: 0, trade: 0 },
+      equipment: { weaponId: null, armorId: null },
+      mateProgress: {},
+      combatResults: {},
+      activeCombat: null,
     };
 
     expect(migrate(current)).toEqual(current);
