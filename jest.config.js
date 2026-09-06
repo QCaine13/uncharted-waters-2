@@ -13,5 +13,9 @@ module.exports = {
   // testMatch walks into them and runs a second full copy of the suite. That
   // doubles the run and reports another checkout's results as if they were
   // this one's.
-  testPathIgnorePatterns: ['/node_modules/', '/\\.claude/', '/\\.worktrees/'],
+  testPathIgnorePatterns: [
+    '<rootDir>/node_modules/',
+    '<rootDir>/\\.claude/',
+    '<rootDir>/\\.worktrees/',
+  ],
 };

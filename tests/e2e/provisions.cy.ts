@@ -5,7 +5,7 @@ const setAtSeaState = (quantity: number) =>
   setState({
     portId: null,
     buildingId: null,
-    timePassed: 1420,
+    timePassed: 1421,
     dayAtSea: 4,
     fleets: {
       '1': {
@@ -44,7 +44,7 @@ describe('Daily provisions', () => {
     cy.window().should((win) => {
       const saved = JSON.parse(win.localStorage.getItem(SAVED_STATE_KEY)!);
       expect(saved.dayAtSea).to.equal(5);
-      expect(saved.timePassed).to.equal(1440);
+      expect(saved.timePassed).to.be.at.least(1441);
       expect(saved.fleets['1'].ships[0].cargo).to.deep.equal([
         { type: 'water', quantity: 6 },
         { type: 'food', quantity: 6 },

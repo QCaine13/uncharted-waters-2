@@ -3,7 +3,7 @@ import createMap from '../../map';
 import PercentNextMove from '../../percentNextMove';
 import createWorldCharacters from './worldCharacters';
 import { getTimeOfDay } from '../../state/selectors';
-import { worldTimeTick } from '../../state/actionsWorld';
+import { updateWorldStatus, worldTimeTick } from '../../state/actionsWorld';
 import { drawCamera, drawCharacter, getCameraPosition } from './sharedUtils';
 import { TILE_SIZE } from '../../constants';
 
@@ -15,6 +15,8 @@ const createWorld = () => {
   const height = canvas.height / TILE_SIZE;
 
   const map = createMap([Math.ceil(width + 1), Math.ceil(height + 1)]);
+
+  updateWorldStatus();
 
   const characters = createWorldCharacters(map);
 

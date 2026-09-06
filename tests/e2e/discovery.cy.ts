@@ -4,21 +4,27 @@ import { goldIs, setState } from '../utils';
 const capeOfGoodHope = landmarks.find((l) => l.id === 'cape-of-good-hope')!;
 const azores = landmarks.find((l) => l.id === 'azores')!;
 
-// timePassed + 20 is a multiple of 240 in both specs below. worldTimeTick
-// only sets state.wind on a multiple-of-240 tick, and state.wind (unlike
-// timePassed) isn't part of the save — a sea save that loads on an
-// off-multiple tick reads state.wind while it's still undefined and throws
-// before the first frame ever draws. provisions.cy.ts's 1420 dodges the same
-// hazard; see actionsWorld.ts's worldTimeTick and worldPlayer.ts's
-// updateSpeed.
-const SAFE_TIME_PASSED = 220;
+const SEA_SAVE_TIME = 240;
+
+const indicatorsAreInitialized = () => {
+  cy.contains('Wind')
+    .parent()
+    .find('img')
+    .should('have.attr', 'src')
+    .and('not.be.empty');
+  cy.contains('Current')
+    .parent()
+    .find('img')
+    .should('have.attr', 'src')
+    .and('not.be.empty');
+};
 
 describe('Discovery', () => {
   it('shows previously discovered landmarks in the list and their fame in the HUD', () => {
     setState({
       portId: null,
       buildingId: null,
-      timePassed: SAFE_TIME_PASSED,
+      timePassed: SEA_SAVE_TIME,
       dayAtSea: 3,
       fleets: {
         '1': {
@@ -52,6 +58,11 @@ describe('Discovery', () => {
     cy.visit('');
 
     cy.contains('Game is loading...').should('not.exist');
+    indicatorsAreInitialized();
+
+    cy.reload();
+    cy.contains('Game is loading...').should('not.exist');
+    indicatorsAreInitialized();
 
     goldIs(5000);
     cy.get('[data-test=fame-adventure]').should(
@@ -85,7 +96,7 @@ describe('Discovery', () => {
     setState({
       portId: null,
       buildingId: null,
-      timePassed: SAFE_TIME_PASSED,
+      timePassed: SEA_SAVE_TIME,
       dayAtSea: 0,
       fleets: {
         '1': {
@@ -151,7 +162,7 @@ describe('Discovery', () => {
     setState({
       portId: null,
       buildingId: null,
-      timePassed: SAFE_TIME_PASSED,
+      timePassed: SEA_SAVE_TIME,
       dayAtSea: 0,
       fleets: {
         '1': {
