@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import Right from './Right';
@@ -13,6 +13,8 @@ import Building from './port/Building';
 import { classNames } from './interfaceUtils';
 import useFade from './port/hooks/useFade';
 import useLocale from '../localization/useLocale';
+import SeaStory from './world/SeaStory';
+import { getLoadGeneration, subscribeGameLoad } from '../state/saveEvents';
 
 import './global.css';
 
@@ -30,6 +32,10 @@ type Props = {
 
 function Interface({ resolve }: Props) {
   const locale = useLocale();
+  const loadGeneration = useSyncExternalStore(
+    subscribeGameLoad,
+    getLoadGeneration,
+  );
   const [portId, setPortId] = useState<string | null>(null);
   const [buildingId, setBuildingId] = useState<string | null>(null);
   const [timePassed, setTimePassed] = useState(0);
@@ -54,6 +60,7 @@ function Interface({ resolve }: Props) {
     <div className="[image-rendering:pixelated]" lang={locale}>
       <div className="flex items-stretch">
         <Left
+          key={loadGeneration}
           portId={portId}
           buildingId={buildingId}
           timePassed={timePassed}
@@ -69,11 +76,17 @@ function Interface({ resolve }: Props) {
           onAnimationEnd={onAnimationEnd}
           onContextMenu={(e) => e.preventDefault()}
         >
-          {buildingId !== null && <Building buildingId={buildingId} />}
+          {buildingId !== null && (
+            <Building
+              key={`${portId}:${buildingId}:${loadGeneration}`}
+              buildingId={buildingId}
+            />
+          )}
           <div className={buildingId ? 'hidden' : ''}>
             <Camera />
           </div>
           <DiscoveryBanner hidden={inPort} />
+          {!inPort && <SeaStory />}
         </div>
         <Right>
           {inPort && <PortInfo portId={portId} />}

@@ -204,7 +204,13 @@ export const getStoryContentReport = (
   });
 
   const onceEvents = validEvents.filter(({ repeat }) => repeat === 'once');
-  const mappedEvents = onceEvents.filter(
+  const legacyCompatibilityEvents =
+    catalogs === undefined
+      ? onceEvents
+      : onceEvents.filter(({ id }) =>
+          catalogs.parityManifest.migratedEventIds.has(String(id)),
+        );
+  const mappedEvents = legacyCompatibilityEvents.filter(
     ({ legacyCompletionKey }) => legacyCompletionKey !== undefined,
   );
   const unreferencedCharacters = sorted(
@@ -232,11 +238,12 @@ export const getStoryContentReport = (
     unreferencedCharacters,
     unreferencedRelationships,
     legacyCompatibility: {
-      onceEvents: onceEvents.length,
+      onceEvents: legacyCompatibilityEvents.length,
       mappedEvents: mappedEvents.length,
-      coverageComplete: mappedEvents.length === onceEvents.length,
+      coverageComplete:
+        mappedEvents.length === legacyCompatibilityEvents.length,
       unmappedEvents: sorted(
-        onceEvents
+        legacyCompatibilityEvents
           .filter(
             ({ legacyCompletionKey }) => legacyCompletionKey === undefined,
           )

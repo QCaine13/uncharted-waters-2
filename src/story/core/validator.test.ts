@@ -85,7 +85,6 @@ const expectedCodes = [
   'invalid-time-window',
   'invalid-days-range',
   'invalid-fame-value',
-  'once-without-legacy-key',
   'duplicate-legacy-key',
   'conflicting-reciprocal',
   'priority-conflict',
@@ -216,13 +215,6 @@ const invalidCases: InvalidCase[] = [
     },
   },
   {
-    code: 'once-without-legacy-key',
-    path: 'events[0].legacyCompletionKey',
-    mutate: (source) => {
-      delete source.events[0].legacyCompletionKey;
-    },
-  },
-  {
     code: 'duplicate-legacy-key',
     path: 'events[1].legacyCompletionKey',
     mutate: (source) => {
@@ -284,14 +276,12 @@ describe('validateStoryContent', () => {
     source.relationships[0].to = characterId('missing');
     source.arcs[0].protagonist = characterId('also-missing');
     source.events[0].steps = [{ type: 'effect', effects: [] }];
-    delete source.events[0].legacyCompletionKey;
 
     expect(validateStoryContent(source).map(({ code }) => code)).toEqual(
       expect.arrayContaining([
         'missing-relationship-character',
         'missing-arc-protagonist',
         'empty-effects',
-        'once-without-legacy-key',
       ]),
     );
   });

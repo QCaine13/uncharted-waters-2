@@ -46,9 +46,7 @@ const graphFixture = (): StoryContentSource => {
       },
     ],
     relationships: [],
-    arcs: [
-      { id: arcId, protagonist, title: 'Arc', eventIds: [first, second] },
-    ],
+    arcs: [{ id: arcId, protagonist, title: 'Arc', eventIds: [first, second] }],
     events: [
       {
         id: first,
@@ -114,7 +112,12 @@ describe('story validation semantic boundaries', () => {
     );
     expect(
       [...storyValidationCatalogs.parityManifest.migratedEventIds].sort(),
-    ).toEqual(storyContentSource.events.map(({ id }) => String(id)).sort());
+    ).toEqual(
+      storyContentSource.events
+        .filter(({ arcId }) => String(arcId) === 'joao.lisbon-opening')
+        .map(({ id }) => String(id))
+        .sort(),
+    );
     expect(
       storyContentSource.events.filter(
         ({ legacyCompletionKey }) => legacyCompletionKey !== undefined,
@@ -154,9 +157,7 @@ describe('story validation semantic boundaries', () => {
         { type: 'atPort', portId: '1' },
       ],
     };
-    const catalogs = emptyCatalogs(
-      source.events.map(({ id }) => String(id)),
-    );
+    const catalogs = emptyCatalogs(source.events.map(({ id }) => String(id)));
     catalogs.portIds = new Set(['1']);
 
     expect(validate(source, catalogs)).toEqual(
@@ -179,9 +180,7 @@ describe('story validation semantic boundaries', () => {
         { type: 'atPort', portId: '1' },
       ],
     };
-    const catalogs = emptyCatalogs(
-      source.events.map(({ id }) => String(id)),
-    );
+    const catalogs = emptyCatalogs(source.events.map(({ id }) => String(id)));
     catalogs.portIds = new Set(['1']);
 
     expect(validate(source, catalogs).map(({ code }) => code)).not.toContain(
@@ -233,8 +232,7 @@ describe('story validation semantic boundaries', () => {
 
   test('rejects a persisted key remapped to a repeatable event with both exact owners', () => {
     const persistedId = 'joao.lisbon-opening.house-introduction';
-    const repeatableId =
-      'joao.lisbon-opening.house-guard-after-introduction';
+    const repeatableId = 'joao.lisbon-opening.house-guard-after-introduction';
     const legacyKeyToEvent = new Map(
       storyValidationCatalogs.parityManifest.legacyKeyToEvent,
     );
@@ -292,10 +290,14 @@ describe('story validation semantic boundaries', () => {
         ...arc,
         eventIds: arc.eventIds.filter((id) => String(id) !== splitId),
       })),
-      events: storyContentSource.events.filter(({ id }) => String(id) !== splitId),
+      events: storyContentSource.events.filter(
+        ({ id }) => String(id) !== splitId,
+      ),
     };
 
-    expect(validate(source, storyValidationCatalogs as ExpectedCatalogs)).toEqual(
+    expect(
+      validate(source, storyValidationCatalogs as ExpectedCatalogs),
+    ).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           code: 'parity-event-missing',

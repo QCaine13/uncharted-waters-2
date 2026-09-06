@@ -18,11 +18,13 @@ baseline are being strengthened incrementally.
 
 ## 中文版开发进度
 
-首批中文可玩基础（M0）已完成并通过验收与审查：默认简体中文、中英显示切换、现有里斯本开场与界面汉化，以及海上读档修复。当前可玩内容是里斯本开场、航海、贸易、补给和探索；约翰后续章节、战斗与结局仍在路线图中。
+继续开发请先读根目录的[交接文档](HANDOFF.md)：当前 M1 已完成，下一阶段从 M2 冲突与成长接续，附启动方式、验证证据及存档约束。
 
-首个完整交付目标是 **约翰·法雷尔全线通关**。后续按独立章节继续加入其他主角及扩展剧情，沿用稳定内容ID、声明式条件/奖励和兼容旧存档的迁移。参见[交付方案](docs/superpowers/specs/2026-09-06-chinese-playable-release-design.md)、[实施计划](docs/superpowers/plans/2026-09-06-chinese-foundation.md)、[中文资料基线](docs/1-baseline/chinese-reference-baseline.md)及[验收记录](docs/superpowers/verification/2026-09-06-chinese-foundation.md)。
+首批中文可玩基础（M0）已完成并通过验收与审查：默认简体中文、中英显示切换、现有里斯本开场与界面汉化，以及海上读档修复。M1 在此基础上加入首次航海一章：工会委托、连续出海三天后遇见多明戈、探索直布罗陀海峡、返港上报与一次性委托奖励。约翰完整主线、战斗与结局仍在路线图中。
 
-使用 WASD 移动，E、Enter 或鼠标左键确认，Escape 或鼠标右键取消。左侧「系统」提供保存、读取、重置及中英切换；语言偏好独立保存。新增剧情前请阅读[剧情编写指南](docs/story/authoring-guide.md)中的章节、中文文本和存档约束。
+首个完整交付目标是 **约翰·法雷尔全线通关**。后续按独立章节继续加入其他主角及扩展剧情，沿用稳定内容ID、声明式条件/奖励和兼容旧存档的迁移。参见[交付方案](docs/superpowers/specs/2026-09-06-chinese-playable-release-design.md)、[M1实施计划](docs/superpowers/plans/2026-09-06-m1-first-voyage.md)、[中文资料基线](docs/1-baseline/chinese-reference-baseline.md)及[M1验收记录](docs/superpowers/verification/2026-09-06-m1-first-voyage.md)。
+
+使用 WASD 移动，E、Enter 或鼠标左键确认，Escape 或鼠标右键取消。左侧「系统」提供保存、读取、重置及中英切换；语言偏好独立保存。「日志」给出当前任务和返港上报指引，海上对话及侧栏弹窗会暂停航行。完成开场后先到里斯本工会接取委托；发现增加名声，上报才领取发现物金币。拒绝多明戈后可在里斯本工会重新邀请。新增剧情前请阅读[剧情编写指南](docs/story/authoring-guide.md)中的章节、中文文本和存档约束。
 
 ## Features
 
@@ -32,6 +34,7 @@ baseline are being strengthened incrementally.
 - **Save / Load** system — progress is persisted to `localStorage` with
   auto-save on key actions (trading, docking, buying ships, etc.) and a
   manual System menu (Save / Load / Reset).
+- **First voyage** — a bilingual journal, sea encounters, Domingo recruitment and a Lisbon Guild commission. Save v5 preserves semantic chapter progress and migrates previously paid discoveries safely.
 - **Market trading** — buy and sell 24 trade goods across 13 market
   regions. Each region has local supply (cheap) and demand (expensive)
   goods, enabling the classic buy-low-sell-high trade routes.

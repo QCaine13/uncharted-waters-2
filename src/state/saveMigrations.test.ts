@@ -53,6 +53,24 @@ describe('save migrations (D6)', () => {
     });
   });
 
+  it('upgrades v4 progress to semantic events and treats paid discoveries as reported', () => {
+    const old = {
+      version: 4,
+      quests: ['houseBeforeQuest', 'future-old-key'],
+      discoveries: ['strait-of-gibraltar'],
+      gold: 900,
+    };
+
+    const upgraded = migrate(old);
+
+    expect(upgraded?.storyEvents).toEqual([
+      'joao.lisbon-opening.house-introduction',
+    ]);
+    expect(upgraded?.reportedDiscoveries).toEqual(['strait-of-gibraltar']);
+    expect(upgraded?.quests).toEqual(old.quests);
+    expect(upgraded?.gold).toBe(900);
+  });
+
   it('leaves a current-version save unchanged', () => {
     const current = {
       version: SAVE_VERSION,

@@ -12,6 +12,7 @@ import Church from './Church';
 import ItemShop from './ItemShop';
 import Pub from './Pub';
 import Market from './Market';
+import Guild from './Guild';
 
 interface Props {
   buildingId: string;
@@ -38,6 +39,10 @@ export default function Building({ buildingId }: Props) {
 
   if (buildingId === '5') {
     return <Lodge />;
+  }
+
+  if (buildingId === '7') {
+    return <Guild />;
   }
 
   if (buildingId === '9') {

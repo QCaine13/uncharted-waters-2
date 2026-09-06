@@ -11,7 +11,9 @@
  which callers treat the same as "no save" — so this is strictly safer than before.
 */
 
-export const SAVE_VERSION = 4;
+import { legacyToSemanticEvent } from '../story/legacy/lisbonCompletionKeys';
+
+export const SAVE_VERSION = 5;
 
 export type AnySave = Record<string, unknown> & { version?: unknown };
 
@@ -36,6 +38,27 @@ const migrations: Record<number, (save: AnySave) => AnySave> = {
     version: 4,
     discoveries: [],
   }),
+  // 4 -> 5: persist semantic story completion independently of legacy quest
+  // keys. Discoveries in v4 have already paid their gold reward, so they are
+  // reported during migration to prevent a second payout.
+  4: (save) => {
+    const quests = Array.isArray(save.quests) ? save.quests : [];
+    const discoveries = Array.isArray(save.discoveries) ? save.discoveries : [];
+    const storyEvents = quests.reduce<string[]>((eventIds, key) => {
+      if (typeof key !== 'string') return eventIds;
+      const eventId =
+        legacyToSemanticEvent[key as keyof typeof legacyToSemanticEvent];
+      if (eventId !== undefined) eventIds.push(eventId);
+      return eventIds;
+    }, []);
+
+    return {
+      ...save,
+      version: 5,
+      storyEvents: [...new Set(storyEvents)],
+      reportedDiscoveries: [...discoveries],
+    };
+  },
 };
 
 export const migrate = (raw: AnySave | null | undefined): AnySave | null => {

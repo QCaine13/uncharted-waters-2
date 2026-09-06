@@ -14,6 +14,9 @@ import { itemData } from '../data/itemData';
 import { shipData } from '../data/shipData';
 import { landmarks } from '../data/discoveryData';
 import { sailorData } from '../data/sailorData';
+import { firstVoyageDialogue } from '../story/content/arcs/joao/first-voyage/dialogue';
+import { getFirstVoyageJournal } from '../story/firstVoyageJournal';
+import state from '../state/state';
 
 describe('locale', () => {
   beforeEach(() => {
@@ -140,6 +143,38 @@ test('every Lisbon dialogue line, prompt and choice has a placeholder-safe trans
   });
 });
 
+test('every first-voyage branch and journal entry has a placeholder-safe translation', () => {
+  setLocale('zh-CN');
+  const sources: string[] = [];
+  const collect = (value: unknown): void => {
+    if (Array.isArray(value)) value.forEach(collect);
+    else if (value && typeof value === 'object') {
+      Object.entries(value).forEach(([key, child]) => {
+        if (
+          ['body', 'prompt', 'label', 'title'].includes(key) &&
+          typeof child === 'string'
+        )
+          sources.push(child);
+        else collect(child);
+      });
+    }
+  };
+  collect(firstVoyageDialogue);
+  collect(getFirstVoyageJournal(state));
+
+  sources.forEach((source) => {
+    const translated = t(source);
+    expect(translated).toBeTruthy();
+    expect(translated).not.toBe(source);
+    expect(translated.match(/\{[^}]+\}/g) ?? []).toEqual(
+      source.match(/\{[^}]+\}/g) ?? [],
+    );
+  });
+  expect(
+    Math.max(...sources.map((source) => t(source).length)),
+  ).toBeLessThanOrEqual(48);
+});
+
 test('every live game term and detail has an explicit Chinese translation', () => {
   setLocale('zh-CN');
   const names = [
@@ -164,6 +199,8 @@ test('uses the approved canonical Chinese Lisbon names', () => {
   expect(t('Rocco Alemkel')).toBe('洛克·阿尔姆克');
   expect(t('Brother Enrico')).toBe('恩里克神父');
   expect(t('Lucia the Waitress')).toBe('女侍路琪亚');
+  expect(t('Domingo')).toBe('多明戈');
+  expect(t('Domingo Manana')).toBe('多明戈');
   expect(t('Otto Baynes')).toBe('奥托·斯宾诺拉');
   expect(t('Ernst von Bohr')).toBe('恩斯特·洛佩斯');
   expect(t('Pietro Conti')).toBe('皮耶德·康迪');

@@ -1,9 +1,5 @@
-import joaoLisbon from './dialogue/joaoLisbon';
+import { dialogueCatalog } from './catalogs';
 
-// Add each future story arc as its own dictionary, then merge it here. This
-// keeps the stable t() API independent from story growth.
-export const dialogue: Record<string, string> = {
-  ...joaoLisbon,
-};
+export const dialogue: Record<string, string> = dialogueCatalog;
 
 export default dialogue;

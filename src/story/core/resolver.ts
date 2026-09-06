@@ -6,6 +6,7 @@ import type {
   StoryContext,
   StoryEvent,
 } from './types';
+import { storyEventId } from './types';
 import { getCompletedStoryEvents } from '../legacy/lisbonCompletionKeys';
 
 export type RandomSelector = (
@@ -53,6 +54,17 @@ export const conditionSatisfied = (
         (condition.max === undefined || days <= condition.max)
       );
     }
+    case 'daysAtSea': {
+      const days = context.dayAtSea ?? 0;
+      return (
+        (condition.min === undefined || days >= condition.min) &&
+        (condition.max === undefined || days <= condition.max)
+      );
+    }
+    case 'hasDiscovery':
+      return context.discoveries?.has(condition.discoveryId) ?? false;
+    case 'hasReportedDiscovery':
+      return context.reportedDiscoveries?.has(condition.discoveryId) ?? false;
     case 'fameAtLeast':
       return context.fame[condition.fame] >= condition.value;
     case 'hasItem':
@@ -144,13 +156,19 @@ export const createStoryContext = (
     portId: state.portId,
     buildingId: state.buildingId,
     timePassed: state.timePassed,
-    completedEvents: getCompletedStoryEvents(state.quests, content),
+    dayAtSea: state.dayAtSea ?? 0,
+    completedEvents: new Set([
+      ...(state.storyEvents ?? []).map(storyEventId),
+      ...getCompletedStoryEvents(state.quests ?? [], content),
+    ]),
     fame: state.fame,
-    items: new Set(state.items),
+    items: new Set(state.items ?? []),
     companions: new Set(
-      state.mates
+      (state.mates ?? [])
         .map(({ sailorId }) => characterBySailorId.get(sailorId))
         .filter((id): id is NonNullable<typeof id> => id !== undefined),
     ),
+    discoveries: new Set(state.discoveries ?? []),
+    reportedDiscoveries: new Set(state.reportedDiscoveries ?? []),
   };
 };

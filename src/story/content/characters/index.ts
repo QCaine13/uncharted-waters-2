@@ -3,6 +3,7 @@ import butlerMarco from './butler-marco';
 import carlotta from './carlotta';
 import duchessChristiana from './duchess-christiana';
 import dukeFranco from './duke-franco';
+import domingo from './domingo';
 import enrico from './enrico';
 import joao from './joao';
 import lucia from './lucia';
@@ -17,6 +18,7 @@ export const storyCharacters: StoryCharacter[] = [
   enrico,
   carlotta,
   lucia,
+  domingo,
 ];
 
 export default storyCharacters;

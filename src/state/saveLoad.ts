@@ -1,5 +1,6 @@
 import state, { SAVED_STATE_KEY, State } from './state';
 import { migrate, SAVE_VERSION } from './saveMigrations';
+import { notifyGameLoaded } from './saveEvents';
 
 export { SAVE_VERSION };
 
@@ -20,6 +21,8 @@ interface SaveData {
   fame: State['fame'];
   marketPrices: State['marketPrices'];
   discoveries: State['discoveries'];
+  storyEvents: State['storyEvents'];
+  reportedDiscoveries: State['reportedDiscoveries'];
 }
 
 export const save = (): void => {
@@ -40,6 +43,8 @@ export const save = (): void => {
     fame: { ...state.fame },
     marketPrices: JSON.parse(JSON.stringify(state.marketPrices)),
     discoveries: [...state.discoveries],
+    storyEvents: [...(state.storyEvents ?? [])],
+    reportedDiscoveries: [...(state.reportedDiscoveries ?? [])],
   };
 
   window.localStorage.setItem(SAVED_STATE_KEY, JSON.stringify(saveData));
@@ -61,7 +66,9 @@ export const load = (): boolean => {
   }
 
   // Upgrade older saves through the migration chain instead of rejecting them.
-  const saveData = migrate(parsed as Record<string, unknown>) as SaveData | null;
+  const saveData = migrate(
+    parsed as Record<string, unknown>,
+  ) as SaveData | null;
 
   if (!saveData) {
     return false;
@@ -82,10 +89,18 @@ export const load = (): boolean => {
   state.fame = saveData.fame;
   state.marketPrices = saveData.marketPrices;
   state.discoveries = saveData.discoveries;
+  state.storyEvents = Array.isArray(saveData.storyEvents)
+    ? [...saveData.storyEvents]
+    : [];
+  state.reportedDiscoveries = Array.isArray(saveData.reportedDiscoveries)
+    ? [...saveData.reportedDiscoveries]
+    : [];
 
   // Clear non-serializable objects so game loop recreates them
   state.world = undefined as unknown as State['world'];
   state.port = undefined as unknown as State['port'];
+
+  notifyGameLoaded();
 
   return true;
 };

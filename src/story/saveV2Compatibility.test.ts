@@ -108,12 +108,23 @@ describe('Save v2 Lisbon compatibility', () => {
       const saved = JSON.parse(
         window.localStorage.getItem(SAVED_STATE_KEY) ?? '{}',
       );
+      const expectedStoryEvents = new Set<string>(
+        originalQuests.reduce<string[]>((eventIds, key) => {
+          const id =
+            legacyToSemanticEvent[key as keyof typeof legacyToSemanticEvent];
+          if (id !== undefined) eventIds.push(id);
+          return eventIds;
+        }, []),
+      );
+      if (completion?.type === 'completeEvent') {
+        expectedStoryEvents.add(completion.eventId);
+      }
       expect(saved.version).toBe(SAVE_VERSION);
       expect(saved.quests.slice(0, originalQuests.length)).toEqual(
         originalQuests,
       );
       expect(saved.quests).not.toContain(event?.id);
-      expect(JSON.stringify(saved)).not.toContain('joao.lisbon-opening.');
+      expect(saved.storyEvents).toEqual([...expectedStoryEvents]);
       const next = resolveStoryEvent(
         createStoryContext(state, compiledStoryContent),
         compiledStoryContent,

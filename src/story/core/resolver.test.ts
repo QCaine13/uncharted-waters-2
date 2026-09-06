@@ -27,10 +27,13 @@ const context = (overrides: Partial<StoryContext> = {}): StoryContext => ({
   portId: '1',
   buildingId: '8',
   timePassed: 0,
+  dayAtSea: 0,
   completedEvents: new Set(),
   fame: { adventure: 0, pirate: 0, trade: 0 },
   items: new Set(),
   companions: new Set(),
+  discoveries: new Set(),
+  reportedDiscoveries: new Set(),
   ...overrides,
 });
 
@@ -476,23 +479,35 @@ describe('createStoryContext', () => {
       portId: '1',
       buildingId: '8',
       timePassed: 321,
+      dayAtSea: 7,
       quests: ['houseBeforeQuest', 'unknownQuest'],
+      storyEvents: ['future.event'],
       items: ['1'],
       mates: [
         { sailorId: '19', role: null },
         { sailorId: 'unknown', role: null },
       ],
       fame: { adventure: 4, pirate: 5, trade: 6 },
+      discoveries: ['strait-of-gibraltar'],
+      reportedDiscoveries: ['strait-of-gibraltar'],
     } as unknown as State;
 
     const result = createStoryContext(state, content);
 
     expect(result.completedEvents).toEqual(
-      new Set([storyEventId('joao.lisbon-opening.house-introduction')]),
+      new Set([
+        storyEventId('future.event'),
+        storyEventId('joao.lisbon-opening.house-introduction'),
+      ]),
     );
     expect(result.items).toEqual(new Set(['1']));
     expect(result.companions).toEqual(new Set([rocco]));
     expect(result.fame).toEqual(state.fame);
     expect(result.timePassed).toBe(321);
+    expect(result.dayAtSea).toBe(7);
+    expect(result.discoveries).toEqual(new Set(['strait-of-gibraltar']));
+    expect(result.reportedDiscoveries).toEqual(
+      new Set(['strait-of-gibraltar']),
+    );
   });
 });

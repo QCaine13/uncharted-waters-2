@@ -1,6 +1,6 @@
-import dialogueCatalog from './dialogue';
-import termsCatalog from './terms';
-import uiCatalog from './ui';
+import { chineseCatalog } from './catalogs';
+
+export { mergeCatalogs } from './catalogs';
 
 export type Locale = 'zh-CN' | 'en';
 
@@ -57,29 +57,15 @@ export const localizeDocument = (): void => {
   });
 };
 
-export const mergeCatalogs = (
-  ...catalogs: Record<string, string>[]
-): Record<string, string> => {
-  const merged: Record<string, string> = Object.create(null);
-  catalogs.forEach((catalog) => {
-    Object.entries(catalog).forEach(([source, translated]) => {
-      if (source in merged && merged[source] !== translated) {
-        throw new Error(`Conflicting translation for "${source}"`);
-      }
-      merged[source] = translated;
-    });
-  });
-  return merged;
-};
-
-const chinese = mergeCatalogs(uiCatalog, termsCatalog, dialogueCatalog);
-
 export const t = (
   source: string,
   values: Record<string, string | number> = {},
 ): string => {
-  const translated = Object.prototype.hasOwnProperty.call(chinese, source)
-    ? chinese[source]
+  const translated = Object.prototype.hasOwnProperty.call(
+    chineseCatalog,
+    source,
+  )
+    ? chineseCatalog[source]
     : source;
   const template = getLocale() === 'zh-CN' ? translated : source;
   return template.replace(/\{([^}]+)\}/g, (match, name: string) =>

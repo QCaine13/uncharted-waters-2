@@ -9,8 +9,8 @@ describe('canonical Lisbon characters', () => {
     storyCharacters.find((character) => character.id === id);
 
   test('preserves every legacy identity, English name, color, role, and sailor link', () => {
-    expect(storyCharacters).toHaveLength(8);
-    expect(new Set(storyCharacters.map(({ id }) => id)).size).toBe(8);
+    expect(storyCharacters).toHaveLength(9);
+    expect(new Set(storyCharacters.map(({ id }) => id)).size).toBe(9);
 
     expect(byId('joao')).toEqual({
       id: characterId('joao'),
@@ -71,11 +71,19 @@ describe('canonical Lisbon characters', () => {
       dialogueStyle: { color: 'text-pink-600' },
       legacyCharacterId: '99',
     });
+    expect(byId('domingo')).toEqual({
+      id: characterId('domingo'),
+      names: { en: 'Domingo', zh: '多明戈' },
+      role: 'companion',
+      dialogueStyle: { color: 'text-emerald-700' },
+      sailorId: '34',
+      legacyCharacterId: '34',
+    });
 
     const sailorIds = storyCharacters
       .map(({ sailorId }) => sailorId)
       .filter((sailorId): sailorId is string => Boolean(sailorId));
-    expect(sailorIds).toEqual(['1', '32', '33']);
+    expect(sailorIds).toEqual(['1', '32', '33', '34']);
     expect(sailorIds).toHaveLength(new Set(sailorIds).size);
   });
 
@@ -89,6 +97,7 @@ describe('canonical Lisbon characters', () => {
       '33': { name: 'Brother Enrico', color: 'text-purple-800' },
       '98': { name: 'Carlotta, Owner of the Pub', color: 'text-amber-600' },
       '99': { name: 'Lucia the Waitress', color: 'text-pink-600' },
+      '34': { name: 'Domingo', color: 'text-emerald-700' },
     });
   });
 });
@@ -153,6 +162,13 @@ describe('canonical Lisbon relationships', () => {
         type: 'acquaintance',
         reciprocal: 'acquaintance',
       },
+      {
+        id: 'joao.domingo.companion',
+        from: 'domingo',
+        to: 'joao',
+        type: 'companion',
+        reciprocal: 'companion',
+      },
     ]);
 
     const compiled = compileStoryContent(
@@ -185,9 +201,11 @@ describe('canonical Lisbon relationships', () => {
         'joao:acquaintance:carlotta',
         'lucia:acquaintance:joao',
         'joao:acquaintance:lucia',
+        'domingo:companion:joao',
+        'joao:companion:domingo',
       ]),
     );
-    expect(compiledEdges).toHaveLength(14);
+    expect(compiledEdges).toHaveLength(16);
     expect(compiled.diagnostics).toEqual([]);
   });
 });

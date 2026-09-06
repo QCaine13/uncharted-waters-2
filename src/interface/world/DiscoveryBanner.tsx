@@ -32,11 +32,14 @@ export default function DiscoveryBanner({ hidden }: Props) {
           key={landmark.id}
           className="bg-black bg-opacity-75 text-white text-xl px-6 py-2"
         >
-          {t('Discovered: {name} — +{fame} adventure fame, +{gold}g', {
-            name: t(landmark.name),
-            fame: landmark.fame,
-            gold: landmark.gold,
-          })}
+          {t(
+            'Discovered: {name} — +{fame} adventure fame; report for {gold}g',
+            {
+              name: t(landmark.name),
+              fame: landmark.fame,
+              gold: landmark.gold,
+            },
+          )}
         </div>
       ))}
     </div>

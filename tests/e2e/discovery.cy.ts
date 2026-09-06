@@ -79,7 +79,7 @@ describe('Discovery', () => {
     // Discovery order (Cape of Good Hope first) drives the default detail.
     cy.get('[data-test=left]').should(
       'include.text',
-      `+${capeOfGoodHope.fame} adventure fame, +${capeOfGoodHope.gold}g`,
+      `Unreported — ${capeOfGoodHope.gold}g pending at Lisbon Guild`,
     );
     cy.get('[data-test=left]').should('include.text', '34.4° S');
     cy.get('[data-test=left]').should('include.text', '18.5° E');
@@ -142,13 +142,13 @@ describe('Discovery', () => {
 
     cy.get('[data-test=discoveryBanner]', { timeout: 15000 }).should(
       'have.text',
-      `Discovered: ${capeOfGoodHope.name} — +${capeOfGoodHope.fame} adventure fame, +${capeOfGoodHope.gold}g`,
+      `Discovered: ${capeOfGoodHope.name} — +${capeOfGoodHope.fame} adventure fame; report for ${capeOfGoodHope.gold}g`,
     );
     cy.get('[data-test=fame-adventure]').should(
       'have.text',
       String(capeOfGoodHope.fame),
     );
-    goldIs(1000 + capeOfGoodHope.gold);
+    goldIs(1000);
   });
 
   // The next-closest reachable equivalent: a fresh, not-yet-discovered
@@ -195,12 +195,12 @@ describe('Discovery', () => {
     // Cypress's ordinary should() retry is the only polling involved.
     cy.get('[data-test=discoveryBanner]').should(
       'have.text',
-      `Discovered: ${capeOfGoodHope.name} — +${capeOfGoodHope.fame} adventure fame, +${capeOfGoodHope.gold}g`,
+      `Discovered: ${capeOfGoodHope.name} — +${capeOfGoodHope.fame} adventure fame; report for ${capeOfGoodHope.gold}g`,
     );
     cy.get('[data-test=fame-adventure]').should(
       'have.text',
       String(capeOfGoodHope.fame),
     );
-    goldIs(1000 + capeOfGoodHope.gold);
+    goldIs(1000);
   });
 });
