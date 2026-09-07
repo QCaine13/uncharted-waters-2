@@ -137,7 +137,9 @@ All npm and git invocations used the required Node 22/tool PATH.
 - Confirmed the five repeatable scenes either complete only on affirmative readiness or are advice/retry scenes with later-completion exclusions.
 - Confirmed no event adds a companion, no new character has a sailor or portrait link, and no shared building/runtime code changed.
 - Corrected the chapter-complete Pietro line to first person and made the defense report state the completed result and direct the next real facility.
-- Mutation check: resolver tests fail for wrong port/building, wrong calendar anchor/boundary, wrong battle rectangle/outcome and out-of-order markers; effects tests fail for missing Staff preflight, duplicate rewards, missing save durability, combat start timing or roster mutation; transcript tests fail for missing localization, internal tile directions, invalid choices or missing final self-completion.
+- Conceptual mutation-coverage review (no production mutations were executed or restored): the resolver assertions cover wrong port/building, wrong calendar anchor/boundary, wrong battle rectangle/outcome and out-of-order markers; the effects assertions cover missing Staff preflight, duplicate rewards, missing save durability, combat start timing and roster mutation; the transcript assertions cover missing localization, internal tile directions, invalid choices and missing final self-completion. This is test-intent reasoning, not additional executed RED evidence.
+
+Review clarification: this wording correction changed only this ignored evidence report. Per controller instruction, no test suite was rerun for the documentation-only clarification; the executed commands and outputs remain those recorded above.
 
 ## Concerns
 
