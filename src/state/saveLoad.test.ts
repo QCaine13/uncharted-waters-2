@@ -4,6 +4,7 @@ import { getLoadGeneration, subscribeGameLoad } from './saveEvents';
 import { advanceDuel, createDuel } from '../combat/duel';
 import { advanceNaval, createNaval } from '../combat/naval';
 import type { DuelCombatantStats } from '../combat/types';
+import { encounterCatalog } from '../combat/encounters';
 
 const fighter: DuelCombatantStats = {
   swordplay: 82,
@@ -85,7 +86,7 @@ describe('save/load round trip', () => {
       createDuel({
         encounterId: 'joao.m2.kahn-house',
         player: fighter,
-        enemy: fighter,
+        enemy: encounterCatalog['joao.m2.kahn-house'].enemy,
       }),
       { type: 'attack', attack: 'thrust' },
     );
@@ -112,7 +113,7 @@ describe('save/load round trip', () => {
 
   test('preserves an ongoing naval challenge through a JSON round trip', () => {
     const naval = createNaval({
-      encounterId: 'joao.m2.kahn-shipyard',
+      encounterId: 'joao.m2.katarina',
       player: { hull: 30, maxHull: 30, crew: 20, guns: 8, shot: 3, lumber: 2 },
       playerDuel: fighter,
     });
@@ -127,6 +128,90 @@ describe('save/load round trip', () => {
 
     expect(load()).toBe(true);
     expect(state.activeCombat).toEqual(expected);
+  });
+
+  test('discards unsupported active encounter IDs and mismatched outer kinds', () => {
+    save();
+    const saved = JSON.parse(window.localStorage.getItem('savedState')!);
+    const futureDuel = createDuel({
+      encounterId: 'future.encounter',
+      player: fighter,
+      enemy: fighter,
+    });
+    saved.activeCombat = futureDuel;
+    window.localStorage.setItem('savedState', JSON.stringify(saved));
+    expect(load()).toBe(true);
+    expect(state.activeCombat).toBeNull();
+
+    saved.activeCombat = createNaval({
+      encounterId: 'joao.m2.kahn-house',
+      player: {
+        hull: 30,
+        maxHull: 30,
+        crew: 20,
+        guns: 8,
+        shot: 3,
+        lumber: 2,
+      },
+      playerDuel: fighter,
+    });
+    window.localStorage.setItem('savedState', JSON.stringify(saved));
+    expect(load()).toBe(true);
+    expect(state.activeCombat).toBeNull();
+
+    saved.activeCombat = createDuel({
+      encounterId: 'joao.m2.katarina',
+      player: fighter,
+      enemy: fighter,
+    });
+    window.localStorage.setItem('savedState', JSON.stringify(saved));
+    expect(load()).toBe(true);
+    expect(state.activeCombat).toBeNull();
+  });
+
+  test('discards malformed weapon categories and altered nested captain definitions', () => {
+    save();
+    const saved = JSON.parse(window.localStorage.getItem('savedState')!);
+    const direct = createDuel({
+      encounterId: 'joao.m2.kahn-house',
+      player: fighter,
+      enemy: {
+        swordplay: 78,
+        level: 3,
+        weaponRating: 20,
+        armorRating: 10,
+        weaponCategory: null,
+      },
+    });
+    (
+      direct.player.stats as unknown as { weaponCategory: number }
+    ).weaponCategory = 2;
+    saved.activeCombat = direct;
+    window.localStorage.setItem('savedState', JSON.stringify(saved));
+    expect(load()).toBe(true);
+    expect(state.activeCombat).toBeNull();
+
+    const naval = createNaval({
+      encounterId: 'joao.m2.katarina',
+      player: {
+        hull: 30,
+        maxHull: 30,
+        crew: 20,
+        guns: 8,
+        shot: 3,
+        lumber: 2,
+      },
+      playerDuel: fighter,
+    });
+    const challenged = advanceNaval(
+      { ...naval, range: 0 },
+      { type: 'challenge' },
+    );
+    challenged.boardingDuel!.enemy.stats.swordplay = 1;
+    saved.activeCombat = challenged;
+    window.localStorage.setItem('savedState', JSON.stringify(saved));
+    expect(load()).toBe(true);
+    expect(state.activeCombat).toBeNull();
   });
 
   test('defaults missing v6 fields and discards malformed combat without minting results', () => {

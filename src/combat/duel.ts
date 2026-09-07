@@ -124,7 +124,9 @@ export const advanceDuel = (
   const playerHp = Math.max(0, state.player.hp - received);
   const defeated = playerHp === 0;
   const drawn = !defeated && state.round === 10;
-  const outcome = defeated ? 'defeat' : drawn ? 'draw' : null;
+  let outcome: DuelState['outcome'] = null;
+  if (defeated) outcome = 'defeat';
+  if (drawn) outcome = 'draw';
   const nextRound = outcome ? state.round : state.round + 1;
   return {
     ...state,

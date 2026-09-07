@@ -1,9 +1,18 @@
-import type { DuelCombatantStats } from './types';
+import { isCombatState } from './types';
+import type { CombatState, DuelCombatantStats, NavalForce } from './types';
 
 export interface DuelEncounter {
   kind: 'duel';
   enemy: DuelCombatantStats;
 }
+
+export interface NavalEncounter {
+  kind: 'naval';
+  enemy: NavalForce;
+  captain: DuelCombatantStats;
+}
+
+export type CombatEncounter = DuelEncounter | NavalEncounter;
 
 export const encounterCatalog = {
   'joao.m2.kahn-shipyard': {
@@ -27,8 +36,9 @@ export const encounterCatalog = {
     },
   },
   'joao.m2.katarina': {
-    kind: 'duel',
-    enemy: {
+    kind: 'naval',
+    enemy: { hull: 42, maxHull: 42, crew: 18, guns: 8 },
+    captain: {
       swordplay: 84,
       level: 4,
       weaponRating: 25,
@@ -39,3 +49,40 @@ export const encounterCatalog = {
 } as const;
 
 export type CombatEncounterId = keyof typeof encounterCatalog;
+
+const sameStats = (
+  actual: DuelCombatantStats,
+  expected: DuelCombatantStats,
+): boolean =>
+  actual.swordplay === expected.swordplay &&
+  actual.level === expected.level &&
+  actual.weaponRating === expected.weaponRating &&
+  actual.armorRating === expected.armorRating &&
+  actual.weaponCategory === expected.weaponCategory;
+
+export const isSupportedCombatState = (
+  value: unknown,
+): value is CombatState => {
+  if (!isCombatState(value)) return false;
+  const definition: CombatEncounter | undefined =
+    encounterCatalog[value.encounterId as CombatEncounterId];
+  if (!definition || definition.kind !== value.kind) return false;
+
+  if (value.kind === 'duel' && definition.kind === 'duel') {
+    return sameStats(value.enemy.stats, definition.enemy);
+  }
+
+  if (value.kind !== 'naval' || definition.kind !== 'naval') return false;
+  if (
+    value.enemy.maxHull !== definition.enemy.maxHull ||
+    value.enemy.guns !== definition.enemy.guns ||
+    value.enemy.crew > definition.enemy.crew
+  ) {
+    return false;
+  }
+  return (
+    value.boardingDuel === null ||
+    (value.boardingDuel.encounterId === value.encounterId &&
+      sameStats(value.boardingDuel.enemy.stats, definition.captain))
+  );
+};

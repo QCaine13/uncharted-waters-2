@@ -14,11 +14,12 @@
 import { legacyToSemanticEvent } from '../story/legacy/lisbonCompletionKeys';
 import {
   combatOutcomes,
-  isCombatState,
   type CombatOutcome,
   type Equipment,
   type MateProgress,
 } from '../combat/types';
+import { isSupportedCombatState } from '../combat/encounters';
+import { itemData } from '../data/itemData';
 
 export const SAVE_VERSION = 6;
 
@@ -77,14 +78,32 @@ const migrations: Record<number, (save: AnySave) => AnySave> = {
   }),
 };
 
-const normalizeEquipment = (value: unknown): Equipment => {
+const normalizeEquipment = (value: unknown, items: unknown): Equipment => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return { weaponId: null, armorId: null };
   }
   const record = value as Record<string, unknown>;
+  const owned = new Set(
+    Array.isArray(items)
+      ? items.filter((item): item is string => typeof item === 'string')
+      : [],
+  );
+  const weaponId = typeof record.weaponId === 'string' ? record.weaponId : null;
+  const armorId = typeof record.armorId === 'string' ? record.armorId : null;
+  const weapon =
+    weaponId !== null && owned.has(weaponId)
+      ? itemData[weaponId as keyof typeof itemData]
+      : undefined;
+  const armor =
+    armorId !== null && owned.has(armorId)
+      ? itemData[armorId as keyof typeof itemData]
+      : undefined;
   return {
-    weaponId: typeof record.weaponId === 'string' ? record.weaponId : null,
-    armorId: typeof record.armorId === 'string' ? record.armorId : null,
+    weaponId:
+      weapon && ['1', '2', '3', '4'].includes(weapon.categoryId)
+        ? weaponId
+        : null,
+    armorId: armor?.categoryId === '7' ? armorId : null,
   };
 };
 
@@ -124,10 +143,12 @@ const normalizeCombatResults = (
 
 const normalizeV6 = (save: AnySave): AnySave => ({
   ...save,
-  equipment: normalizeEquipment(save.equipment),
+  equipment: normalizeEquipment(save.equipment, save.items),
   mateProgress: normalizeMateProgress(save.mateProgress),
   combatResults: normalizeCombatResults(save.combatResults),
-  activeCombat: isCombatState(save.activeCombat) ? save.activeCombat : null,
+  activeCombat: isSupportedCombatState(save.activeCombat)
+    ? save.activeCombat
+    : null,
 });
 
 export const migrate = (raw: AnySave | null | undefined): AnySave | null => {

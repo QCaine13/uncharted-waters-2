@@ -104,6 +104,35 @@ describe('save migrations (D6)', () => {
     expect(migrate(current)).toEqual(current);
   });
 
+  it('clears unknown, unowned, and wrong-category equipped items', () => {
+    const base = {
+      version: SAVE_VERSION,
+      items: ['4', '18', 'future-item'],
+      mateProgress: {},
+      combatResults: {},
+      activeCombat: null,
+    };
+
+    expect(
+      migrate({
+        ...base,
+        equipment: { weaponId: '12', armorId: 'future-item' },
+      })?.equipment,
+    ).toEqual({ weaponId: null, armorId: null });
+    expect(
+      migrate({
+        ...base,
+        equipment: { weaponId: '18', armorId: '4' },
+      })?.equipment,
+    ).toEqual({ weaponId: null, armorId: null });
+    expect(
+      migrate({
+        ...base,
+        equipment: { weaponId: '4', armorId: '18' },
+      })?.equipment,
+    ).toEqual({ weaponId: '4', armorId: '18' });
+  });
+
   it('fails safe (null) on unknown, missing, or absent version', () => {
     expect(migrate({ version: 99 })).toBeNull();
     expect(migrate({ gold: 1 })).toBeNull();

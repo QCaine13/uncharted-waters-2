@@ -233,8 +233,9 @@ describe('combat stats and encounters', () => {
         },
       },
       'joao.m2.katarina': {
-        kind: 'duel',
-        enemy: {
+        kind: 'naval',
+        enemy: { hull: 42, maxHull: 42, crew: 18, guns: 8 },
+        captain: {
           swordplay: 84,
           level: 4,
           weaponRating: 25,
@@ -256,14 +257,16 @@ describe('naval rules', () => {
 
   test('enforces action availability without consuming rounds or resources', () => {
     const created = naval();
-    for (const action of [
-      { type: 'board' },
-      { type: 'challenge' },
-      { type: 'retreat' },
-      { type: 'repair' },
-    ] as const) {
+    (
+      [
+        { type: 'board' },
+        { type: 'challenge' },
+        { type: 'retreat' },
+        { type: 'repair' },
+      ] as const
+    ).forEach((action) => {
       expect(advanceNaval(created, action)).toBe(created);
-    }
+    });
     const noShot = { ...created, player: { ...created.player, shot: 0 } };
     expect(advanceNaval(noShot, { type: 'fire' })).toBe(noShot);
   });
@@ -300,6 +303,22 @@ describe('naval rules', () => {
     expect(retreated.round).toBe(withdrawn.round);
   });
 
+  test('receives cannon fire when withdrawing to close or cannon range', () => {
+    const created = naval();
+
+    const fromAdjacent = advanceNaval(
+      { ...created, range: 0 },
+      { type: 'withdraw' },
+    );
+    expect(fromAdjacent).toMatchObject({ range: 1, player: { hull: 26 } });
+
+    const fromClose = advanceNaval(
+      { ...created, range: 1 },
+      { type: 'withdraw' },
+    );
+    expect(fromClose).toMatchObject({ range: 2, player: { hull: 26 } });
+  });
+
   test('can be defeated by the deterministic enemy response', () => {
     const created = naval();
     const fragile = { ...created, player: { ...created.player, hull: 4 } };
@@ -323,6 +342,22 @@ describe('naval rules', () => {
     expect(advanceNaval(nearlyWon, { type: 'board' }).outcome).toBe('victory');
   });
 
+  test('simultaneous boarding crew exhaustion resolves as defeat', () => {
+    const created = naval();
+    const lastCrews = {
+      ...created,
+      range: 0 as const,
+      player: { ...created.player, crew: 1 },
+      enemy: { ...created.enemy, crew: 2 },
+    };
+
+    const result = advanceNaval(lastCrews, { type: 'board' });
+
+    expect(result.player.crew).toBe(0);
+    expect(result.enemy.crew).toBe(0);
+    expect(result.outcome).toBe('defeat');
+  });
+
   test('repairs with lumber, caps hull, and then receives the enemy response', () => {
     const damaged = { ...naval(), player: { ...naval().player, hull: 25 } };
     const result = advanceNaval(damaged, { type: 'repair' });
@@ -342,7 +377,7 @@ describe('naval rules', () => {
       ['defeat', 'defeat'],
       ['draw', null],
     ] as const;
-    for (const [duelOutcome, navalOutcome] of outcomes) {
+    outcomes.forEach(([duelOutcome, navalOutcome]) => {
       const active = {
         ...challenge,
         boardingDuel: { ...challenge.boardingDuel!, outcome: duelOutcome },
@@ -351,7 +386,7 @@ describe('naval rules', () => {
       expect(resolved.outcome).toBe(navalOutcome);
       expect(resolved.boardingDuel).toBeNull();
       if (duelOutcome === 'draw') expect(resolved.range).toBe(0);
-    }
+    });
   });
 
   test('forwards duel actions and does not mutate naval input snapshots', () => {

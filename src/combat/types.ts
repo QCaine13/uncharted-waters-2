@@ -111,7 +111,10 @@ const isStats = (value: unknown): value is DuelCombatantStats => {
     isFiniteNonNegative(value.weaponRating) &&
     isFiniteNonNegative(value.armorRating) &&
     (value.weaponCategory === null ||
-      ['1', '2', '3', '4'].includes(String(value.weaponCategory)))
+      value.weaponCategory === '1' ||
+      value.weaponCategory === '2' ||
+      value.weaponCategory === '3' ||
+      value.weaponCategory === '4')
   );
 };
 

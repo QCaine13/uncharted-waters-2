@@ -4,7 +4,6 @@ import type {
   CombatLogRecord,
   DuelCombatantStats,
   NavalAction,
-  NavalForce,
   NavalRange,
   NavalState,
   PlayerNavalForce,
@@ -21,8 +20,6 @@ const appendLog = (
   record: CombatLogRecord,
 ): CombatLogRecord[] => [...log, record].slice(-8);
 
-const enemy: NavalForce = { hull: 42, maxHull: 42, crew: 18, guns: 8 };
-
 export const createNaval = ({
   encounterId,
   player,
@@ -35,23 +32,23 @@ export const createNaval = ({
   outcome: null,
   log: [],
   player: { ...player },
-  enemy: { ...enemy },
+  enemy: { ...encounterCatalog['joao.m2.katarina'].enemy },
   range: 2,
   playerDuel: { ...playerDuel },
   boardingDuel: null,
 });
 
 const resolvedOutcome = (state: NavalState): NavalState['outcome'] => {
-  if (state.enemy.hull === 0 || state.enemy.crew === 0) return 'victory';
   if (state.player.hull === 0 || state.player.crew === 0) return 'defeat';
+  if (state.enemy.hull === 0 || state.enemy.crew === 0) return 'victory';
   return null;
 };
 
 const withEnemyResponse = (state: NavalState): NavalState => {
   if (resolvedOutcome(state))
     return { ...state, outcome: resolvedOutcome(state) };
-  let player = { ...state.player };
-  let range = state.range;
+  const player = { ...state.player };
+  let { range } = state;
   let response = 'none';
   let damage = 0;
   if (range === 1 || range === 2) {
@@ -83,12 +80,9 @@ const finishChallenge = (
 ): NavalState => {
   const duelOutcome = state.boardingDuel?.outcome;
   if (!duelOutcome) return state;
-  const outcome =
-    duelOutcome === 'victory'
-      ? 'victory'
-      : duelOutcome === 'defeat'
-      ? 'defeat'
-      : null;
+  let outcome: NavalState['outcome'] = null;
+  if (duelOutcome === 'victory') outcome = 'victory';
+  if (duelOutcome === 'defeat') outcome = 'defeat';
   return {
     ...state,
     revision: state.revision + (incrementRevision ? 1 : 0),
@@ -145,7 +139,7 @@ export const advanceNaval = (
       boardingDuel: createDuel({
         encounterId: 'joao.m2.katarina',
         player: state.playerDuel,
-        enemy: encounterCatalog['joao.m2.katarina'].enemy,
+        enemy: encounterCatalog['joao.m2.katarina'].captain,
       }),
       log: appendLog(state.log, {
         key: 'combat.naval.challenge',
@@ -234,7 +228,7 @@ export const advanceNaval = (
     }),
   };
 
-  if (action.type === 'withdraw') {
+  if (action.type === 'withdraw' && changed.range === 3) {
     return { ...changed, outcome: resolvedOutcome(changed) };
   }
   return withEnemyResponse(changed);
