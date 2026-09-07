@@ -166,6 +166,14 @@ describe('combat state actions', () => {
     ['joao.m2.katarina', 'defeat', true],
     ['joao.m2.katarina', 'victory', false],
     ['joao.m2.katarina', 'retreat', false],
+    ['joao.m3.ottoman-one', 'defeat', true],
+    ['joao.m3.ottoman-one', 'retreat', false],
+    ['joao.m3.ottoman-two', 'defeat', true],
+    ['joao.m3.rudolph', 'victory', false],
+    ['joao.m3.amazon', 'defeat', true],
+    ['joao.m3.amazon', 'retreat', true],
+    ['joao.m3.amazon', 'draw', true],
+    ['joao.m3.amazon', 'victory', false],
   ] as const)(
     'applies the replay rule for %s after %s',
     (encounterId, outcome, allowed) => {
@@ -242,20 +250,20 @@ describe('combat state actions', () => {
     };
 
     expect(canStartCombat('joao.m2.katarina')).toBe(false);
-    expect(
-      canStartCombatWithRoster('joao.m2.katarina', prospective),
-    ).toBe(true);
+    expect(canStartCombatWithRoster('joao.m2.katarina', prospective)).toBe(
+      true,
+    );
 
     const releaseOverlay = Input.suspend('overlay');
-    expect(
-      canStartCombatWithRoster('joao.m2.katarina', prospective),
-    ).toBe(false);
+    expect(canStartCombatWithRoster('joao.m2.katarina', prospective)).toBe(
+      false,
+    );
     releaseOverlay();
 
     state.combatResults['joao.m2.katarina'] = 'victory';
-    expect(
-      canStartCombatWithRoster('joao.m2.katarina', prospective),
-    ).toBe(false);
+    expect(canStartCombatWithRoster('joao.m2.katarina', prospective)).toBe(
+      false,
+    );
   });
 
   test('autosaves legal actions and syncs only flagship battle resources', () => {
@@ -451,6 +459,96 @@ describe('combat state actions', () => {
     expect(canStartCombat('joao.m2.katarina')).toBe(false);
   });
 
+  test('settles Amazon victory using its larger catalog reward', () => {
+    expect(startCombat('joao.m3.amazon')).toBe(true);
+    const current = getCombatSnapshot()!;
+    current.outcome = 'victory';
+
+    expect(finishCombat(current)).toBe(true);
+    expect(state.mateProgress).toEqual({
+      '1': { battleExperience: 1050 },
+      '32': { battleExperience: 75 },
+      '33': { battleExperience: 75 },
+    });
+    expect(canStartCombat('joao.m3.amazon')).toBe(false);
+  });
+
+  test('wins Amazon by firing eight times from a fully repaired and supplied starter ship', () => {
+    state.mateProgress = {};
+    state.combatResults['joao.m3.amazon'] = 'retreat';
+    state.fleets['1'].ships[0].durability = 30;
+    state.fleets['1'].ships[0].crew = 10;
+    state.fleets['1'].ships[0].cargo = [{ type: 'shot', quantity: 8 }];
+
+    expect(startCombat('joao.m3.amazon')).toBe(true);
+    expect(getCombatSnapshot()).toMatchObject({
+      kind: 'naval',
+      range: 2,
+      player: { hull: 30, crew: 10, guns: 10, shot: 8 },
+    });
+
+    for (let shot = 1; shot <= 8; shot += 1) {
+      expect(actCombat(getCombatSnapshot()!, { type: 'fire' })).toBe(true);
+      if (shot < 8) expect(getCombatSnapshot()?.outcome).toBeNull();
+    }
+
+    expect(getCombatSnapshot()).toMatchObject({
+      outcome: 'victory',
+      player: { hull: 2, crew: 10, shot: 0 },
+      enemy: { hull: 0 },
+      range: 2,
+    });
+    expect(state.fleets['1'].ships[0]).toMatchObject({
+      durability: 2,
+      crew: 10,
+      cargo: [],
+    });
+    const victory = getCombatSnapshot()!;
+    expect(finishCombat(victory)).toBe(true);
+    expect(state.mateProgress).toEqual({
+      '1': { battleExperience: 150 },
+      '32': { battleExperience: 75 },
+      '33': { battleExperience: 75 },
+    });
+    expect(state.combatResults['joao.m3.amazon']).toBe('victory');
+    expect(canStartCombat('joao.m3.amazon')).toBe(false);
+  });
+
+  test('final retreat stays in place, awards zero experience, and permits retry', () => {
+    const position = { ...state.fleets['1'].position! };
+    expect(startCombat('joao.m3.amazon')).toBe(true);
+    expect(actCombat(getCombatSnapshot()!, { type: 'withdraw' })).toBe(true);
+    expect(actCombat(getCombatSnapshot()!, { type: 'retreat' })).toBe(true);
+    const result = getCombatSnapshot()!;
+
+    expect(finishCombat(result)).toBe(true);
+    expect(state.combatResults['joao.m3.amazon']).toBe('retreat');
+    expect(state.mateProgress).toEqual({
+      '1': { battleExperience: 900 },
+    });
+    expect(state.fleets['1'].position).toEqual(position);
+    expect(state.portId).toBe('1');
+    expect(state.buildingId).toBe('8');
+    expect(canStartCombat('joao.m3.amazon')).toBe(true);
+  });
+
+  test('Ottoman retreat pays once and locks that encounter', () => {
+    expect(startCombat('joao.m3.ottoman-one')).toBe(true);
+    expect(actCombat(getCombatSnapshot()!, { type: 'withdraw' })).toBe(true);
+    expect(actCombat(getCombatSnapshot()!, { type: 'retreat' })).toBe(true);
+    const result = getCombatSnapshot()!;
+
+    expect(finishCombat(result)).toBe(true);
+    expect(state.mateProgress).toEqual({
+      '1': { battleExperience: 925 },
+      '32': { battleExperience: 25 },
+      '33': { battleExperience: 25 },
+    });
+    expect(canStartCombat('joao.m3.ottoman-one')).toBe(false);
+    expect(finishCombat(result)).toBe(false);
+    expect(state.mateProgress['1'].battleExperience).toBe(925);
+  });
+
   test('recovers once from naval defeat in Lisbon and permits a free retry', () => {
     const retained = {
       items: [...state.items],
@@ -500,6 +598,85 @@ describe('combat state actions', () => {
     expect(getCombatGeneration()).toBe(generation + 1);
     expect(canStartCombat('joao.m2.katarina')).toBe(true);
     expect(startCombat('joao.m2.katarina')).toBe(true);
+  });
+
+  test.each([
+    ['joao.m3.ottoman-one', '75', { x: 1148, y: 528 }],
+    ['joao.m3.amazon', '57', { x: 558, y: 642 }],
+  ] as const)(
+    'recovers %s at its local safe anchor without minting supplies and retries current resources',
+    (encounterId, portId, recoveryPosition) => {
+      const retained = {
+        items: [...state.items],
+        equipment: { ...state.equipment },
+        gold: state.gold,
+        progress: JSON.parse(JSON.stringify(state.mateProgress)),
+        consort: JSON.stringify(state.fleets['1'].ships[1]),
+      };
+      state.portId = null;
+      state.buildingId = null;
+      state.fleets['1'].ships[0].durability = 4;
+      state.fleets['1'].ships[0].crew = 3;
+
+      expect(startCombat(encounterId)).toBe(true);
+      expect(actCombat(getCombatSnapshot()!, { type: 'fire' })).toBe(true);
+      const defeated = getCombatSnapshot()!;
+      expect(defeated).toMatchObject({
+        outcome: 'defeat',
+        player: { hull: 0, crew: 3, shot: 5, lumber: 2 },
+      });
+      expect(finishCombat(defeated)).toBe(true);
+
+      expect(state.fleets['1'].position).toEqual(recoveryPosition);
+      expect(state.portId).toBe(portId);
+      expect(state.fleets['1'].ships[0]).toMatchObject({
+        durability: 15,
+        crew: 10,
+        cargo: expect.arrayContaining([
+          { type: 'shot', quantity: 5 },
+          { type: 'lumber', quantity: 2 },
+        ]),
+      });
+      expect(state.items).toEqual(retained.items);
+      expect(state.equipment).toEqual(retained.equipment);
+      expect(state.gold).toBe(retained.gold);
+      expect(state.mateProgress).toEqual(retained.progress);
+      expect(JSON.stringify(state.fleets['1'].ships[1])).toBe(retained.consort);
+      expect(canStartCombat(encounterId)).toBe(true);
+
+      expect(startCombat(encounterId)).toBe(true);
+      expect(getCombatSnapshot()).toMatchObject({
+        player: { hull: 15, crew: 10, shot: 5, lumber: 2 },
+      });
+    },
+  );
+
+  test('starts a zero-resource naval defeat without consuming an action', () => {
+    state.fleets['1'].ships[0].durability = 0;
+    const writes = savedWrites();
+
+    expect(startCombat('joao.m3.ottoman-one')).toBe(true);
+    const defeated = getCombatSnapshot()!;
+    expect(defeated).toMatchObject({
+      revision: 0,
+      round: 1,
+      outcome: 'defeat',
+    });
+    expect(actCombat(defeated, { type: 'fire' })).toBe(false);
+    expect(writes).toHaveBeenCalledTimes(1);
+  });
+
+  test('preflights local recovery before recording or rewarding a defeat', () => {
+    state.fleets['1'].ships[0].durability = 0;
+    expect(startCombat('joao.m3.amazon')).toBe(true);
+    const defeated = getCombatSnapshot()!;
+    delete state.fleets['1'];
+    const before = JSON.stringify(state);
+    const writes = savedWrites();
+
+    expect(finishCombat(defeated)).toBe(false);
+    expect(JSON.stringify(state)).toBe(before);
+    expect(writes).not.toHaveBeenCalled();
   });
 
   test('leaves the player at the duel location after defeat', () => {

@@ -1,5 +1,9 @@
 import { itemData } from '../data/itemData';
-import { encounterCatalog } from './encounters';
+import {
+  canReplayEncounter,
+  encounterCatalog,
+  getEncounterExperience,
+} from './encounters';
 import { advanceDuel, createDuel } from './duel';
 import { createPlayerDuelStats } from './stats';
 import { advanceNaval, createNaval } from './naval';
@@ -210,10 +214,18 @@ describe('combat stats and encounters', () => {
     ).toMatchObject({ weaponRating: 0, armorRating: 0 });
   });
 
-  test('publishes the three stable M2 encounters with exact enemy stats', () => {
-    expect(encounterCatalog).toEqual({
+  test('preserves the three M2 encounter forces and catalog policy', () => {
+    expect({
+      'joao.m2.kahn-shipyard': encounterCatalog['joao.m2.kahn-shipyard'],
+      'joao.m2.kahn-house': encounterCatalog['joao.m2.kahn-house'],
+      'joao.m2.katarina': encounterCatalog['joao.m2.katarina'],
+    }).toEqual({
       'joao.m2.kahn-shipyard': {
         kind: 'duel',
+        nameKey: 'Kahn at the shipyard',
+        captainNameKey: 'Antonio Kahn',
+        replayOutcomes: [],
+        experience: {},
         enemy: {
           swordplay: 66,
           level: 2,
@@ -224,6 +236,10 @@ describe('combat stats and encounters', () => {
       },
       'joao.m2.kahn-house': {
         kind: 'duel',
+        nameKey: 'Kahn at the Franco house',
+        captainNameKey: 'Antonio Kahn',
+        replayOutcomes: ['draw'],
+        experience: { victory: { joao: 100, others: 0 } },
         enemy: {
           swordplay: 78,
           level: 3,
@@ -234,6 +250,14 @@ describe('combat stats and encounters', () => {
       },
       'joao.m2.katarina': {
         kind: 'naval',
+        nameKey: 'Katarina’s pursuit',
+        captainNameKey: 'Katarina Erantzo',
+        replayOutcomes: ['defeat'],
+        experience: {
+          victory: { joao: 100, others: 50 },
+          retreat: { joao: 25, others: 25 },
+        },
+        recoveryPortId: '1',
         enemy: { hull: 42, maxHull: 42, crew: 18, guns: 8 },
         captain: {
           swordplay: 84,
@@ -245,15 +269,205 @@ describe('combat stats and encounters', () => {
       },
     });
   });
+
+  test('publishes exact M3 forces, names, replay outcomes, rewards, and recovery ports', () => {
+    expect({
+      'joao.m3.ottoman-one': encounterCatalog['joao.m3.ottoman-one'],
+      'joao.m3.ottoman-two': encounterCatalog['joao.m3.ottoman-two'],
+      'joao.m3.rudolph': encounterCatalog['joao.m3.rudolph'],
+      'joao.m3.amazon': encounterCatalog['joao.m3.amazon'],
+    }).toEqual({
+      'joao.m3.ottoman-one': {
+        kind: 'naval',
+        nameKey: 'Ottoman Vanguard',
+        captainNameKey: 'Ottoman Vanguard Captain',
+        replayOutcomes: ['defeat'],
+        experience: {
+          victory: { joao: 100, others: 50 },
+          retreat: { joao: 25, others: 25 },
+        },
+        recoveryPortId: '75',
+        enemy: { hull: 46, maxHull: 46, crew: 18, guns: 8 },
+        captain: {
+          swordplay: 76,
+          level: 4,
+          weaponRating: 20,
+          armorRating: 10,
+          weaponCategory: null,
+        },
+      },
+      'joao.m3.ottoman-two': {
+        kind: 'naval',
+        nameKey: 'Ottoman Main Fleet',
+        captainNameKey: 'Ottoman Fleet Captain',
+        replayOutcomes: ['defeat'],
+        experience: {
+          victory: { joao: 100, others: 50 },
+          retreat: { joao: 25, others: 25 },
+        },
+        recoveryPortId: '75',
+        enemy: { hull: 52, maxHull: 52, crew: 20, guns: 8 },
+        captain: {
+          swordplay: 80,
+          level: 5,
+          weaponRating: 25,
+          armorRating: 15,
+          weaponCategory: null,
+        },
+      },
+      'joao.m3.rudolph': {
+        kind: 'duel',
+        nameKey: 'Rudolph',
+        replayOutcomes: [],
+        experience: { victory: { joao: 100, others: 0 } },
+        enemy: {
+          swordplay: 86,
+          level: 5,
+          weaponRating: 30,
+          armorRating: 15,
+          weaponCategory: null,
+        },
+      },
+      'joao.m3.amazon': {
+        kind: 'naval',
+        nameKey: 'Neo-Atlantis Fleet',
+        captainNameKey: "Martinez's Captain",
+        replayOutcomes: ['defeat', 'retreat', 'draw'],
+        experience: {
+          victory: { joao: 150, others: 75 },
+          retreat: { joao: 0, others: 0 },
+        },
+        recoveryPortId: '57',
+        enemy: { hull: 64, maxHull: 64, crew: 22, guns: 10 },
+        captain: {
+          swordplay: 90,
+          level: 6,
+          weaponRating: 35,
+          armorRating: 20,
+          weaponCategory: null,
+        },
+      },
+    });
+  });
+
+  test('derives replay and experience from catalog policy and defaults unknown policy to zero', () => {
+    expect(
+      canReplayEncounter('joao.m3.amazon', {
+        'joao.m3.amazon': 'retreat',
+      }),
+    ).toBe(true);
+    expect(
+      canReplayEncounter('joao.m3.ottoman-one', {
+        'joao.m3.ottoman-one': 'retreat',
+      }),
+    ).toBe(false);
+    expect(getEncounterExperience('joao.m3.amazon', 'victory')).toEqual({
+      joao: 150,
+      others: 75,
+    });
+    expect(getEncounterExperience('joao.m3.amazon', 'retreat')).toEqual({
+      joao: 0,
+      others: 0,
+    });
+    expect(getEncounterExperience('future.encounter', 'victory')).toEqual({
+      joao: 0,
+      others: 0,
+    });
+  });
 });
 
 describe('naval rules', () => {
   const naval = () =>
     createNaval({
-      encounterId: 'test.naval',
+      encounterId: 'joao.m2.katarina',
       player: { hull: 30, maxHull: 30, crew: 18, guns: 8, shot: 2, lumber: 1 },
       playerDuel: player,
     });
+
+  test.each([
+    ['joao.m2.katarina', { hull: 42, maxHull: 42, crew: 18, guns: 8 }],
+    ['joao.m3.ottoman-one', { hull: 46, maxHull: 46, crew: 18, guns: 8 }],
+    ['joao.m3.ottoman-two', { hull: 52, maxHull: 52, crew: 20, guns: 8 }],
+    ['joao.m3.amazon', { hull: 64, maxHull: 64, crew: 22, guns: 10 }],
+  ] as const)(
+    'copies the %s force into a new naval state',
+    (encounterId, force) => {
+      const created = createNaval({
+        encounterId,
+        player: {
+          hull: 30,
+          maxHull: 30,
+          crew: 10,
+          guns: 10,
+          shot: 9,
+          lumber: 0,
+        },
+        playerDuel: player,
+      });
+
+      expect(created.enemy).toEqual(force);
+      expect(created.enemy).not.toBe(encounterCatalog[encounterId].enemy);
+    },
+  );
+
+  test('uses the selected encounter ID and captain for a nested challenge', () => {
+    const created = createNaval({
+      encounterId: 'joao.m3.amazon',
+      player: { hull: 30, maxHull: 30, crew: 22, guns: 10, shot: 9, lumber: 0 },
+      playerDuel: player,
+    });
+    const challenge = advanceNaval(
+      { ...created, range: 0 },
+      { type: 'challenge' },
+    );
+
+    expect(challenge.boardingDuel).toMatchObject({
+      encounterId: 'joao.m3.amazon',
+      enemy: { stats: encounterCatalog['joao.m3.amazon'].captain },
+    });
+  });
+
+  test('rejects unknown and duel encounter IDs when constructing naval state', () => {
+    const params = {
+      player: { hull: 30, maxHull: 30, crew: 10, guns: 10, shot: 9, lumber: 0 },
+      playerDuel: player,
+    };
+    expect(() =>
+      createNaval({ ...params, encounterId: 'future.encounter' }),
+    ).toThrow(new RangeError('Unknown naval encounter: future.encounter'));
+    expect(() =>
+      createNaval({ ...params, encounterId: 'joao.m3.rudolph' }),
+    ).toThrow(new RangeError('Unknown naval encounter: joao.m3.rudolph'));
+  });
+
+  test.each([
+    [{ hull: 0, crew: 10 }, 'hull'],
+    [{ hull: 30, crew: 0 }, 'crew'],
+  ] as const)(
+    'recognizes zero $s as defeat at revision zero without spending supplies',
+    (override) => {
+      const created = createNaval({
+        encounterId: 'joao.m3.ottoman-one',
+        player: {
+          hull: override.hull,
+          maxHull: 30,
+          crew: override.crew,
+          guns: 10,
+          shot: 4,
+          lumber: 2,
+        },
+        playerDuel: player,
+      });
+
+      expect(created).toMatchObject({
+        revision: 0,
+        round: 1,
+        outcome: 'defeat',
+        player: { shot: 4, lumber: 2 },
+        log: [],
+      });
+    },
+  );
 
   test('enforces action availability without consuming rounds or resources', () => {
     const created = naval();
@@ -290,6 +504,36 @@ describe('naval rules', () => {
         shotCost: 1,
         damage: 8,
       },
+    });
+  });
+
+  test('lets the repaired starter force defeat Amazon with eight opening-range shots', () => {
+    let battle = createNaval({
+      encounterId: 'joao.m3.amazon',
+      player: {
+        hull: 30,
+        maxHull: 30,
+        crew: 10,
+        guns: 10,
+        shot: 8,
+        lumber: 0,
+      },
+      playerDuel: player,
+    });
+    expect(battle.range).toBe(2);
+
+    for (let shot = 1; shot <= 8; shot += 1) {
+      battle = advanceNaval(battle, { type: 'fire' });
+      if (shot < 8) expect(battle.outcome).toBeNull();
+    }
+
+    expect(battle).toMatchObject({
+      outcome: 'victory',
+      revision: 8,
+      round: 9,
+      player: { hull: 2, crew: 10, shot: 0 },
+      enemy: { hull: 0 },
+      range: 2,
     });
   });
 

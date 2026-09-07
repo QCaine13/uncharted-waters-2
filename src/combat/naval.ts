@@ -1,5 +1,5 @@
 import { createDuel, advanceDuel } from './duel';
-import { encounterCatalog } from './encounters';
+import { getEncounter } from './encounters';
 import type {
   CombatLogRecord,
   DuelCombatantStats,
@@ -24,19 +24,25 @@ export const createNaval = ({
   encounterId,
   player,
   playerDuel,
-}: CreateNavalParams): NavalState => ({
-  kind: 'naval',
-  encounterId,
-  revision: 0,
-  round: 1,
-  outcome: null,
-  log: [],
-  player: { ...player },
-  enemy: { ...encounterCatalog['joao.m2.katarina'].enemy },
-  range: 2,
-  playerDuel: { ...playerDuel },
-  boardingDuel: null,
-});
+}: CreateNavalParams): NavalState => {
+  const encounter = getEncounter(encounterId);
+  if (!encounter || encounter.kind !== 'naval') {
+    throw new RangeError(`Unknown naval encounter: ${encounterId}`);
+  }
+  return {
+    kind: 'naval',
+    encounterId,
+    revision: 0,
+    round: 1,
+    outcome: player.hull === 0 || player.crew === 0 ? 'defeat' : null,
+    log: [],
+    player: { ...player },
+    enemy: { ...encounter.enemy },
+    range: 2,
+    playerDuel: { ...playerDuel },
+    boardingDuel: null,
+  };
+};
 
 const resolvedOutcome = (state: NavalState): NavalState['outcome'] => {
   if (state.player.hull === 0 || state.player.crew === 0) return 'defeat';
@@ -133,13 +139,15 @@ export const advanceNaval = (
 
   if (action.type === 'challenge') {
     if (state.range !== 0 || state.player.crew < state.enemy.crew) return state;
+    const encounter = getEncounter(state.encounterId);
+    if (!encounter || encounter.kind !== 'naval') return state;
     return {
       ...state,
       revision: state.revision + 1,
       boardingDuel: createDuel({
-        encounterId: 'joao.m2.katarina',
+        encounterId: state.encounterId,
         player: state.playerDuel,
-        enemy: encounterCatalog['joao.m2.katarina'].captain,
+        enemy: encounter.captain,
       }),
       log: appendLog(state.log, {
         key: 'combat.naval.challenge',

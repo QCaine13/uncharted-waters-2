@@ -250,3 +250,45 @@ test('summarizes earned experience before result confirmation', () => {
   expect(state.activeCombat).toBeNull();
   expect(state.mateProgress['1'].battleExperience).toBe(100);
 });
+
+test('shows the Amazon name and zero-experience replayable retreat preview', () => {
+  expect(startCombatWithoutSave('joao.m3.amazon')).toBe(true);
+  state.activeCombat = {
+    ...getCombatSnapshot()!,
+    outcome: 'retreat',
+  } as typeof state.activeCombat;
+  notifyCombatChanged();
+  act(() => root.render(<Combat />));
+
+  expect(container.textContent).toContain('Neo-Atlantis Fleet');
+  expect(container.textContent).toContain(
+    'No experience is awarded for this encounter.',
+  );
+  expect(container.textContent).not.toContain('gains 25 battle experience');
+});
+
+test('shows the catalog captain name for the Amazon challenge', () => {
+  state.fleets['1'].ships[0].crew = 25;
+  expect(startCombatWithoutSave('joao.m3.amazon')).toBe(true);
+  act(() => root.render(<Combat />));
+  click('Approach');
+  click('Approach');
+  click('Challenge the captain');
+
+  expect(container.textContent).toContain("Martinez's Captain");
+});
+
+test('shows Cayenne as the Amazon defeat recovery destination in both languages', () => {
+  expect(startCombatWithoutSave('joao.m3.amazon')).toBe(true);
+  state.activeCombat = {
+    ...getCombatSnapshot()!,
+    outcome: 'defeat',
+  } as typeof state.activeCombat;
+  notifyCombatChanged();
+  act(() => root.render(<Combat />));
+  expect(container.textContent).toContain('return safely to Cayenne');
+
+  act(() => setLocale('zh-CN'));
+  expect(container.textContent).toContain('安全返回开云');
+  expect(container.textContent).toContain('新亚特兰蒂斯舰队');
+});

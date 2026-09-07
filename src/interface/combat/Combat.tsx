@@ -6,6 +6,7 @@ import type {
   NavalState,
 } from '../../combat/types';
 import { getCombatSnapshot, subscribeCombat } from '../../combat/combatEvents';
+import { getEncounter } from '../../combat/encounters';
 import { itemData } from '../../data/itemData';
 import { t } from '../../localization';
 import useLocale from '../../localization/useLocale';
@@ -13,13 +14,7 @@ import { actCombat, finishCombat } from '../../state/actionsCombat';
 import state from '../../state/state';
 import DuelControls from './DuelControls';
 import NavalControls from './NavalControls';
-import { formatCombatLog } from './combatPresentation';
-
-const encounterNames: Record<string, string> = {
-  'joao.m2.kahn-shipyard': 'Kahn at the shipyard',
-  'joao.m2.kahn-house': 'Kahn at the Franco house',
-  'joao.m2.katarina': 'Katarina’s pursuit',
-};
+import { formatCombatLog, getCombatResultPreview } from './combatPresentation';
 
 const outcomeTitles: Record<CombatOutcome, string> = {
   victory: 'Battle won',
@@ -64,10 +59,8 @@ function CombatantCard({
 }
 
 function DuelSummary({ duel }: { duel: DuelState }) {
-  const enemyName =
-    duel.encounterId === 'joao.m2.katarina'
-      ? 'Katarina Erantzo'
-      : 'Antonio Kahn';
+  const encounter = getEncounter(duel.encounterId);
+  const enemyName = encounter?.captainNameKey ?? encounter?.nameKey ?? 'Battle';
   return (
     <>
       <div className="grid grid-cols-2 gap-5">
@@ -85,16 +78,16 @@ function DuelSummary({ duel }: { duel: DuelState }) {
       <div className="mt-2 flex flex-wrap gap-x-6 text-base text-amber-200">
         <span>
           {state.equipment.weaponId
-              ? t('Weapon: {name}', {
-                  name: t(equipmentName(state.equipment.weaponId)),
-                })
+            ? t('Weapon: {name}', {
+                name: t(equipmentName(state.equipment.weaponId)),
+              })
             : t('No weapon equipped')}
         </span>
         <span>
           {state.equipment.armorId
-              ? t('Armor: {name}', {
-                  name: t(equipmentName(state.equipment.armorId)),
-                })
+            ? t('Armor: {name}', {
+                name: t(equipmentName(state.equipment.armorId)),
+              })
             : t('No armor equipped')}
         </span>
         <span>
@@ -149,33 +142,40 @@ function NavalSummary({ naval }: { naval: NavalState }) {
 
 function Result({ combat }: { combat: CombatState }) {
   const lines: string[] = [];
-  if (combat.kind === 'naval') {
-    if (combat.outcome === 'victory') {
-      lines.push(t('João gains {amount} battle experience.', { amount: 100 }));
+  const preview = getCombatResultPreview(combat.encounterId, combat.outcome!);
+  if (
+    preview.experience.joao > 0 &&
+    preview.experience.joao === preview.experience.others
+  ) {
+    lines.push(
+      t('Every current mate gains {amount} battle experience.', {
+        amount: preview.experience.joao,
+      }),
+    );
+  } else if (preview.experience.joao > 0) {
+    lines.push(
+      t('João gains {amount} battle experience.', {
+        amount: preview.experience.joao,
+      }),
+    );
+    if (preview.experience.others > 0) {
       lines.push(
-        t('Each companion gains {amount} battle experience.', { amount: 50 }),
-      );
-    } else if (combat.outcome === 'retreat') {
-      lines.push(
-        t('Every current mate gains {amount} battle experience.', {
-          amount: 25,
+        t('Each companion gains {amount} battle experience.', {
+          amount: preview.experience.others,
         }),
       );
-    } else if (combat.outcome === 'defeat') {
-      lines.push(
-        t(
-          'Your fleet will return safely to Lisbon. The flagship will receive emergency repairs and replacement crew.',
-        ),
-      );
-      lines.push(t('Your ships, items and gold are retained.'));
     }
-  } else if (
-    combat.encounterId === 'joao.m2.kahn-house' &&
-    combat.outcome === 'victory'
-  ) {
-    lines.push(t('João gains {amount} battle experience.', { amount: 100 }));
   } else {
     lines.push(t('No experience is awarded for this encounter.'));
+  }
+  if (preview.recoveryPortNameKey) {
+    lines.push(
+      t(
+        'Your fleet will return safely to {port}. The flagship will receive emergency repairs and replacement crew.',
+        { port: t(preview.recoveryPortNameKey) },
+      ),
+    );
+    lines.push(t('Your ships, items and gold are retained.'));
   }
 
   return (
@@ -207,6 +207,7 @@ export default function Combat() {
   useLocale();
   const combat = useSyncExternalStore(subscribeCombat, getCombatSnapshot);
   if (combat === null) return null;
+  const encounter = getEncounter(combat.encounterId);
 
   const dispatch = (action: Parameters<typeof actCombat>[1]) =>
     actCombat(combat, action);
@@ -265,7 +266,7 @@ export default function Combat() {
     >
       <header className="mb-3 flex items-center justify-between border-b-2 border-amber-500 pb-2">
         <h1 className="text-3xl font-bold">
-          {t(encounterNames[combat.encounterId] ?? 'Battle')}
+          {t(encounter?.nameKey ?? 'Battle')}
         </h1>
         <p className="text-2xl">
           {t('Round {round}', { round: presentation.round })}

@@ -6,6 +6,7 @@ import {
   formatCombatLog,
   attackLabel,
   defenseLabel,
+  getCombatResultPreview,
 } from './combatPresentation';
 
 afterEach(() => setLocale('zh-CN'));
@@ -81,3 +82,31 @@ test('renders an unfamiliar saved log record as neutral text', () => {
     }),
   ).toBe('An action was completed.');
 });
+
+test.each([
+  ['joao.m2.kahn-shipyard', 'victory', { joao: 0, others: 0 }, null],
+  ['joao.m2.kahn-house', 'victory', { joao: 100, others: 0 }, null],
+  ['joao.m2.katarina', 'defeat', { joao: 0, others: 0 }, 'Lisbon'],
+  ['joao.m2.katarina', 'retreat', { joao: 25, others: 25 }, null],
+  ['joao.m3.ottoman-one', 'victory', { joao: 100, others: 50 }, null],
+  ['joao.m3.ottoman-one', 'retreat', { joao: 25, others: 25 }, null],
+  ['joao.m3.ottoman-one', 'defeat', { joao: 0, others: 0 }, 'Massawa'],
+  ['joao.m3.ottoman-two', 'victory', { joao: 100, others: 50 }, null],
+  ['joao.m3.ottoman-two', 'retreat', { joao: 25, others: 25 }, null],
+  ['joao.m3.ottoman-two', 'defeat', { joao: 0, others: 0 }, 'Massawa'],
+  ['joao.m3.rudolph', 'victory', { joao: 100, others: 0 }, null],
+  ['joao.m3.rudolph', 'defeat', { joao: 0, others: 0 }, null],
+  ['joao.m3.amazon', 'victory', { joao: 150, others: 75 }, null],
+  ['joao.m3.amazon', 'retreat', { joao: 0, others: 0 }, null],
+  ['joao.m3.amazon', 'draw', { joao: 0, others: 0 }, null],
+  ['joao.m3.amazon', 'defeat', { joao: 0, others: 0 }, 'Cayenne'],
+  ['future.encounter', 'victory', { joao: 0, others: 0 }, null],
+] as const)(
+  'previews %s %s with its actual rewards and recovery name',
+  (encounterId, outcome, experience, recoveryPortNameKey) => {
+    expect(getCombatResultPreview(encounterId, outcome)).toEqual({
+      experience,
+      recoveryPortNameKey,
+    });
+  },
+);

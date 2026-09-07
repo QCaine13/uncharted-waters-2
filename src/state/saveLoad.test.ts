@@ -50,7 +50,7 @@ const pendingReplay = (encounterId: CombatEncounterId): CombatState => {
       maxHull: 100,
       crew: 20,
       guns: 10,
-      shot: 6,
+      shot: 10,
       lumber: 2,
     },
     playerDuel: fighter,
@@ -204,6 +204,8 @@ describe('save/load round trip', () => {
   test.each([
     ['joao.m2.kahn-house', 'draw'],
     ['joao.m2.katarina', 'defeat'],
+    ['joao.m3.ottoman-one', 'defeat'],
+    ['joao.m3.amazon', 'retreat'],
   ] as const)(
     'loads a pending %s replay result after an allowed %s',
     (encounterId, priorOutcome) => {
@@ -246,6 +248,103 @@ describe('save/load round trip', () => {
     expect(state.activeCombat).toEqual(expected);
   });
 
+  test.each([
+    ['joao.m3.ottoman-one', { hull: 46, maxHull: 46, crew: 18, guns: 8 }],
+    ['joao.m3.ottoman-two', { hull: 52, maxHull: 52, crew: 20, guns: 8 }],
+    ['joao.m3.amazon', { hull: 64, maxHull: 64, crew: 22, guns: 10 }],
+  ] as const)(
+    'reloads %s only with its own catalog force',
+    (encounterId, enemy) => {
+      state.combatResults = {};
+      state.activeCombat = createNaval({
+        encounterId,
+        player: {
+          hull: 30,
+          maxHull: 30,
+          crew: 10,
+          guns: 10,
+          shot: 8,
+          lumber: 0,
+        },
+        playerDuel: fighter,
+      });
+      save();
+      state.activeCombat = null;
+
+      expect(load()).toBe(true);
+      expect(state.activeCombat).toMatchObject({ enemy });
+
+      const saved = JSON.parse(window.localStorage.getItem('savedState')!);
+      saved.activeCombat.enemy.maxHull = 42;
+      window.localStorage.setItem('savedState', JSON.stringify(saved));
+      expect(load()).toBe(true);
+      expect(state.activeCombat).toBeNull();
+    },
+  );
+
+  test('reloads the Amazon nested challenge with its distinct captain and rejects substitutions', () => {
+    const naval = createNaval({
+      encounterId: 'joao.m3.amazon',
+      player: {
+        hull: 30,
+        maxHull: 30,
+        crew: 22,
+        guns: 10,
+        shot: 8,
+        lumber: 0,
+      },
+      playerDuel: fighter,
+    });
+    state.activeCombat = advanceNaval(
+      { ...naval, range: 0 },
+      { type: 'challenge' },
+    );
+    save();
+    const expected = JSON.parse(JSON.stringify(state.activeCombat));
+    state.activeCombat = null;
+
+    expect(load()).toBe(true);
+    expect(state.activeCombat).toEqual(expected);
+    expect(
+      (state.activeCombat as unknown as Extract<CombatState, { kind: 'naval' }>)
+        .boardingDuel?.enemy.stats,
+    ).toEqual(encounterCatalog['joao.m3.amazon'].captain);
+
+    const saved = JSON.parse(window.localStorage.getItem('savedState')!);
+    saved.activeCombat.boardingDuel.enemy.stats =
+      encounterCatalog['joao.m3.ottoman-two'].captain;
+    window.localStorage.setItem('savedState', JSON.stringify(saved));
+    expect(load()).toBe(true);
+    expect(state.activeCombat).toBeNull();
+  });
+
+  test.each([
+    ['joao.m3.ottoman-one', 'retreat'],
+    ['joao.m3.amazon', 'victory'],
+  ] as const)(
+    'discards a contradictory paid %s active save after %s',
+    (encounterId, paidOutcome) => {
+      state.combatResults = { [encounterId]: paidOutcome };
+      state.activeCombat = createNaval({
+        encounterId,
+        player: {
+          hull: 30,
+          maxHull: 30,
+          crew: 10,
+          guns: 10,
+          shot: 8,
+          lumber: 0,
+        },
+        playerDuel: fighter,
+      });
+      save();
+
+      expect(load()).toBe(true);
+      expect(state.combatResults[encounterId]).toBe(paidOutcome);
+      expect(state.activeCombat).toBeNull();
+    },
+  );
+
   test('discards unsupported active encounter IDs and mismatched outer kinds', () => {
     save();
     const saved = JSON.parse(window.localStorage.getItem('savedState')!);
@@ -259,18 +358,21 @@ describe('save/load round trip', () => {
     expect(load()).toBe(true);
     expect(state.activeCombat).toBeNull();
 
-    saved.activeCombat = createNaval({
+    saved.activeCombat = {
+      ...createNaval({
+        encounterId: 'joao.m2.katarina',
+        player: {
+          hull: 30,
+          maxHull: 30,
+          crew: 20,
+          guns: 8,
+          shot: 3,
+          lumber: 2,
+        },
+        playerDuel: fighter,
+      }),
       encounterId: 'joao.m2.kahn-house',
-      player: {
-        hull: 30,
-        maxHull: 30,
-        crew: 20,
-        guns: 8,
-        shot: 3,
-        lumber: 2,
-      },
-      playerDuel: fighter,
-    });
+    };
     window.localStorage.setItem('savedState', JSON.stringify(saved));
     expect(load()).toBe(true);
     expect(state.activeCombat).toBeNull();

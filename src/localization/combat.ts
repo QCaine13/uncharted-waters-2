@@ -10,6 +10,13 @@ const combatCatalog: Record<string, string> = {
   'Kahn at the shipyard': '船厂的卡恩',
   'Kahn at the Franco house': '宅邸的卡恩',
   'Katarina’s pursuit': '卡特琳娜的追击',
+  'Ottoman Vanguard': '奥斯曼先遣舰队',
+  'Ottoman Main Fleet': '奥斯曼主力舰队',
+  Rudolph: '鲁道夫',
+  'Neo-Atlantis Fleet': '新亚特兰蒂斯舰队',
+  'Ottoman Vanguard Captain': '奥斯曼先遣舰长',
+  'Ottoman Fleet Captain': '奥斯曼舰长',
+  "Martinez's Captain": '马丁内斯的舰长',
   'Round {round}': '第 {round} 回合',
   'HP {current}/{maximum}': '生命 {current}/{maximum}',
   'Battle level {level}': '战斗等级 {level}',
@@ -89,6 +96,8 @@ const combatCatalog: Record<string, string> = {
     '回到法雷尔宅邸，再与卡恩较量一次。',
   'Your fleet will return safely to Lisbon. The flagship will receive emergency repairs and replacement crew.':
     '船队将安全返回里斯本。旗舰会获得紧急修复，并补齐最低出航船员。',
+  'Your fleet will return safely to {port}. The flagship will receive emergency repairs and replacement crew.':
+    '船队将安全返回{port}。旗舰会获得紧急修复，并补齐最低出航船员。',
   'Prepare at the port, or try again immediately from the Lisbon harbor.':
     '可以先在港内整备，也可以到里斯本码头立即再次迎战。',
   'Your ships, items and gold are retained.': '现有舰船、物品与金币会保留。',

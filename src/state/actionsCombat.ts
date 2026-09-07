@@ -2,6 +2,8 @@ import { createDuel, advanceDuel } from '../combat/duel';
 import {
   canReplayEncounter,
   encounterCatalog,
+  getEncounter,
+  getEncounterExperience,
   type CombatEncounterId,
 } from '../combat/encounters';
 import { getCombatSnapshot, notifyCombatChanged } from '../combat/combatEvents';
@@ -206,33 +208,25 @@ export const actCombat = (
 };
 
 const grantExperience = (sailorId: string, amount: number): void => {
+  if (amount === 0) return;
   if (!state.mates.some((mate) => mate.sailorId === sailorId)) return;
   const current = state.mateProgress[sailorId]?.battleExperience ?? 0;
   state.mateProgress[sailorId] = { battleExperience: current + amount };
 };
 
 const settleExperience = (combat: CombatState): void => {
-  if (
-    combat.encounterId === 'joao.m2.kahn-house' &&
-    combat.outcome === 'victory'
-  ) {
-    grantExperience('1', 100);
-  }
-
-  if (combat.kind !== 'naval') return;
-  if (combat.outcome === 'victory') {
-    grantExperience('1', 100);
-    new Set(state.mates.map(({ sailorId }) => sailorId)).forEach((sailorId) => {
-      if (sailorId !== '1') grantExperience(sailorId, 50);
-    });
-  } else if (combat.outcome === 'retreat') {
-    new Set(state.mates.map(({ sailorId }) => sailorId)).forEach((sailorId) =>
-      grantExperience(sailorId, 25),
-    );
-  }
+  if (combat.outcome === null) return;
+  const reward = getEncounterExperience(combat.encounterId, combat.outcome);
+  grantExperience('1', reward.joao);
+  new Set(state.mates.map(({ sailorId }) => sailorId)).forEach((sailorId) => {
+    if (sailorId !== '1') grantExperience(sailorId, reward.others);
+  });
 };
 
-const recoverFromNavalDefeat = (): void => {
+const recoverFromNavalDefeat = (
+  recoveryPortId: string,
+  recoveryPosition: { x: number; y: number },
+): void => {
   const fleet = state.fleets['1'];
   const flagship = fleet?.ships[0];
   const model = flagship && shipData[flagship.id];
@@ -243,8 +237,8 @@ const recoverFromNavalDefeat = (): void => {
     Math.ceil(model.durability / 2),
   );
   flagship.crew = Math.max(flagship.crew, model.minimumCrew);
-  fleet.position = positionAdjacentToPort('1');
-  state.portId = '1';
+  fleet.position = recoveryPosition;
+  state.portId = recoveryPortId;
   state.buildingId = null;
   state.dayAtSea = 0;
   state.world = undefined as unknown as State['world'];
@@ -273,10 +267,24 @@ export const finishCombat = (expected: CombatState): boolean => {
     return false;
   }
 
+  const encounter = getEncounter(current.encounterId);
+  if (!encounter) return false;
+  const recoveryPortId =
+    current.kind === 'naval' && current.outcome === 'defeat'
+      ? encounter.recoveryPortId
+      : undefined;
+  let recoveryPosition: { x: number; y: number } | undefined;
+  if (recoveryPortId) {
+    const fleet = state.fleets['1'];
+    const flagship = fleet?.ships[0];
+    if (!fleet || !flagship || !shipData[flagship.id]) return false;
+    recoveryPosition = positionAdjacentToPort(recoveryPortId);
+  }
+
   state.combatResults[current.encounterId] = current.outcome;
   settleExperience(current);
-  if (current.kind === 'naval' && current.outcome === 'defeat') {
-    recoverFromNavalDefeat();
+  if (recoveryPortId && recoveryPosition) {
+    recoverFromNavalDefeat(recoveryPortId, recoveryPosition);
   }
   state.activeCombat = null;
   notifyCombatChanged(true);

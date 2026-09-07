@@ -1,9 +1,30 @@
 import type {
+  CombatOutcome,
   CombatLogRecord,
   DuelAttack,
   DuelDefense,
 } from '../../combat/types';
+import { getEncounter, getEncounterExperience } from '../../combat/encounters';
+import { getPortData } from '../../game/port/portUtils';
 import { t } from '../../localization';
+
+export const getCombatResultPreview = (
+  encounterId: string,
+  outcome: CombatOutcome,
+): {
+  experience: { joao: number; others: number };
+  recoveryPortNameKey: string | null;
+} => {
+  const encounter = getEncounter(encounterId);
+  const recoveryPortNameKey =
+    outcome === 'defeat' && encounter?.recoveryPortId
+      ? getPortData(encounter.recoveryPortId).name
+      : null;
+  return {
+    experience: getEncounterExperience(encounterId, outcome),
+    recoveryPortNameKey,
+  };
+};
 
 const attacks: Record<DuelAttack, string> = {
   thrust: 'Thrust',
