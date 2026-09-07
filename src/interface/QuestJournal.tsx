@@ -3,10 +3,14 @@ import React from 'react';
 import { t } from '../localization';
 import { getFirstVoyageJournal } from '../story/firstVoyageJournal';
 import { getConflictAndGrowthJournal } from '../story/conflictAndGrowthJournal';
+import { getJoaoFinaleJournal } from '../story/joaoFinaleJournal';
 import { CHAPTER_COMPLETE_EVENT_ID } from '../story/content/arcs/joao/first-voyage';
+import { CONFLICT_AND_GROWTH_COMPLETE_EVENT_ID } from '../story/content/arcs/joao/conflict-and-growth';
+import { JOAO_ENDING_EVENT_ID } from '../story/content/arcs/joao/finale';
 import type { JournalEntry } from '../story/firstVoyageJournal';
 import state from '../state/state';
 import MessageBox from './common/MessageBox';
+import JoaoEnding from './JoaoEnding';
 
 const entryMarker = (entry: JournalEntry, current: boolean): string => {
   if (entry.completed) return '✓';
@@ -24,9 +28,13 @@ const entryStatus = (entry: JournalEntry, current: boolean): string => {
 
 export default function QuestJournal() {
   const firstVoyage = getFirstVoyageJournal(state);
-  const entries = state.storyEvents.includes(CHAPTER_COMPLETE_EVENT_ID)
-    ? [...getConflictAndGrowthJournal(state), ...firstVoyage]
-    : firstVoyage;
+  const m1Complete = state.storyEvents.includes(CHAPTER_COMPLETE_EVENT_ID);
+  const m2Complete = state.storyEvents.includes(
+    CONFLICT_AND_GROWTH_COMPLETE_EVENT_ID,
+  );
+  let entries = firstVoyage;
+  if (m1Complete) entries = [...getConflictAndGrowthJournal(state), ...entries];
+  if (m2Complete) entries = [...getJoaoFinaleJournal(state), ...entries];
   const current =
     entries.find(({ current: active }) => active)?.id ??
     entries.find(
@@ -41,6 +49,7 @@ export default function QuestJournal() {
         data-test="questJournal"
       >
         <div className="text-3xl text-blue-700 mb-4">{t('Voyage Journal')}</div>
+        {state.storyEvents.includes(JOAO_ENDING_EVENT_ID) && <JoaoEnding />}
         <div className="space-y-3">
           {entries.map((entry) => {
             const isCurrent = entry.id === current;
@@ -57,7 +66,9 @@ export default function QuestJournal() {
                     {entryStatus(entry, isCurrent)}
                   </span>
                 </div>
-                <div className="text-lg ml-8">{t(entry.body)}</div>
+                <div className="text-lg ml-8 break-words">
+                  {t(entry.body, entry.values)}
+                </div>
               </div>
             );
           })}

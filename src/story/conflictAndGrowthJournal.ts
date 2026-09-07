@@ -293,18 +293,10 @@ export const getConflictAndGrowthJournal = (state: State): JournalEntry[] => {
       {
         id: 'm2-complete',
         title: 'Conflict and growth complete',
-        body: 'M2 is complete: Ali knows Sasha is safe, while Lucia’s kidnapping remains unresolved.',
+        body: 'In M2, Ali learned that Sasha was safe and João cleared his family’s name.',
         completed: true,
         current: false,
         kind: 'objective',
-      },
-      {
-        id: 'm3-future',
-        title: 'A future voyage',
-        body: 'Ali’s new lead continues in a future chapter.',
-        completed: false,
-        current: false,
-        kind: 'future',
       },
     ];
   }

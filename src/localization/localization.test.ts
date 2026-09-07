@@ -19,6 +19,7 @@ import { firstVoyageDialogue } from '../story/content/arcs/joao/first-voyage/dia
 import { conflictAndGrowthEvents } from '../story/content/arcs/joao/conflict-and-growth';
 import { getFirstVoyageJournal } from '../story/firstVoyageJournal';
 import { getConflictAndGrowthJournal } from '../story/conflictAndGrowthJournal';
+import { getJoaoFinaleJournal } from '../story/joaoFinaleJournal';
 import type { StoryStep } from '../story/core/types';
 import type { CombatOutcome } from '../combat/types';
 import state from '../state/state';
@@ -374,7 +375,9 @@ const expectTranslatedSources = (sources: readonly string[]): void => {
     const placeholders = source.match(/\{[^}]+\}/g) ?? [];
     expect(translated).toBeTruthy();
     expect(translated).not.toBe(source);
-    expect(translated.match(/\{[^}]+\}/g) ?? []).toEqual(placeholders);
+    expect((translated.match(/\{[^}]+\}/g) ?? []).sort()).toEqual(
+      [...placeholders].sort(),
+    );
 
     const values = Object.fromEntries(
       placeholders.map((placeholder, index) => [
@@ -399,8 +402,8 @@ test('every visible conflict-and-growth branch and journal state has a translati
   expect(m2JournalScenarios).toHaveLength(27);
   expect(eventSources).toHaveLength(35);
   expect(uniqueEventSources.size).toBe(32);
-  expect(uniqueJournalSources.size).toBe(63);
-  expect(uniqueSources.size).toBe(95);
+  expect(uniqueJournalSources.size).toBe(61);
+  expect(uniqueSources.size).toBe(93);
   expectTranslatedSources([...uniqueSources]);
 });
 
@@ -416,6 +419,116 @@ test('the conflict-and-growth localization guard rejects an absent translation',
   } finally {
     chineseCatalog[source.body] = savedTranslation;
   }
+});
+
+test('every reachable M3 journal objective has a placeholder-safe translation', () => {
+  const milestones = [
+    'joao.massawa.five-day-voyage',
+    'joao.massawa.ali-massawa-lead',
+    'joao.massawa.religious-lead',
+    'joao.massawa.staff-request',
+    'joao.massawa.pietro-commissioned',
+    'joao.massawa.waiting-for-pietro',
+    'joao.massawa.invasion-authorized',
+    'joao.massawa.first-sortie-ready',
+    'joao.massawa.ottoman-one-start',
+    'joao.massawa.second-sortie-ready',
+    'joao.massawa.ottoman-two-start',
+    'joao.massawa.defense-reported',
+    'joao.massawa.staff-received',
+    'joao.massawa.staff-returned',
+    'joao.massawa.chapter-complete',
+    'joao.finale.japan-request',
+    'joao.finale.enrico-farewell',
+    'joao.finale.letter-notice',
+    'joao.finale.enrico-letter',
+    'joao.finale.sakai-lead',
+    'joao.finale.south-america-arrival',
+    'joao.finale.rudolph-start',
+    'joao.finale.lucia-rescued',
+    'joao.finale.martinez-exposed',
+    'joao.finale.spanish-alliance',
+    'joao.finale.amazon-start',
+    'joao.finale.amazon-victory',
+    'joao.finale.homecoming',
+  ];
+  const baseEvents = [
+    'joao.first-voyage.chapter-complete',
+    'joao.conflict-and-growth.chapter-complete',
+  ];
+  const epoch = Date.UTC(1522, 4, 17);
+  const minutesAt = (year: number, month: number, day: number, hour = 0) =>
+    (Date.UTC(year, month - 1, day, hour) - epoch) / 60_000;
+  const collectJournal = (
+    events: string[],
+    combatResults: Record<string, CombatOutcome> = {
+      'joao.m3.ottoman-one': 'victory',
+      'joao.m3.ottoman-two': 'retreat',
+      'joao.m3.rudolph': 'draw',
+      'joao.m3.amazon': 'victory',
+    },
+    timePassed = minutesAt(1523, 1, 2, 10),
+  ): string[] => {
+    state.storyEvents = [...baseEvents, ...events];
+    state.storyEventTimes = {
+      'joao.massawa.waiting-for-pietro': minutesAt(1522, 7, 20, 10),
+      'joao.finale.martinez-exposed': minutesAt(1523, 1, 1, 10),
+    };
+    state.timePassed = timePassed;
+    state.combatResults = combatResults;
+    return getJoaoFinaleJournal(state).flatMap(({ title, body }) => [
+      title,
+      body,
+    ]);
+  };
+
+  const sources = milestones.flatMap((_eventId, index) =>
+    collectJournal(milestones.slice(0, index)),
+  );
+  sources.push(
+    ...collectJournal(milestones.slice(0, 6), {}, minutesAt(1522, 8, 10, 8)),
+    ...collectJournal(milestones.slice(0, 9), {}),
+    ...collectJournal(milestones.slice(0, 9), {
+      'joao.m3.ottoman-one': 'defeat',
+    }),
+    ...collectJournal(milestones.slice(0, 11), {
+      'joao.m3.ottoman-one': 'victory',
+    }),
+    ...collectJournal(milestones.slice(0, 11), {
+      'joao.m3.ottoman-one': 'victory',
+      'joao.m3.ottoman-two': 'defeat',
+    }),
+    ...collectJournal(milestones.slice(0, 22), {
+      'joao.m3.ottoman-one': 'victory',
+      'joao.m3.ottoman-two': 'victory',
+    }),
+    ...collectJournal(
+      milestones.slice(0, 24),
+      {
+        'joao.m3.ottoman-one': 'victory',
+        'joao.m3.ottoman-two': 'victory',
+        'joao.m3.rudolph': 'defeat',
+      },
+      minutesAt(1523, 1, 2, 15),
+    ),
+    ...collectJournal(milestones.slice(0, 26), {
+      'joao.m3.ottoman-one': 'victory',
+      'joao.m3.ottoman-two': 'victory',
+      'joao.m3.rudolph': 'defeat',
+    }),
+    ...collectJournal(milestones.slice(0, 26), {
+      'joao.m3.ottoman-one': 'victory',
+      'joao.m3.ottoman-two': 'victory',
+      'joao.m3.rudolph': 'defeat',
+      'joao.m3.amazon': 'retreat',
+    }),
+    ...collectJournal(milestones),
+  );
+
+  const uniqueSources = new Set(sources);
+  expect(uniqueSources.size).toBeGreaterThan(50);
+  setLocale('zh-CN');
+  expectTranslatedSources([...uniqueSources]);
 });
 
 test('every live game term and detail has an explicit Chinese translation', () => {

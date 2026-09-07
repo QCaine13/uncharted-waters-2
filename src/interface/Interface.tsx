@@ -51,6 +51,7 @@ export function Interface({ resolve }: Props) {
   const [buildingId, setBuildingId] = useState<string | null>(null);
   const [timePassed, setTimePassed] = useState(0);
   const [gold, setGold] = useState(0);
+  const [, setGeneralGeneration] = useState(0);
 
   useEffect(() => {
     resolve();
@@ -61,6 +62,7 @@ export function Interface({ resolve }: Props) {
     setBuildingId(general.buildingId);
     setTimePassed(general.timePassed);
     setGold(general.gold);
+    setGeneralGeneration((generation) => generation + 1);
   };
 
   const { fade, onAnimationEnd } = useFade();

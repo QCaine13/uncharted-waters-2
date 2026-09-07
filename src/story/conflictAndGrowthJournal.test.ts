@@ -138,13 +138,9 @@ describe('conflict and growth journal', () => {
       title: 'Conflict and growth complete',
       completed: true,
     });
-    expect(entries[0].body).toContain('M2 is complete');
-    expect(entries[1]).toMatchObject({
-      id: 'm3-future',
-      kind: 'future',
-      current: false,
-    });
-    expect(entries[1].body).toContain('future chapter');
-    expect(entries[1].body).not.toContain('Massawa');
+    expect(entries[0].body).toBe(
+      'In M2, Ali learned that Sasha was safe and João cleared his family’s name.',
+    );
+    expect(entries).toHaveLength(1);
   });
 });

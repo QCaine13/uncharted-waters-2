@@ -76,6 +76,7 @@ export const terms: Record<string, string> = {
   Aden: '亚丁',
   Hormuz: '根布龙',
   Massawa: '马沙华',
+  Axum: '阿克苏姆',
   Cairo: '开罗',
   Basra: '巴士拉',
   Mecca: '麦加',

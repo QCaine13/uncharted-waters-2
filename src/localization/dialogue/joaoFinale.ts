@@ -57,6 +57,126 @@ const joaoFinale: Record<string, string> = {
     '你用任何头衔都无法赋予的功绩恢复了家族名誉。欢迎回家，我的儿子。',
   'The voyage is complete, Captain. Whatever horizon comes next, this route is yours.':
     '航程完成了，船长。无论下一道地平线通向何方，这条道路都属于你。',
+  'Prepare for long voyages and battle': '为远航与战斗做好准备',
+  'Stock food and water, fill each ship to its minimum crew at a pub, repair at a shipyard, and buy ammunition at a harbor. The starter ship cannot recruit above its minimum crew through the current menus. The Royal Crown can be sold to fund long travel, but it is not required.':
+    '储备食物和水，在酒馆把每艘船补足到最低水手数，在船厂修理，并在港口购买炮弹。当前菜单无法让初始船招募超过最低水手数。可以卖掉王冠筹措远航资金，但这不是必需条件。',
+  'Return for Pietro’s news': '回来听取皮耶德的消息',
+  'The date gate is open. Visit the Axum (Massawa) residence now.':
+    '日期条件已经满足。现在前往阿克苏姆（马沙华）的宅邸。',
+  'Wait for Pietro in a later month': '等到之后的月份迎接皮耶德',
+  'Current date: {currentMonth}/{currentDay}/{currentYear}. The first eligible return is {nextMonth}/{nextDay}/{nextYear}: visit the Axum (Massawa) residence on day 11 of a later month or after. Lodge Check In advances to 08:00 the next morning.':
+    '当前日期：{currentYear}年{currentMonth}月{currentDay}日。最早可返回的日期是{nextYear}年{nextMonth}月{nextDay}日：在之后某个月的11日或更晚前往阿克苏姆（马沙华）的宅邸。旅店住宿会把时间推进到次日08:00。',
+  'Meet the Spanish officer now': '现在会见西班牙军官',
+  'The appointment is open at this South American harbor from 09:00–14:59 on {nextMonth}/{nextDay}/{nextYear}.':
+    '这座南美港口的会面时段现已开放：{nextYear}年{nextMonth}月{nextDay}日09:00至14:59。',
+  'Return for the alliance appointment': '回来参加联盟会面',
+  'Current date: {currentMonth}/{currentDay}/{currentYear}. Return to this South American harbor from 09:00–14:59 on {nextMonth}/{nextDay}/{nextYear}. Lodge Check In wakes the crew at 08:00; make ordinary facility visits until 09:00. If you miss 14:59, return during the window on a later day.':
+    '当前日期：{currentYear}年{currentMonth}月{currentDay}日。请在{nextYear}年{nextMonth}月{nextDay}日09:00至14:59返回这座南美港口。旅店住宿会让船员在08:00醒来；照常进出设施，等到09:00。若错过14:59，请在之后某天的同一时段回来。',
+  'Sail for five uninterrupted days': '连续航海五天',
+  'After M2, spend five uninterrupted days at sea. Docking resets the count.':
+    'M2结束后，连续在海上航行五天。靠港会重置计数。',
+  'Ask Ali about the voyage': '向阿兰询问航程',
+  'Enter the next facility after the five-day voyage to hear Ali’s lead.':
+    '完成五天航行后，进入下一处设施，听取阿兰的线索。',
+  'Seek the Christian kingdom': '寻找基督教王国',
+  'Visit the Axum (Massawa) religious house for news of the Christian kingdom.':
+    '前往阿克苏姆（马沙华）的宗教会堂，打听基督教王国的消息。',
+  'Meet Taphiel': '会见塔菲尔',
+  'Visit Taphiel at the Axum (Massawa) residence.':
+    '前往阿克苏姆（马沙华）的宅邸会见塔菲尔。',
+  'Commission Pietro': '委托皮耶德',
+  'Ask Pietro to recover the Staff of the Saint at the Lisbon residence.':
+    '前往里斯本宅邸，请皮耶德寻回圣者之杖。',
+  'Begin the wait for Pietro': '开始等待皮耶德',
+  'Return to the Axum (Massawa) residence so Taphiel can record the start of the wait.':
+    '返回阿克苏姆（马沙华）的宅邸，让塔菲尔记下等待开始的时间。',
+  'Prepare the first sortie': '准备第一次出击',
+  'Visit the Axum (Massawa) harbor and accept the first sortie when the fleet is ready.':
+    '前往阿克苏姆（马沙华）的港口，船队准备就绪后接受第一次出击。',
+  'Meet the Ottoman vanguard': '迎战奥斯曼先锋舰队',
+  'Sail east and slightly south of the Axum (Massawa) harbor to water near 15.2°N, 42.7°E.':
+    '从阿克苏姆（马沙华）港口向东、稍偏南航行，前往北纬15.2度、东经42.7度附近的海域。',
+  'Finish the vanguard battle': '完成先锋舰队战斗',
+  'Defeat or successfully retreat from the Ottoman vanguard.':
+    '击败奥斯曼先锋舰队，或成功撤退。',
+  'Retry the Ottoman vanguard': '再次迎战奥斯曼先锋舰队',
+  'Return to the Axum (Massawa) harbor to retry immediately or prepare first.':
+    '返回阿克苏姆（马沙华）的港口，可以立刻再战，也可以先行整备。',
+  'Prepare the second sortie': '准备第二次出击',
+  'Return to the Axum (Massawa) harbor and accept the second sortie.':
+    '返回阿克苏姆（马沙华）的港口，接受第二次出击。',
+  'Meet the Ottoman main fleet': '迎战奥斯曼主力舰队',
+  'Return east and slightly south of Axum (Massawa), near 15.2°N, 42.7°E.':
+    '返回阿克苏姆（马沙华）以东、稍偏南，北纬15.2度、东经42.7度附近的海域。',
+  'Finish the main-fleet battle': '完成主力舰队战斗',
+  'Defeat or successfully retreat from the Ottoman main fleet.':
+    '击败奥斯曼主力舰队，或成功撤退。',
+  'Retry the Ottoman main fleet': '再次迎战奥斯曼主力舰队',
+  'Report the defense': '报告防卫结果',
+  'Report both withdrawn Ottoman fleets at the Axum (Massawa) harbor.':
+    '前往阿克苏姆（马沙华）的港口，报告两支奥斯曼舰队均已撤退。',
+  'Collect the Staff': '领取圣者之杖',
+  'Meet Pietro at the Axum (Massawa) pub and receive the Staff of the Saint.':
+    '前往阿克苏姆（马沙华）的酒馆会见皮耶德，领取圣者之杖。',
+  'Return the Staff': '归还圣者之杖',
+  'Carry the Staff of the Saint to Taphiel at the Axum (Massawa) residence.':
+    '把圣者之杖带到阿克苏姆（马沙华）的宅邸，交给塔菲尔。',
+  'Complete the defense of Axum': '完成阿克苏姆防卫战',
+  'Visit the Axum (Massawa) harbor to close the chapter. The Royal Crown may be sold to fund the voyage ahead, but it is not required.':
+    '前往阿克苏姆（马沙华）的港口结束本章。可以卖掉王冠筹措之后的航行资金，但这不是必需条件。',
+  'Hear Enrico’s Japan request': '听取恩里克的日本请求',
+  'Visit a pub outside the Far East and accept Enrico’s request when ready.':
+    '准备好后，前往远东以外的酒馆，接受恩里克的请求。',
+  'Carry Enrico to Japan': '护送恩里克前往日本',
+  'Sail to the Nagasaki harbor, where Enrico will leave the fleet for Sakai.':
+    '航行到长崎港口，恩里克将在那里离开船队前往界。',
+  'Return to Lisbon': '返回里斯本',
+  'Return to Lisbon and enter any facility to hear that Enrico left a letter.':
+    '返回里斯本并进入任意设施，得知恩里克留下了一封信。',
+  'Read Enrico’s letter': '阅读恩里克的信',
+  'Visit the Lisbon Guild and read Enrico’s letter.':
+    '前往里斯本工会，阅读恩里克的信。',
+  'Meet Enrico in Sakai': '在界会见恩里克',
+  'Visit the Sakai Guild to learn where the search continues.':
+    '前往界的工会，了解搜索应往何处继续。',
+  'Reach South America': '抵达南美洲',
+  'Sail to any South American port and enter a facility other than its pub.':
+    '航行到任意南美港口，进入酒馆以外的设施。',
+  'Ask about Lucia': '打听路琪亚的消息',
+  'Visit the pub at that South American port and ask about Lucia.':
+    '前往那座南美港口的酒馆，打听路琪亚的消息。',
+  'Finish Rudolph’s duel': '完成与鲁道夫的决斗',
+  'Any duel result continues Lucia’s rescue.':
+    '无论决斗结果如何，路琪亚的营救都会继续。',
+  'Bring Lucia to safety': '带路琪亚脱离危险',
+  'Continue at the South American pub after Rudolph’s duel; victory, defeat, or draw all rescue Lucia.':
+    '与鲁道夫决斗后，继续在南美酒馆推进剧情；胜利、战败或平局都能救出路琪亚。',
+  'Expose Martinez’s orders': '揭露马丁内斯的命令',
+  'Visit the harbor at a South American port with Lucia and Katarina.':
+    '与路琪亚和卡特琳娜一同前往南美港口的港口设施。',
+  'Sail to the Amazon fleet': '驶向亚马逊舰队',
+  'Sail east of Cayenne to the Amazon river mouth near 0.5°S, 50.0°W.':
+    '从开云向东航行，前往南纬0.5度、西经50.0度附近的亚马逊河口。',
+  'Finish the Amazon battle': '完成亚马逊战斗',
+  'Defeat Martinez’s fleet to end its hold over Lucia.':
+    '击败马丁内斯的舰队，彻底终结其对路琪亚的控制。',
+  'Retry the Amazon fleet': '再次挑战亚马逊舰队',
+  'Return to the Cayenne harbor to retry immediately or prepare first.':
+    '返回开云港口，可以立刻再战，也可以先行整备。',
+  'Finish the Amazon victory': '完成亚马逊胜利报告',
+  'Continue the victory report after the battle.':
+    '战斗结束后继续查看胜利报告。',
+  'Return home to Lisbon': '返回里斯本家中',
+  'Visit the Lisbon residence for João’s homecoming.':
+    '前往里斯本宅邸，迎接约翰归家。',
+  'João’s main story is complete': '约翰主线已完成',
+  'João returned home after rescuing Lucia and breaking Martinez’s command.':
+    '约翰救出路琪亚并瓦解马丁内斯的指挥后回到了家。',
+  'João’s homecoming': '约翰归家',
+  'João returned home with his family’s accusation resolved, Lucia rescued, and the alliance victorious.':
+    '约翰回到了家，家族所受的指控已经洗清，路琪亚获救，联盟也赢得了胜利。',
+  'The main story is complete. You can continue exploring.':
+    '约翰主线已完成，仍可继续自由探索。',
 };
 
 export default joaoFinale;

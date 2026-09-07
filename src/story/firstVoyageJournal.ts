@@ -15,6 +15,7 @@ export interface JournalEntry {
   completed: boolean;
   current?: boolean;
   kind?: 'objective' | 'advice' | 'future';
+  values?: Record<string, string | number>;
 }
 
 const openingSteps = [
