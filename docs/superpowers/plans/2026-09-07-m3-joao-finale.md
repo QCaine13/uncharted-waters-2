@@ -60,7 +60,7 @@ expect(getCalendarParts(0)).toMatchObject({year:1522,month:5,day:17,dayIndex:0})
 
 ### Task 2: Quest-item transactions and a second companion departure
 
-**Files:** Modify `src/data/itemData.ts`, `src/state/actionsPort.ts`, `src/story/core/{types,effects,validator}.ts`, `src/story/{storyRuntimeActions,contentManifest,companionDeparture}.ts`; item/effect/departure tests; `src/interface/{Items,ItemShopItemBox}.tsx` only as required, `src/interface/common/ItemInfo.tsx`, `src/interface/port/ItemShop.tsx` and UI tests; `src/data/sailorData.ts`, character registration and localization. Create `src/story/content/characters/second-relief-captain.ts` and a focused quest-item test file.
+**Files:** Modify `src/data/itemData.ts`, `src/state/actionsPort.ts`, `src/story/core/{types,effects,validator}.ts`, `src/story/{storyRuntimeActions,companionDeparture}.ts`; inspect `src/story/contentManifest.ts` and modify character registration/manifest tests as needed; modify item/effect/departure tests, `src/interface/{Items,ItemShopItemBox}.tsx` only as required, `src/interface/common/ItemInfo.tsx`, `src/interface/port/ItemShop.tsx` and UI tests, `src/data/sailorData.ts`, and localization. Create `src/story/content/characters/second-relief-captain.ts` and a focused quest-item test file.
 
 **Interfaces:** Add effect `{type:'consumeItem';itemId:ItemId}` and item metadata `sellable?: boolean` (default true); `Item.imageSlice` becomes `number|null`. Staff stable ID is `m3-staff-of-the-saint`, name `Staff of the Saint` / `圣者之杖`, description `The Staff entrusted to João for the ruler of Massawa.` / `皮耶德托付给约翰、须交还马沙华统治者的圣杖。`, category11, rating0, price0, imageSlice null, sellable false. Existing numeric items and Crown45 are unchanged. The null-image display is a neutral CSS/text emblem, no generated/borrowed original-looking sprite.
 
@@ -82,7 +82,7 @@ Keep `m2-relief-captain` stable. Add `m3-relief-captain`, canonical English name
 
 ### Task 3: Catalog-driven M3 combat and local recovery
 
-**Files:** Modify `src/combat/{encounters,naval}.ts`, relevant pure tests; `src/state/actionsCombat.ts`, action/save tests; `src/interface/Combat.tsx`, combat presentation helpers and UI tests; `src/localization/combat.ts`. No chapter events yet.
+**Files:** Modify `src/combat/{encounters,naval}.ts`, relevant pure tests; `src/state/actionsCombat.ts`, action/save tests; `src/interface/combat/Combat.tsx`, combat presentation helpers and UI tests; `src/localization/combat.ts`. No chapter events yet.
 
 **Interfaces:** Each encounter includes `nameKey:string`, optional `captainNameKey:string`, `replayOutcomes:readonly CombatOutcome[]`, `experience:Partial<Record<CombatOutcome,{joao:number;others:number}>>`, and optional `recoveryPortId:string`. Export `getEncounterExperience(encounterId:string,outcome:CombatOutcome):{joao:number;others:number}` returning zeros for absent/unknown policy. `canReplayEncounter` uses the same catalog policy at start, load and finish. The UI's displayed XP/recovery consumes these values. A stored historical replayable outcome may be replaced only by a new actual result; paid success cannot be replayed or confirmed twice.
 
