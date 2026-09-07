@@ -1,4 +1,7 @@
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import Assets from '../assets';
+import { WORLD_MAP_COLUMNS } from '../constants';
 import Input from '../input';
 import type { Ship } from '../game/world/fleets';
 import updateInterface from './updateInterface';
@@ -40,9 +43,23 @@ const consort = (): Ship => ({
 
 const savedWrites = () => jest.spyOn(Storage.prototype, 'setItem').mockClear();
 
+const worldTilemap = new Uint8Array(
+  readFileSync(resolve(__dirname, '../data/assets/worldTilemap.wasm')),
+);
+
+const footprintTilesAt = ({ x, y }: { x: number; y: number }) =>
+  [
+    { x: 0, y: 0 },
+    { x: 1, y: 0 },
+    { x: 0, y: 1 },
+    { x: 1, y: 1 },
+  ].map(
+    (offset) => worldTilemap[(y + offset.y) * WORLD_MAP_COLUMNS + x + offset.x],
+  );
+
 describe('combat state actions', () => {
   beforeEach(() => {
-    jest.spyOn(Assets, 'data').mockReturnValue(new Uint8Array(2700));
+    jest.spyOn(Assets, 'data').mockReturnValue(worldTilemap);
     // Reconcile and release a combat token left by a previous test before
     // installing the next fixture.
     state.activeCombat = null;
@@ -380,7 +397,11 @@ describe('combat state actions', () => {
       durability: 15,
       crew: 10,
     });
-    expect(state.fleets['1'].position).toEqual({ x: 840, y: 356 });
+    const recoveryPosition = state.fleets['1'].position!;
+    expect(recoveryPosition).toEqual({ x: 838, y: 358 });
+    const footprint = footprintTilesAt(recoveryPosition);
+    expect(footprint).toEqual([0, 5, 0, 5]);
+    expect(footprint.every((tile) => tile < 50)).toBe(true);
     expect(state.portId).toBe('1');
     expect(state.buildingId).toBeNull();
     expect(state.dayAtSea).toBe(0);
