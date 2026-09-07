@@ -312,4 +312,44 @@ describe('clock and area condition validation', () => {
 
     expect(validateStoryContent(fixture)).toEqual([]);
   });
+
+  test.each([
+    [
+      'calendarMonthsAfterEvent',
+      {
+        type: 'calendarMonthsAfterEvent',
+        eventId: anchorId,
+        minMonths: 1,
+        minDay: 11,
+      },
+    ],
+    [
+      'calendarDaysAfterEvent',
+      {
+        type: 'calendarDaysAfterEvent',
+        eventId: anchorId,
+        minDays: 1,
+      },
+    ],
+  ] as const)(
+    'extracts a chronological dependency from %s',
+    (_type, clockTrigger) => {
+      const fixture = source();
+      const dependentId = storyEventId('fixture.clock.dependent');
+      fixture.events[0].trigger = {
+        type: 'eventCompleted',
+        eventId: dependentId,
+      };
+      fixture.events[1].trigger = clockTrigger;
+
+      expect(
+        validateStoryContent(fixture)
+          .filter(({ code }) => code === 'dependency-cycle')
+          .map(({ owner, path }) => ({ owner, path })),
+      ).toEqual([
+        { owner: anchorId, path: 'events[0].trigger' },
+        { owner: dependentId, path: 'events[1].trigger' },
+      ]);
+    },
+  );
 });
