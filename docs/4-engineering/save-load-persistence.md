@@ -1,8 +1,8 @@
 # Save/Load & Persistence
 
-## Current contract — M2 / save v6
+## Current contract — M3 / save v7
 
-Updated 2026-09-06. The implementation is in
+Updated 2026-09-07. The implementation is in
 [`saveMigrations.ts`](../../src/state/saveMigrations.ts),
 [`saveLoad.ts`](../../src/state/saveLoad.ts), and
 [`state.ts`](../../src/state/state.ts). The proposal below is retained as
@@ -12,8 +12,8 @@ the current implementation status.
 - A single `savedState` key holds the game snapshot. Language preference uses
   the separate `uw2.locale` key. Browser origins, including different preview
   ports, have separate storage.
-- Startup and explicit Load share the migration chain. Versions 1 through 5
-  migrate to version 6; an unsupported version or invalid JSON is rejected.
+- Startup and explicit Load share the migration chain. Versions 1 through 6
+  migrate to version 7; an unsupported version or invalid JSON is rejected.
   Explicit failed Load leaves the running game unchanged. Live world/port
   objects are rebuilt after a successful load, and load subscribers reconcile
   input pauses and open sessions.
@@ -25,12 +25,21 @@ the current implementation status.
   by sailor ID), `combatResults` (outcome by encounter ID), and `activeCombat`
   (a serializable duel/naval snapshot or `null`). Version-5 migration initializes
   those fields without changing possessions, money, companions, or story history.
+- Version 7 adds `storyEventTimes: Record<string, number>`, measured in game
+  minutes. First completion stamps the event once; repeated completion preserves
+  a valid existing timestamp. Save/load deep-copies the map. Migration and
+  normalization preserve finite nonnegative timestamps no later than the saved
+  current time, including unknown IDs. Completed events with missing or invalid
+  clocks are anchored conservatively at that saved time (or zero when invalid);
+  normalization never invents completed events. Such old saves may wait longer
+  for a calendar gate, rather than bypass it.
 - Current-version normalization clears unsupported or malformed active combats,
   invalid equipment slots, invalid XP entries, and invalid outcome values.
   Equipped items must be owned and match the slot category. Unknown historical
   combat IDs with supported outcome values remain saved; unknown inventory IDs
   remain owned. This is defensive normalization of the M2 fields, not a claim
-  that every legacy state field has a complete runtime schema.
+  that every legacy state field has a complete runtime schema. Story clocks
+  receive the additional normalization described above.
 - Combat snapshots retain phase, intent, round, revision, HP, range, crew, shot,
   lumber, and any nested captain duel. A legal action saves once. Result
   confirmation records the outcome, applies its one-time XP/recovery, and clears
@@ -43,6 +52,17 @@ the current implementation status.
   Final settlement independently rejects a closed encounter before mutation.
   Loading normalizes the running state without immediately rewriting storage;
   the next save persists the normalized snapshot.
+- M3 uses the same encounter replay contract. Each Ottoman fleet accepts
+  victory or voluntary retreat for story progression, with defeat retry at
+  Massawa. Amazon defeat, retreat and draw permit retry at Cayenne; only victory
+  unlocks homecoming, and a final retreat awards no XP. The historical
+  outcome stays stored while a legal retry is active. Naval starts with zero flagship hull
+  or crew are immediate defeats with no paid action.
+- The Staff is a protected item, not a completion flag. Ordered effect preflight
+  simulates receive/consume before any mutation; hand-in consumes one Staff,
+  awards the existing Crown and fame, completes the event and saves once. Its
+  sale action and UI both refuse sale. Axum display and the journal ending are
+  derived from completion markers, with no extra persisted UI state.
 - A declarative event that starts combat uses `startCombatWithoutSave` inside
   its effect group; the story runtime performs the enclosing save. Do not add
   a second save or a narrative callback to simulate an outcome.

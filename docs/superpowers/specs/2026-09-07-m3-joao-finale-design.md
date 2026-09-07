@@ -42,7 +42,7 @@ The primary route evidence is the [2025 PC playthrough guide](https://gamefaqs.g
 - The current Sakai map has no church entrance. Meet Enrico at the existing guild, clearly called the Sakai guild reception in both languages. Do not place a fictional door on an arbitrary road cell. Massawa uses the real logical religious building `11` and southwest residence `8`; mosque portrait `13` is presentation only.
 - The South American tavern encounter is deterministic. Eligibility uses the data's South America market membership, not the larger New World region. This resolves the PC guide's broader region/chance-roll difference in favor of a clear route.
 - Enrico's departure extends the existing bounded relief-captain pool. Existing `m2-relief-captain` remains unchanged; a second registered portraitless relief can captain a retained fourth ship.
-- The ending appears through the final home scene and a durable journal summary. The player can continue exploration and save; completion neither resets the world nor prevents loading another save.
+- The ending appears through the final home scene and a durable journal summary. The player can continue exploration and save; completion neither resets the world nor prevents loading another save. Subsequent visits to the Lisbon home retain a brief family welcome, replacing the old opening farewell only after completion and granting no further reward.
 
 ## Durable state and declarative interfaces
 

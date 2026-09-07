@@ -117,6 +117,8 @@ The runtime preflights an effect group before applying it and coalesces redundan
 
 Lower numeric priority resolves first. Event ID is the deterministic tie-breaker. Two candidates whose indexed scenes overlap may not share a priority unless they are members of the same non-empty `randomGroup`.
 
+Priority accepts finite nonnegative numbers, including fractions. M3 uses unique values below 1 to supersede eligible legacy repeatable scenes at priorities 1–70: Massawa progression starts at 0.100, finale progression at 0.200, Massawa advice/retries at 0.300, and finale advice/retries at 0.400. Check actual eligible fallback scenes before choosing a new range; merely choosing a unique number above an old fallback does not make the new scene reachable. Use explicit progress exclusions instead of changing unrelated legacy scenes.
+
 For `repeat: 'random-ambient'`, give every member of one candidate set the same `randomGroup`, priority, and scene conditions. Do not sample in content. The resolver receives the selector, which keeps production random and tests deterministic. Members of one random group must not use different priorities.
 
 ## Validation and reports
@@ -130,7 +132,7 @@ npm run story:report
 
 Validation aggregates errors instead of stopping at the first one. Every diagnostic contains a code, owner when available, and an exact field path such as `events[3].steps[1].speaker`. Repair the field at that path; do not suppress the validator. Typical messages cover duplicate IDs, missing references, arc ownership, empty dialogue/choices/effects, invalid numeric bounds, priority conflicts, reciprocal conflicts, and missing or duplicate Save v2 keys.
 
-The report prints registered counts, entry and terminal events, cross-arc dependencies, unreferenced characters and relationships, and legacy-key coverage. Entry/terminal topology and cross-arc dependencies use positive `eventCompleted` prerequisites; a negated completion gate is not a prerequisite, while a double negation is. `crossArcDependencies` contains sorted public arc IDs whose events are prerequisites. `npm run verify` runs asset checks, then story validation, before the complete Jest/type/lint/build gate. The project-owned `baseline.yml` workflow invokes `verify:full`, so it inherits this check.
+The report prints registered counts, entry and terminal events, cross-arc dependencies, unreferenced characters and relationships, and legacy-key coverage. Entry/terminal topology and cross-arc dependencies use positive `eventCompleted` and calendar-condition event references; a negated reference is not a prerequisite, while a double negation is. `crossArcDependencies` contains sorted public arc IDs whose events are prerequisites. `npm run verify` runs asset checks, then story validation, before the complete Jest/type/lint/build gate. The project-owned `baseline.yml` workflow invokes `verify:full`, so it inherits this check.
 
 ## Required tests
 
@@ -148,7 +150,7 @@ The Lisbon examples are in `src/story/lisbonResolver.parity.test.ts`, `src/story
 
 ## Persistence and presentation
 
-The current save format is v6. `state.storyEvents` persists completed semantic event IDs; `state.quests` preserves the original Lisbon keys. Completing a registered event writes its semantic ID once and also writes its legacy key where mapped. The independent migrated-event inventory requires every migrated once-only event to retain its mapping. New chapters use semantic IDs without adding legacy keys. Unknown semantic IDs and legacy keys survive save/load.
+The current save format is v7. `state.storyEvents` persists completed semantic event IDs; `state.quests` preserves the original Lisbon keys. Completing a registered event writes its semantic ID once and also writes its legacy key where mapped. The independent migrated-event inventory requires every migrated once-only event to retain its mapping. New chapters use semantic IDs without adding legacy keys. Unknown semantic IDs and legacy keys survive save/load.
 
 The v4→v5 migration maps known Lisbon keys to semantic IDs and marks existing discoveries as reported because v4 already paid their gold. New discoveries grant fame when sighted and gold only through `reportDiscoveries()` at Lisbon Guild. `reportedDiscoveries` prevents a second payout, including after reload. Do not bump `SAVE_VERSION` or add persistent fields in an authoring-only change.
 
@@ -156,6 +158,12 @@ The v5→v6 migration adds equipment, battle experience, durable combat results,
 and resumable combat snapshots. See the [current persistence contract](../4-engineering/save-load-persistence.md).
 Story completion and combat completion are different records: completing a
 start event does not imply that the player won its encounter.
+
+The v6→v7 migration adds `storyEventTimes`, storing each event’s first completion in game minutes. Missing or invalid clocks for completed events are conservatively anchored to the loaded save’s valid current time, or zero. Valid unknown timestamp IDs survive; no new completion markers are inferred. `completeEvent` preserves a valid first stamp across repeats and load.
+
+Use `calendarMonthsAfterEvent { eventId, minMonths, minDay }` for a later-month/day gate and `calendarDaysAfterEvent { eventId, minDays }` for crossed calendar dates. Both require a completed reference with a valid clock no later than now. A month gate compares year/month indices and also requires the current day to reach `minDay`, including in subsequent months. Share `getCalendarParts` with the HUD and guide text; do not turn a date-boundary rule into an elapsed 24-hour timer. Clock references participate in validation and dependency/cycle reporting. `withinWorldArea { minX, maxX, minY, maxY }` checks inclusive nonwrapping bounds against the player fleet position; pair it with an explicit world-stage condition for sea encounters.
+
+`consumeItem { itemId }` removes one owned copy. Effect preflight simulates ordered receives/consumes, so a missing item or duplicate overconsumption rejects the whole group before rewards or markers change. Consuming the last equipped copy clears its slot. Put consumption, reward and completion in the same group; protected quest items also need item metadata plus action/UI sale guards.
 
 Use `{ type: 'daysAtSea', min: 3 }` for consecutive sailing days; elapsed calendar days are a different condition. `{ type: 'hasDiscovery', discoveryId }` and `{ type: 'hasReportedDiscovery', discoveryId }` reference the registered discovery catalog. Sea scenes resolve through the subscribed controller before simulation advances. Active dialogues and sidebar overlays pause simulation, and successful loads discard transient cursors.
 
