@@ -114,6 +114,7 @@ export const setupSeaStory = () => {
     },
     receiveFame: () => {},
     receiveItem: () => {},
+    consumeItem: () => {},
     receiveShip: () => {},
     addCompanion: () => {},
     removeCompanion: () => {},

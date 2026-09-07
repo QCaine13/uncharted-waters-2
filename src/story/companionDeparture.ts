@@ -1,6 +1,11 @@
 import type { State } from '../state/state';
 
 export const RELIEF_CAPTAIN_SAILOR_ID = 'm2-relief-captain';
+export const SECOND_RELIEF_CAPTAIN_SAILOR_ID = 'm3-relief-captain';
+export const RELIEF_CAPTAIN_SAILOR_IDS = [
+  RELIEF_CAPTAIN_SAILOR_ID,
+  SECOND_RELIEF_CAPTAIN_SAILOR_ID,
+] as const;
 const JOAO_SAILOR_ID = '1';
 
 type Mate = State['mates'][number];
@@ -39,6 +44,27 @@ export const planCompanionDeparture = (
     };
   }
 
+  const captainRoles = currentMates
+    .map(({ role }) => role)
+    .filter(
+      (role): role is number => typeof role === 'number' && !Number.isNaN(role),
+    );
+  const captainSlotsAreValid =
+    Number.isInteger(fleetLength) &&
+    fleetLength >= 0 &&
+    captainRoles.length === fleetLength &&
+    captainRoles.every(
+      (role) => Number.isInteger(role) && role >= 0 && role < fleetLength,
+    ) &&
+    new Set(captainRoles).size === fleetLength;
+  if (!captainSlotsAreValid) {
+    return {
+      ok: false,
+      code: 'invalid-captain-role',
+      message: 'The fleet has invalid captain roles.',
+    };
+  }
+
   const remaining = currentMates
     .filter((mate) => mate !== departing)
     .map((mate) => ({ ...mate }));
@@ -57,17 +83,19 @@ export const planCompanionDeparture = (
     };
   }
 
-  const replacement = remaining.find(({ role }) => role === null);
+  const replacement = remaining.find(
+    ({ role }) => role === null || Number.isNaN(role),
+  );
   if (replacement) {
     replacement.role = departing.role;
     return { ok: true, mates: remaining };
   }
 
-  if (
-    remaining.some(
-      (mate) => mate.sailorId === RELIEF_CAPTAIN_SAILOR_ID,
-    )
-  ) {
+  const usedSailorIds = new Set(remaining.map(({ sailorId: id }) => id));
+  const reliefCaptainId = RELIEF_CAPTAIN_SAILOR_IDS.find(
+    (id) => id !== sailorId && !usedSailorIds.has(id),
+  );
+  if (!reliefCaptainId) {
     return {
       ok: false,
       code: 'relief-captain-unavailable',
@@ -75,10 +103,7 @@ export const planCompanionDeparture = (
     };
   }
 
-  remaining.push({
-    sailorId: RELIEF_CAPTAIN_SAILOR_ID,
-    role: departing.role,
-  });
+  remaining.push({ sailorId: reliefCaptainId, role: departing.role });
   return { ok: true, mates: remaining };
 };
 

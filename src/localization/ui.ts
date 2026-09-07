@@ -212,6 +212,7 @@ export const ui: Record<string, string> = {
   'You don’t have any items.': '你没有任何物品。',
   'What would you like to sell?': '想卖什么？',
   'What else can you sell me?': '还有什么可以卖给我？',
+  'Quest item — cannot be sold': '任务物品——无法出售',
   'Welcome to our regional branch of the Marco Polo Bank.':
     '欢迎光临马可·波罗银行分行。',
   'You don’t have any gold to deposit.': '你没有可存入的金币。',

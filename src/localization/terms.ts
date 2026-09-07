@@ -298,6 +298,8 @@ export const terms: Record<string, string> = {
   'Malachite Box': '孔雀石盒',
   'Garnet Brooch': '石榴石胸针',
   'Ruby Ring': '红宝石戒指',
+  'Staff of the Saint': '圣者之杖',
+  'Second Relief Captain': '第二代理船长',
   'Magic Muramasa': '妖刀村正',
   'Rune Blade': '如尼剑',
   'Crusader Armor': '十字军铠甲',

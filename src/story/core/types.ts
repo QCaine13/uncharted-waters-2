@@ -102,6 +102,7 @@ export type StoryEffect =
   | { type: 'receiveGold'; amount: number }
   | { type: 'receiveFame'; fame: FameType; amount: number }
   | { type: 'receiveItem'; itemId: ItemId }
+  | { type: 'consumeItem'; itemId: ItemId }
   | { type: 'receiveShip'; shipId: string; name: string }
   | { type: 'addCompanion'; characterId: CharacterId }
   | { type: 'removeCompanion'; characterId: CharacterId }

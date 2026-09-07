@@ -6,7 +6,10 @@ import updateInterface from '../state/updateInterface';
 import { storyRuntimeActions } from './storyRuntimeActions';
 import { notifyCombatChanged } from '../combat/combatEvents';
 import { load } from '../state/saveLoad';
-import { RELIEF_CAPTAIN_SAILOR_ID } from './companionDeparture';
+import {
+  RELIEF_CAPTAIN_SAILOR_ID,
+  SECOND_RELIEF_CAPTAIN_SAILOR_ID,
+} from './companionDeparture';
 import { getCaptain } from '../state/selectors';
 
 const ship = () => ({
@@ -378,18 +381,23 @@ describe('production story runtime actions', () => {
     expect(setItem).toHaveBeenCalledTimes(1);
   });
 
-  test('dismisses Domingo from a four-ship fleet and retains valid captains after load', () => {
+  test('dismisses Domingo then Enrico while preserving four ships and valid captains after load', () => {
     state.fleets = {
       '1': {
         position: undefined,
-        ships: [ship(), ship(), ship(), ship()],
+        ships: [
+          { ...ship(), name: 'São Gabriel' },
+          { ...ship(), name: 'Domingo' },
+          { ...ship(), name: 'Rocco' },
+          { ...ship(), name: 'Enrico' },
+        ],
       },
     };
     state.mates = [
       { sailorId: '1', role: 0 },
-      { sailorId: '32', role: 1 },
-      { sailorId: '33', role: 2 },
-      { sailorId: '34', role: 3 },
+      { sailorId: '34', role: 1 },
+      { sailorId: '32', role: 2 },
+      { sailorId: '33', role: 3 },
     ];
 
     expect(
@@ -401,9 +409,27 @@ describe('production story runtime actions', () => {
     expect(state.fleets['1'].ships).toHaveLength(4);
     expect(state.mates).toContainEqual({
       sailorId: RELIEF_CAPTAIN_SAILOR_ID,
+      role: 1,
+    });
+    expect(
+      executeStoryEffects(
+        [{ type: 'removeCompanion', characterId: characterId('enrico') }],
+        storyRuntimeActions,
+      ),
+    ).toEqual({ ok: true, executed: 1 });
+    expect(state.fleets['1'].ships.map(({ name }) => name)).toEqual([
+      'São Gabriel',
+      'Domingo',
+      'Rocco',
+      'Enrico',
+    ]);
+    expect(state.mates).toContainEqual({
+      sailorId: SECOND_RELIEF_CAPTAIN_SAILOR_ID,
       role: 3,
     });
-    expect(state.mates.some(({ sailorId }) => sailorId === '1')).toBe(true);
+    expect(
+      state.mates.some(({ sailorId }) => ['33', '34'].includes(sailorId)),
+    ).toBe(false);
 
     state.mates = [];
     expect(load()).toBe(true);
@@ -415,14 +441,77 @@ describe('production story runtime actions', () => {
     ).toHaveLength(4);
     expect(
       state.mates.every(({ sailorId }) =>
-        ['1', '32', '33', RELIEF_CAPTAIN_SAILOR_ID].includes(sailorId),
+        [
+          '1',
+          '32',
+          RELIEF_CAPTAIN_SAILOR_ID,
+          SECOND_RELIEF_CAPTAIN_SAILOR_ID,
+        ].includes(sailorId),
       ),
     ).toBe(true);
     expect([0, 1, 2, 3].map((role) => getCaptain(role).name)).toEqual([
       'João Franco',
-      'Rocco Alemkel',
-      'Enrico Malione',
       'Relief Captain',
+      'Rocco Alemkel',
+      'Second Relief Captain',
     ]);
+  });
+
+  test('preflights an added mate before a captain departure in the same group', () => {
+    state.fleets = {
+      '1': {
+        position: undefined,
+        ships: [ship(), ship(), ship(), ship()],
+      },
+    };
+    state.mates = [
+      { sailorId: '1', role: 0 },
+      { sailorId: '34', role: 1 },
+      { sailorId: '32', role: 2 },
+      { sailorId: '33', role: 3 },
+    ];
+
+    expect(
+      executeStoryEffects(
+        [
+          {
+            type: 'addCompanion',
+            characterId: characterId('m3-relief-captain'),
+          },
+          { type: 'removeCompanion', characterId: characterId('domingo') },
+        ],
+        storyRuntimeActions,
+      ),
+    ).toEqual({ ok: true, executed: 2 });
+    expect(state.mates).toContainEqual({
+      sailorId: 'm3-relief-captain',
+      role: 1,
+    });
+    expect(
+      state.mates.some(({ sailorId }) => sailorId === RELIEF_CAPTAIN_SAILOR_ID),
+    ).toBe(false);
+    expect(state.mates.some(({ sailorId }) => sailorId === '34')).toBe(false);
+  });
+
+  test('rejects repeated removal of the same companion before mutating the group', () => {
+    state.mates.push({ sailorId: '34', role: 'firstMate' });
+    const before = JSON.stringify(state);
+
+    expect(
+      executeStoryEffects(
+        [
+          { type: 'removeCompanion', characterId: characterId('domingo') },
+          { type: 'removeCompanion', characterId: characterId('domingo') },
+        ],
+        storyRuntimeActions,
+      ),
+    ).toEqual({
+      ok: false,
+      executed: 0,
+      diagnostics: [
+        expect.objectContaining({ code: 'companion-not-recruited' }),
+      ],
+    });
+    expect(JSON.stringify(state)).toBe(before);
   });
 });

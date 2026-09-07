@@ -408,6 +408,7 @@ const visitEffect = (
       }
       break;
     case 'receiveItem':
+    case 'consumeItem':
       if (catalogs !== undefined && !catalogs.itemIds.has(effect.itemId)) {
         add(
           'unknown-item',

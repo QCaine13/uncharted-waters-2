@@ -40,6 +40,9 @@ const createRuntime = (
     receiveItem: (itemId: ItemId) => {
       operations.push(['receiveItem', itemId]);
     },
+    consumeItem: (itemId: ItemId) => {
+      operations.push(['consumeItem', itemId]);
+    },
     receiveShip: (shipId: string, name: string) => {
       operations.push(['receiveShip', shipId, name]);
     },
@@ -76,6 +79,7 @@ describe('story effect interpreter', () => {
       { type: 'receiveGold', amount: 1000 },
       { type: 'receiveFame', fame: 'adventure', amount: 200 },
       { type: 'receiveItem', itemId: '4' },
+      { type: 'consumeItem', itemId: '4' },
       { type: 'receiveShip', shipId: '6', name: 'Hermes II' },
       { type: 'addCompanion', characterId: companionId },
       { type: 'removeCompanion', characterId: companionId },
@@ -96,6 +100,7 @@ describe('story effect interpreter', () => {
       ['receiveGold', 1000],
       ['receiveFame', 'adventure', 200],
       ['receiveItem', '4'],
+      ['consumeItem', '4'],
       ['receiveShip', '6', 'Hermes II'],
       ['addCompanion', companionId],
       ['removeCompanion', companionId],

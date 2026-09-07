@@ -10,8 +10,8 @@ describe('canonical Lisbon characters', () => {
     storyCharacters.find((character) => character.id === id);
 
   test('preserves every legacy identity, English name, color, role, and sailor link', () => {
-    expect(storyCharacters).toHaveLength(14);
-    expect(new Set(storyCharacters.map(({ id }) => id)).size).toBe(14);
+    expect(storyCharacters).toHaveLength(15);
+    expect(new Set(storyCharacters.map(({ id }) => id)).size).toBe(15);
 
     expect(byId('joao')).toEqual({
       id: characterId('joao'),
@@ -87,6 +87,13 @@ describe('canonical Lisbon characters', () => {
       dialogueStyle: { color: 'text-slate-600' },
       sailorId: 'm2-relief-captain',
     });
+    expect(byId('m3-relief-captain')).toEqual({
+      id: characterId('m3-relief-captain'),
+      names: { en: 'Second Relief Captain', zh: '第二代理船长' },
+      role: 'companion',
+      dialogueStyle: { color: 'text-slate-600' },
+      sailorId: 'm3-relief-captain',
+    });
     expect(byId('kahn')).toEqual({
       id: characterId('kahn'),
       names: { en: 'Antonio Kahn', zh: '安东尼奥·卡恩' },
@@ -115,11 +122,35 @@ describe('canonical Lisbon characters', () => {
     const sailorIds = storyCharacters
       .map(({ sailorId }) => sailorId)
       .filter((sailorId): sailorId is string => Boolean(sailorId));
-    expect(sailorIds).toEqual(['1', '32', '33', '34', 'm2-relief-captain']);
+    expect(sailorIds).toEqual([
+      '1',
+      '32',
+      '33',
+      '34',
+      'm2-relief-captain',
+      'm3-relief-captain',
+    ]);
     expect(sailorIds).toHaveLength(new Set(sailorIds).size);
 
     expect(getSailor('m2-relief-captain')).toEqual({
       name: 'Relief Captain',
+      age: 30,
+      stats: {
+        leadership: 50,
+        seamanship: 50,
+        knowledge: 50,
+        intuition: 50,
+        courage: 50,
+        swordplay: 50,
+        charm: 50,
+        luck: 50,
+      },
+      navigationLevel: 1,
+      battleLevel: 1,
+      skills: [],
+    });
+    expect(getSailor('m3-relief-captain')).toEqual({
+      name: 'Second Relief Captain',
       age: 30,
       stats: {
         leadership: 50,

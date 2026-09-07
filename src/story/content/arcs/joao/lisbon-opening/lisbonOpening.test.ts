@@ -179,6 +179,7 @@ const callbackOperation = (effect: StoryEffect): string | null => {
         : null;
     case 'completeEvent':
     case 'receiveFame':
+    case 'consumeItem':
     case 'removeCompanion':
     case 'assignMate':
     case 'exitBuilding':

@@ -18,6 +18,7 @@ describe('structured quest session advancement', () => {
       receiveGold: () => operations.push('gold'),
       receiveFame: () => operations.push('fame'),
       receiveItem: () => operations.push('item'),
+      consumeItem: () => operations.push('consumeItem'),
       receiveShip: () => operations.push('ship'),
       addCompanion: () => operations.push('companion'),
       removeCompanion: () => operations.push('removeCompanion'),

@@ -5,6 +5,7 @@ import {
   storyEventId,
   type StoryContentSource,
   type StoryDiagnostic,
+  type StoryEffect,
 } from './types';
 import { validateStoryContent } from './validator';
 import { compileProductionStoryContent } from './registry';
@@ -127,6 +128,7 @@ const cases: Case[] = [
   { code: 'unknown-building', path: 'events[0].trigger.conditions[1].buildingId', mutate: (source) => { const trigger = source.events[0].trigger; if (trigger.type === 'all') trigger.conditions[1] = { type: 'atBuilding', buildingId: 'missing' }; } },
   { code: 'unknown-item', path: 'events[0].trigger.conditions[2].itemId', mutate: (source) => { const trigger = source.events[0].trigger; if (trigger.type === 'all') trigger.conditions[2] = { type: 'hasItem', itemId: 'missing' as '4' }; } },
   { code: 'unknown-item', path: 'events[0].steps[1].effects[1].itemId', mutate: (source) => { const step = source.events[0].steps[1]; if (step.type === 'effect') step.effects[1] = { type: 'receiveItem', itemId: 'missing' as '4' }; } },
+  { code: 'unknown-item', path: 'events[0].steps[1].effects[1].itemId', mutate: (source) => { const step = source.events[0].steps[1]; if (step.type === 'effect') step.effects[1] = { type: 'consumeItem', itemId: 'missing' } as unknown as StoryEffect; } },
   { code: 'unknown-ship', path: 'events[0].steps[1].effects[2].shipId', mutate: (source) => { const step = source.events[0].steps[1]; if (step.type === 'effect') step.effects[2] = { type: 'receiveShip', shipId: 'missing', name: 'Ship' }; } },
   { code: 'unknown-port', path: 'events[0].steps[1].effects[4].portId', mutate: (source) => { const step = source.events[0].steps[1]; if (step.type === 'effect') step.effects[4] = { type: 'setPort', portId: 'missing' }; } },
   { code: 'invalid-gold', path: 'events[0].steps[1].effects[0].amount', mutate: (source) => { const step = source.events[0].steps[1]; if (step.type === 'effect') step.effects[0] = { type: 'receiveGold', amount: -1 }; } },

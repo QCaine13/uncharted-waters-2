@@ -9,6 +9,7 @@ import {
   addStoryCompanion,
   assignStoryMateRole,
   completeLegacyQuestOnce,
+  consumeStoryItem,
   exitBuildingWithoutSave,
   receiveStoryGold,
   receiveStoryItem,
@@ -55,9 +56,31 @@ const preflightStatefulGroup = (
   const plannedShips = (state.fleets['1']?.ships ?? []).map(({ id }) => ({
     id,
   }));
+  const plannedItemCounts = state.items.reduce<Map<string, number>>(
+    (counts, itemId) => counts.set(itemId, (counts.get(itemId) ?? 0) + 1),
+    new Map(),
+  );
   const diagnostics: StoryDiagnostic[] = [];
 
   effects.forEach((effect) => {
+    if (effect.type === 'receiveItem') {
+      plannedItemCounts.set(
+        effect.itemId,
+        (plannedItemCounts.get(effect.itemId) ?? 0) + 1,
+      );
+      return;
+    }
+    if (effect.type === 'consumeItem') {
+      const count = plannedItemCounts.get(effect.itemId) ?? 0;
+      if (count === 0) {
+        diagnostics.push(
+          diagnostic('missing-item', `Item ${effect.itemId} is not owned`),
+        );
+      } else {
+        plannedItemCounts.set(effect.itemId, count - 1);
+      }
+      return;
+    }
     if (effect.type === 'addCompanion') {
       const sailorId = character(effect)?.sailorId;
       if (sailorId) plannedMates.push({ sailorId, role: null });
@@ -152,6 +175,7 @@ export const storyRuntimeActions: StoryEffectRuntime = {
         }
         return [];
       case 'receiveItem':
+      case 'consumeItem':
         return itemData[effect.itemId]
           ? []
           : [diagnostic('unknown-item', `Unknown item ${effect.itemId}`)];
@@ -234,6 +258,7 @@ export const storyRuntimeActions: StoryEffectRuntime = {
     state.fame[fame] += amount;
   },
   receiveItem: receiveStoryItem,
+  consumeItem: consumeStoryItem,
   receiveShip: receiveStoryShip,
   addCompanion(characterId) {
     const sailorId =

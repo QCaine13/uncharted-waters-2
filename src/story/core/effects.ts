@@ -14,6 +14,7 @@ export interface StoryEffectRuntime {
   receiveGold(amount: number): void;
   receiveFame(fame: FameType, amount: number): void;
   receiveItem(itemId: ItemId): void;
+  consumeItem(itemId: ItemId): void;
   receiveShip(shipId: string, name: string): void;
   addCompanion(characterId: CharacterId): void;
   removeCompanion(characterId: CharacterId): void;
@@ -55,6 +56,9 @@ const executeStoryEffect = (
       break;
     case 'receiveItem':
       runtime.receiveItem(effect.itemId);
+      break;
+    case 'consumeItem':
+      runtime.consumeItem(effect.itemId);
       break;
     case 'receiveShip':
       runtime.receiveShip(effect.shipId, effect.name);
