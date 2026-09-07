@@ -110,7 +110,7 @@ Visible names: `Ottoman Vanguard`/`奥斯曼先遣舰队`, `Ottoman Main Fleet`/
 
 **Interfaces:** Arc `joao.massawa`, export `MASSAWA_COMPLETE_EVENT_ID = storyEventId('joao.massawa.chapter-complete')`. Export each named event constant in uppercase snake case with `_EVENT_ID`, plus `MASSAWA_WAITING_EVENT_ID` as the canonical alias of `waiting-for-pietro`. Export `MASSAWA_BATTLE_AREA={minX:1152,maxX:1156,minY:527,maxY:533}`. Events use existing stage/port/building/all/not/combat/item conditions and Tasks1–2's additions. Characters are IDs `pietro` (Pietro/皮耶德) and `taphiel` (Taphiel/塔菲尔), NPCs with canonical neutral dialogue styles. NPCs never join the roster.
 
-All IDs below have `joao.massawa.` prefix. Triggers listed in order also require the preceding applicable marker; each once event completes its own marker in its final effect group. Exclude already-completed later gates in repeatable advice/retry scenes so they cannot shadow progression. Use stable priority1 for actionable progression, priority5 for advice, deterministic ID tie-breaking. Do not use hard fame thresholds.
+All IDs below have `joao.massawa.` prefix. Triggers listed in order also require the preceding applicable marker; each once event completes its own marker in its final effect group. Exclude already-completed later gates in repeatable advice/retry scenes so they cannot shadow progression. Assign unique stable priorities in table order: [0.100, 0.200) for actionable progression (including readiness choices), [0.300, 0.400) for repeatable advice/retry scenes, increasing by 0.001 within each range. Lower numbers resolve first; preserve the existing deterministic ID tie-breaker. The existing validator treats overlapping indexed scenes as a conflict at equal priority even when their completion gates are exclusive. Keep prior arc priorities and validator semantics unchanged, and do not add random groups to ordered story scenes. Do not use hard fame thresholds.
 
 | Event suffix | Trigger / result |
 | --- | --- |
@@ -148,7 +148,7 @@ Each readiness choice's affirmative branch ends normally and leaves the regular 
 
 Actor names: Rudolph/鲁道夫, Ezequiel/艾泽格, Martinez/马丁内斯, all story-only without invented portraits. Enrico uses his existing canonical character even after leaving; he does not rejoin. Katarina and Lucia remain NPCs, Rocco remains a companion. Martinez can speak only through an attributed message/report; no unsupported mandatory duel with him.
 
-All suffixes below use `joao.finale.`. Once events complete their own marker; prerequisites follow the rows. Ordinary progression priority1, repeatable recovery/advice priority5 with explicit exclusions.
+All suffixes below use `joao.finale.`. Once events complete their own marker; prerequisites follow the rows. Assign unique stable priorities in table order: [0.200, 0.300) for ordinary progression (including the Japan choice), [0.400, 0.500) for repeatable recovery/advice, increasing by 0.001 within each range, with explicit exclusions. These fractional ranges (accepted by the finite nonnegative priority contract) keep all M3 actionable scenes ahead of M3 advice and all eligible M3 scenes ahead of legacy repeatable fallbacks at priorities 1–70, distinct from Massawa and existing arc priorities, satisfying the existing overlapping-scene validator without random groups or validator changes.
 
 | Event suffix | Trigger / result |
 | --- | --- |

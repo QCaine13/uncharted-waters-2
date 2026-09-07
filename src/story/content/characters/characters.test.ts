@@ -10,8 +10,8 @@ describe('canonical Lisbon characters', () => {
     storyCharacters.find((character) => character.id === id);
 
   test('preserves every legacy identity, English name, color, role, and sailor link', () => {
-    expect(storyCharacters).toHaveLength(15);
-    expect(new Set(storyCharacters.map(({ id }) => id)).size).toBe(15);
+    expect(storyCharacters).toHaveLength(17);
+    expect(new Set(storyCharacters.map(({ id }) => id)).size).toBe(17);
 
     expect(byId('joao')).toEqual({
       id: characterId('joao'),
@@ -117,6 +117,18 @@ describe('canonical Lisbon characters', () => {
       names: { en: 'Sasha', zh: '莎夏' },
       role: 'npc',
       dialogueStyle: { color: 'text-violet-700' },
+    });
+    expect(byId('pietro')).toEqual({
+      id: characterId('pietro'),
+      names: { en: 'Pietro', zh: '皮耶德' },
+      role: 'npc',
+      dialogueStyle: { color: 'text-slate-600' },
+    });
+    expect(byId('taphiel')).toEqual({
+      id: characterId('taphiel'),
+      names: { en: 'Taphiel', zh: '塔菲尔' },
+      role: 'npc',
+      dialogueStyle: { color: 'text-slate-600' },
     });
 
     const sailorIds = storyCharacters
@@ -278,6 +290,20 @@ describe('canonical Lisbon relationships', () => {
         type: 'sibling',
         reciprocal: 'sibling',
       },
+      {
+        id: 'joao.pietro.acquaintance',
+        from: 'pietro',
+        to: 'joao',
+        type: 'acquaintance',
+        reciprocal: 'acquaintance',
+      },
+      {
+        id: 'joao.taphiel.acquaintance',
+        from: 'taphiel',
+        to: 'joao',
+        type: 'acquaintance',
+        reciprocal: 'acquaintance',
+      },
     ]);
 
     const compiled = compileStoryContent(
@@ -320,9 +346,13 @@ describe('canonical Lisbon relationships', () => {
         'joao:acquaintance:ali',
         'ali:sibling:sasha',
         'sasha:sibling:ali',
+        'pietro:acquaintance:joao',
+        'joao:acquaintance:pietro',
+        'taphiel:acquaintance:joao',
+        'joao:acquaintance:taphiel',
       ]),
     );
-    expect(compiledEdges).toHaveLength(24);
+    expect(compiledEdges).toHaveLength(28);
     expect(compiled.diagnostics).toEqual([]);
   });
 });

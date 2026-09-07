@@ -187,10 +187,10 @@ describe('story content manifest', () => {
       .sort();
 
     expect(report.counts).toEqual({
-      characters: 15,
-      relationships: 12,
-      arcs: 3,
-      events: 70,
+      characters: 17,
+      relationships: 14,
+      arcs: 4,
+      events: 88,
     });
     expect(report.arcs).toEqual([
       {
@@ -223,6 +223,17 @@ describe('story content manifest', () => {
         ),
         crossArcDependencies: [],
       },
+      {
+        id: 'joao.massawa',
+        entryEvents: ['joao.massawa.five-day-voyage'],
+        terminalEvents: [
+          'joao.massawa.chapter-complete',
+          'joao.massawa.ottoman-one-retry',
+          'joao.massawa.ottoman-two-retry',
+          'joao.massawa.waiting-advice',
+        ],
+        crossArcDependencies: ['joao.conflict-and-growth'],
+      },
     ]);
     expect(report.unreferencedCharacters).toEqual([
       'm2-relief-captain',
@@ -251,7 +262,7 @@ describe('story content manifest', () => {
 
     const formatted = formatStoryContentReport(report);
     expect(formatted).toContain(
-      'Story content: 15 characters, 12 relationships, 3 arcs, 70 events',
+      'Story content: 17 characters, 14 relationships, 4 arcs, 88 events',
     );
     expect(formatted).toContain(
       'Legacy compatibility: 10/10 once events mapped (complete)',
