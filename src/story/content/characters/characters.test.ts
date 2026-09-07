@@ -10,8 +10,8 @@ describe('canonical Lisbon characters', () => {
     storyCharacters.find((character) => character.id === id);
 
   test('preserves every legacy identity, English name, color, role, and sailor link', () => {
-    expect(storyCharacters).toHaveLength(17);
-    expect(new Set(storyCharacters.map(({ id }) => id)).size).toBe(17);
+    expect(storyCharacters).toHaveLength(20);
+    expect(new Set(storyCharacters.map(({ id }) => id)).size).toBe(20);
 
     expect(byId('joao')).toEqual({
       id: characterId('joao'),
@@ -129,6 +129,24 @@ describe('canonical Lisbon characters', () => {
       names: { en: 'Taphiel', zh: '塔菲尔' },
       role: 'npc',
       dialogueStyle: { color: 'text-slate-600' },
+    });
+    expect(byId('rudolph')).toEqual({
+      id: characterId('rudolph'),
+      names: { en: 'Rudolph', zh: '鲁道夫' },
+      role: 'antagonist',
+      dialogueStyle: { color: 'text-red-700' },
+    });
+    expect(byId('ezequiel')).toEqual({
+      id: characterId('ezequiel'),
+      names: { en: 'Ezequiel', zh: '艾泽格' },
+      role: 'npc',
+      dialogueStyle: { color: 'text-sky-800' },
+    });
+    expect(byId('martinez')).toEqual({
+      id: characterId('martinez'),
+      names: { en: 'Martinez', zh: '马丁内斯' },
+      role: 'antagonist',
+      dialogueStyle: { color: 'text-stone-700' },
     });
 
     const sailorIds = storyCharacters
@@ -304,6 +322,27 @@ describe('canonical Lisbon relationships', () => {
         type: 'acquaintance',
         reciprocal: 'acquaintance',
       },
+      {
+        id: 'joao.rudolph.enemy',
+        from: 'rudolph',
+        to: 'joao',
+        type: 'enemy',
+        reciprocal: 'enemy',
+      },
+      {
+        id: 'joao.ezequiel.acquaintance',
+        from: 'ezequiel',
+        to: 'joao',
+        type: 'acquaintance',
+        reciprocal: 'acquaintance',
+      },
+      {
+        id: 'joao.martinez.enemy',
+        from: 'martinez',
+        to: 'joao',
+        type: 'enemy',
+        reciprocal: 'enemy',
+      },
     ]);
 
     const compiled = compileStoryContent(
@@ -350,9 +389,15 @@ describe('canonical Lisbon relationships', () => {
         'joao:acquaintance:pietro',
         'taphiel:acquaintance:joao',
         'joao:acquaintance:taphiel',
+        'rudolph:enemy:joao',
+        'joao:enemy:rudolph',
+        'ezequiel:acquaintance:joao',
+        'joao:acquaintance:ezequiel',
+        'martinez:enemy:joao',
+        'joao:enemy:martinez',
       ]),
     );
-    expect(compiledEdges).toHaveLength(28);
+    expect(compiledEdges).toHaveLength(34);
     expect(compiled.diagnostics).toEqual([]);
   });
 });
