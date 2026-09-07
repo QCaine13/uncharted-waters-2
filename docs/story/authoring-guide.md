@@ -148,9 +148,14 @@ The Lisbon examples are in `src/story/lisbonResolver.parity.test.ts`, `src/story
 
 ## Persistence and presentation
 
-The current save format is v5. `state.storyEvents` persists completed semantic event IDs; `state.quests` preserves the original Lisbon keys. Completing a registered event writes its semantic ID once and also writes its legacy key where mapped. The independent migrated-event inventory requires every migrated once-only event to retain its mapping. New chapters use semantic IDs without adding legacy keys. Unknown semantic IDs and legacy keys survive save/load.
+The current save format is v6. `state.storyEvents` persists completed semantic event IDs; `state.quests` preserves the original Lisbon keys. Completing a registered event writes its semantic ID once and also writes its legacy key where mapped. The independent migrated-event inventory requires every migrated once-only event to retain its mapping. New chapters use semantic IDs without adding legacy keys. Unknown semantic IDs and legacy keys survive save/load.
 
 The v4→v5 migration maps known Lisbon keys to semantic IDs and marks existing discoveries as reported because v4 already paid their gold. New discoveries grant fame when sighted and gold only through `reportDiscoveries()` at Lisbon Guild. `reportedDiscoveries` prevents a second payout, including after reload. Do not bump `SAVE_VERSION` or add persistent fields in an authoring-only change.
+
+The v5→v6 migration adds equipment, battle experience, durable combat results,
+and resumable combat snapshots. See the [current persistence contract](../4-engineering/save-load-persistence.md).
+Story completion and combat completion are different records: completing a
+start event does not imply that the player won its encounter.
 
 Use `{ type: 'daysAtSea', min: 3 }` for consecutive sailing days; elapsed calendar days are a different condition. `{ type: 'hasDiscovery', discoveryId }` and `{ type: 'hasReportedDiscovery', discoveryId }` reference the registered discovery catalog. Sea scenes resolve through the subscribed controller before simulation advances. Active dialogues and sidebar overlays pause simulation, and successful loads discard transient cursors.
 
@@ -195,3 +200,59 @@ src/story/content/
 ```
 
 These modules are explicitly registered in `src/story/content/index.ts`. The commission reward is original project balance (500g); the Gibraltar sighting grants 30 adventure fame and reporting grants 300g. Domingo’s later identity reveal and conflict belong to M2.
+
+## Combat and companion departure
+
+Use the encounter catalog's stable IDs when starting a battle. The event marker
+and battle snapshot belong in the same effect group:
+
+```ts
+{
+  type: 'effect',
+  effects: [
+    {
+      type: 'completeEvent',
+      eventId: storyEventId('joao.conflict-and-growth.kahn-house-start'),
+    },
+    { type: 'startCombat', encounterId: 'joao.m2.kahn-house' },
+  ],
+}
+```
+
+`startCombat` must be the group's last non-save effect. Content validation and
+runtime preflight both enforce this. The runtime checks the whole group before
+changing state, calls the non-saving combat entry point, then saves once. No
+content callback, UI mutation, or manually inserted victory belongs here.
+
+Resume later scenes using the actual confirmed result:
+
+```ts
+{
+  type: 'combatResolved',
+  encounterId: 'joao.m2.kahn-house',
+  outcomes: ['victory', 'defeat'],
+}
+```
+
+A house-duel draw needs its rematch scene. For Katarina, successful `retreat`
+and `victory` open the next story step; `defeat` opens recovery/retry. Conditions
+must not treat all recorded outcomes as success. Scene remount after result
+confirmation re-resolves these conditions; ordinary combat actions do not
+advance the story cursor.
+
+Use `{ type: 'receiveFame', fame: 'adventure', amount: 1000 }` for a validated
+non-negative fame reward, with its one-time completion marker in the same
+terminal group. Guard already-owned story gifts in the event graph when a gift
+should not duplicate; `receiveItem` itself also serves ordinary item acquisition.
+
+`{ type: 'removeCompanion', characterId: characterId('domingo') }` uses the
+canonical character ID. The runtime plans departure before applying it and
+retains the fleet. An existing free companion takes over the departing captain's
+ship; otherwise the registered project-original `m2-relief-captain` is created.
+The protagonist cannot be removed. Test both role replacement paths, four-ship
+ownership, save/load, and valid captain selectors when adding departure content.
+
+New story-only characters may omit `sailorId`, `portraitId`, and
+`legacyCharacterId`. Supply canonical names and a dialogue color. The shared
+portrait renderer uses a neutral initials placeholder; never guess original
+sprite IDs. A real companion still requires a registered sailor profile.

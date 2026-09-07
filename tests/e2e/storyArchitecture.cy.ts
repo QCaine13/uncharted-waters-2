@@ -965,7 +965,7 @@ describe('Structured story architecture through production assets', () => {
     );
     finishStoryEventToMenu();
     saveFromSystem().then((saved) => {
-      expect(saved.version).to.equal(5);
+      expect(saved.version).to.equal(SAVE_VERSION);
       expect(saved.gold).to.equal(1800);
       expect(saved.fame.adventure).to.equal(30);
       expect(saved.reportedDiscoveries).to.deep.equal(['strait-of-gibraltar']);

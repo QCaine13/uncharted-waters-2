@@ -1,4 +1,5 @@
 import { SAVED_STATE_KEY, type State } from '../../src/state/state';
+import { SAVE_VERSION } from '../../src/state/saveLoad';
 import { clickMenu, clickMenu2, setState } from '../utils';
 import {
   closeSidebar,
@@ -98,6 +99,8 @@ describe('First voyage chapter compatibility and choices', () => {
     () => {
       fixture({ dayAtSea: 0, timePassed: 220 });
       cy.visit('');
+      cy.scrollTo(0, 650);
+      cy.window().its('scrollY').should('be.greaterThan', 500);
       for (let i = 0; i < 25; i += 1) {
         saveFromSystem();
         closeSidebar(0);
@@ -226,7 +229,7 @@ describe('First voyage chapter compatibility and choices', () => {
       cy.get('[data-test=confirmYes]').click();
       toMenu();
       saveFromSystem().then((saved) => {
-        expect(saved.version).to.equal(5);
+        expect(saved.version).to.equal(SAVE_VERSION);
         expect(saved.gold).to.equal(900);
         expect(saved.reportedDiscoveries).to.deep.equal([
           'strait-of-gibraltar',

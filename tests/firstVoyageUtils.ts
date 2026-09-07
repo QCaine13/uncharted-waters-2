@@ -11,8 +11,15 @@ export const readVoyageSave = () =>
 // movement; the fresh journey never teleports or injects runtime state.
 export const saveFromSystem = () => {
   cy.document().then((document) => {
-    if (!document.getElementById('locale-select'))
-      cy.contains('[data-test=left] div', /^(系统|System)$/).click();
+    if (!document.getElementById('locale-select')) {
+      // The game is followed by a long homepage. Re-anchor the document before
+      // opening a bottom-anchored HUD item so Cypress does not scroll the
+      // trigger while sampling its position during a port/world remount.
+      cy.scrollTo('top', { ensureScrollable: false });
+      cy.contains('[data-test=left] div', /^(系统|System)$/)
+        .should('be.visible')
+        .click({ scrollBehavior: false });
+    }
   });
   cy.contains('button', /^(保存|Save)$/).click();
   return readVoyageSave();

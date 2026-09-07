@@ -1,4 +1,52 @@
-# Proposal: Robust Save/Load & Persistence Layer
+# Save/Load & Persistence
+
+## Current contract — M2 / save v6
+
+Updated 2026-09-06. The implementation is in
+[`saveMigrations.ts`](../../src/state/saveMigrations.ts),
+[`saveLoad.ts`](../../src/state/saveLoad.ts), and
+[`state.ts`](../../src/state/state.ts). The proposal below is retained as
+historical design context; its version-1 status and remaining-work list are not
+the current implementation status.
+
+- A single `savedState` key holds the game snapshot. Language preference uses
+  the separate `uw2.locale` key. Browser origins, including different preview
+  ports, have separate storage.
+- Startup and explicit Load share the migration chain. Versions 1 through 5
+  migrate to version 6; an unsupported version or invalid JSON is rejected.
+  Explicit failed Load leaves the running game unchanged. Live world/port
+  objects are rebuilt after a successful load, and load subscribers reconcile
+  input pauses and open sessions.
+- Version 5 introduced `storyEvents` and `reportedDiscoveries`. Old Lisbon
+  quest keys remain in `quests`; unknown progress IDs are retained. Version-4
+  discoveries are treated as already reported because their gold was paid by
+  that version.
+- Version 6 adds `equipment` (`weaponId`, `armorId`), `mateProgress` (battle XP
+  by sailor ID), `combatResults` (outcome by encounter ID), and `activeCombat`
+  (a serializable duel/naval snapshot or `null`). Version-5 migration initializes
+  those fields without changing possessions, money, companions, or story history.
+- Current-version normalization clears unsupported or malformed active combats,
+  invalid equipment slots, invalid XP entries, and invalid outcome values.
+  Equipped items must be owned and match the slot category. Unknown historical
+  combat IDs with supported outcome values remain saved; unknown inventory IDs
+  remain owned. This is defensive normalization of the M2 fields, not a claim
+  that every legacy state field has a complete runtime schema.
+- Combat snapshots retain phase, intent, round, revision, HP, range, crew, shot,
+  lumber, and any nested captain duel. A legal action saves once. Result
+  confirmation records the outcome, applies its one-time XP/recovery, and clears
+  the active snapshot in one save. Stale controls and covered controls do nothing.
+- A declarative event that starts combat uses `startCombatWithoutSave` inside
+  its effect group; the story runtime performs the enclosing save. Do not add
+  a second save or a narrative callback to simulate an outcome.
+
+When adding persistent state, update the state type, save/load field list,
+migration defaults, normalization where needed, and round-trip tests together.
+The explicit field list is still maintained in code; the proposed
+`SERIALIZABLE_KEYS` refactor and multiple save slots below have not shipped.
+Combat coverage lives in `src/state/saveMigrations.test.ts`,
+`src/state/saveLoad.test.ts`, and `src/state/actionsCombat.test.ts`.
+
+## Historical proposal — June 2026
 
 **Status**: Revised — MVP already shipped; this doc now covers the *remaining* hardening work  
 **Date**: 2026-06-13 (revised 2026-06-13 against commit `9593a11`)  
