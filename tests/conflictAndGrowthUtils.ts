@@ -176,18 +176,23 @@ export const playDuel = (
   });
 };
 
-// Advance visible dialogue until its actual terminal effect stores the marker.
-// A static menu or a missing story fails instead of injecting completion.
-export const completeBuildingEvent = (
-  eventId: string,
+type BuildingTerminal = (saved: State) => boolean;
+type UnexpectedBuildingState = (saved: State) => string | null;
+
+const advanceBuildingUntil = (
+  terminal: BuildingTerminal,
+  unexpectedState: UnexpectedBuildingState,
+  diagnostic: string,
   remaining = 35,
-): Cypress.Chainable<void> => {
-  if (remaining === 0)
-    throw new Error(`Story event did not finish: ${eventId}`);
-  return readVoyageSave().then((saved) => {
-    if (saved.storyEvents.includes(eventId)) return;
-    if (saved.activeCombat) {
-      throw new Error(`Unexpected combat before completing ${eventId}`);
+): Cypress.Chainable<void> =>
+  readVoyageSave().then((saved) => {
+    // Check completion first because a story event may store its marker and
+    // start combat in the same effect group.
+    if (terminal(saved)) return;
+    const unexpected = unexpectedState(saved);
+    if (unexpected) throw new Error(unexpected);
+    if (remaining === 0) {
+      throw new Error(`Building dialogue did not finish ${diagnostic}`);
     }
     return cy
       .get('[data-test=building]')
@@ -204,57 +209,55 @@ export const completeBuildingEvent = (
           const after = JSON.parse(
             next.defaultView!.localStorage.getItem(SAVED_STATE_KEY)!,
           ) as State;
+          if (terminal(after)) return;
+          const nextUnexpected = unexpectedState(after);
+          if (nextUnexpected) throw new Error(nextUnexpected);
+          const nextBuilding = next.querySelector('[data-test=building]');
           expect(
-            after.storyEvents.includes(eventId) ||
-              next.querySelector('[data-test=building]')?.textContent !==
-                before,
-            `dialogue or completion changes for ${eventId}`,
+            nextBuilding !== null && nextBuilding.textContent !== before,
+            `visible dialogue advances while ${diagnostic}`,
           ).to.equal(true);
         });
-        return completeBuildingEvent(eventId, remaining - 1);
+        return advanceBuildingUntil(
+          terminal,
+          unexpectedState,
+          diagnostic,
+          remaining - 1,
+        );
       });
   });
-};
+
+// Advance visible dialogue until its actual terminal effect stores the marker.
+// A static menu or a missing story fails instead of injecting completion.
+export const completeBuildingEvent = (
+  eventId: string,
+  remaining = 35,
+): Cypress.Chainable<void> =>
+  advanceBuildingUntil(
+    (saved) => saved.storyEvents.includes(eventId),
+    (saved) =>
+      saved.activeCombat
+        ? `Unexpected combat ${saved.activeCombat.encounterId} before completing ${eventId}`
+        : null,
+    `story event ${eventId}`,
+    remaining,
+  );
 
 // Repeatable rematches and retries do not get a fresh completion marker. Walk
 // the visible dialogue until the production effect creates a new combat.
 export const advanceBuildingUntilCombat = (
   encounterId: string,
   remaining = 35,
-): Cypress.Chainable<void> => {
-  if (remaining === 0)
-    throw new Error(`Story dialogue did not start combat: ${encounterId}`);
-  return readVoyageSave().then((saved) => {
-    if (saved.activeCombat) {
-      expect(saved.activeCombat.encounterId).to.equal(encounterId);
-      return;
-    }
-    return cy
-      .get('[data-test=building]')
-      .should('be.visible')
-      .then(($building) => {
-        const building = $building[0];
-        const before = building.textContent;
-        if (building.querySelector('[data-test=confirmYes]')) {
-          cy.get('[data-test=building] [data-test=confirmYes]').click();
-        } else {
-          cy.get('[data-test=building]').click();
-        }
-        cy.document().should((next) => {
-          const after = JSON.parse(
-            next.defaultView!.localStorage.getItem(SAVED_STATE_KEY)!,
-          ) as State;
-          expect(
-            after.activeCombat?.encounterId === encounterId ||
-              next.querySelector('[data-test=building]')?.textContent !==
-                before,
-            `dialogue advances toward ${encounterId}`,
-          ).to.equal(true);
-        });
-        return advanceBuildingUntilCombat(encounterId, remaining - 1);
-      });
-  });
-};
+): Cypress.Chainable<void> =>
+  advanceBuildingUntil(
+    (saved) => saved.activeCombat?.encounterId === encounterId,
+    (saved) =>
+      saved.activeCombat
+        ? `Unexpected combat ${saved.activeCombat.encounterId} while waiting for ${encounterId}`
+        : null,
+    `combat ${encounterId}`,
+    remaining,
+  );
 
 // Verified safe 2×2 ship footprints in the shipped production world tilemap.
 // Location fixtures skip travel explicitly; all earned progress is carried over.
