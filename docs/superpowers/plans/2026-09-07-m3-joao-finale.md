@@ -42,7 +42,7 @@ New condition types:
 
 Month match requires the referenced event be completed, a finite nonnegative anchor no later than now, `now.monthIndex-anchor.monthIndex >= minMonths`, and `now.day >= minDay`. Day match requires the same completed/valid anchor and `now.dayIndex-anchor.dayIndex >= minDays`. Require nonnegative integer minimum months/days, day 1–31, and a known event reference. World bounds require finite ordered numbers, X within 0–2159 and Y within 0–1079. Match inclusive bounds with a finite position; the condition itself does not substitute for a `stage:'world'` gate.
 
-- [ ] Add failing calendar/condition tests, including these boundaries (test helper `minutesAt` converts UTC dates relative to the epoch):
+- [x] Add failing calendar/condition tests, including these boundaries (test helper `minutesAt` converts UTC dates relative to the epoch):
 
 ```ts
 expect(getCalendarParts(0)).toMatchObject({year:1522,month:5,day:17,dayIndex:0});
@@ -53,10 +53,10 @@ expect(getCalendarParts(0)).toMatchObject({year:1522,month:5,day:17,dayIndex:0})
 // Area [594,602]x[641,649] includes all four corners and excludes each outside edge.
 ```
 
-- [ ] Run `npm test -- --runInBand src/time/calendar.test.ts src/story/storyClock.test.ts` and record RED. Implement the pure helper and resolver branches; update all reference, validation and manifest dependency traversals. Add meaningful validator tests for unknown clock event IDs, invalid minimum/day/bounds and chronological dependency extraction.
-- [ ] Add v6→v7 migration and final normalization without changing v1–v6 semantics. Retain valid unknown timestamp IDs; discard invalid timestamps and assign completed IDs with missing/invalid clocks the save's finite nonnegative current time (otherwise zero). Do not invent completion markers. Test v6 with a valid active M2 duel/naval snapshot, unknown outcome/event IDs, possessions and equipment; test malformed v7 clocks, deep-copy independence, failed-load nonmutation and bootstrap/load parity.
-- [ ] `completeEvent` stamps first completion and never overwrites a valid existing stamp. Test two completions at different times, a load roundtrip, and a multi-effect group that saves membership and timestamp once. Context creation must not mutate state.
-- [ ] Run focused tests, then full Jest, `npm run typecheck`, `npm run story:validate`, and `git diff --check`. Commit `feat: add durable story clocks and world-area conditions`. Report exact APIs, RED/GREEN commands and counts.
+- [x] Run `npm test -- --runInBand src/time/calendar.test.ts src/story/storyClock.test.ts` and record RED. Implement the pure helper and resolver branches; update all reference, validation and manifest dependency traversals. Add meaningful validator tests for unknown clock event IDs, invalid minimum/day/bounds and chronological dependency extraction.
+- [x] Add v6→v7 migration and final normalization without changing v1–v6 semantics. Retain valid unknown timestamp IDs; discard invalid timestamps and assign completed IDs with missing/invalid clocks the save's finite nonnegative current time (otherwise zero). Do not invent completion markers. Test v6 with a valid active M2 duel/naval snapshot, unknown outcome/event IDs, possessions and equipment; test malformed v7 clocks, deep-copy independence, failed-load nonmutation and bootstrap/load parity.
+- [x] `completeEvent` stamps first completion and never overwrites a valid existing stamp. Test two completions at different times, a load roundtrip, and a multi-effect group that saves membership and timestamp once. Context creation must not mutate state.
+- [x] Run focused tests, then full Jest, `npm run typecheck`, `npm run story:validate`, and `git diff --check`. Commit `feat: add durable story clocks and world-area conditions`. Report exact APIs, RED/GREEN commands and counts.
 
 ### Task 2: Quest-item transactions and a second companion departure
 
@@ -162,7 +162,7 @@ All suffixes below use `joao.finale.`. Once events complete their own marker; pr
 | `lucia-rescued` | eligible South American pub2 after Rudolph victory/defeat/draw; Katarina intervenes, Lucia free. |
 | `martinez-exposed` | eligible South American harbor4 after rescue; explains plot, agree next-morning window, timestamp marker. |
 | `rendezvous-wait` | repeatable eligible harbor4 before alliance and outside qualifying day/time; explain lodge and next 09:00–14:59 window, no mutation of original appointment. |
-| `spanish-alliance` | eligible harbor4, calendarDaysAfterEvent exposed/minDays1, timeWindow540–900; formal alliance with Ezequiel, directs Amazon target coordinates. |
+| `spanish-alliance` | eligible harbor4, calendarDaysAfterEvent exposed/minDays1, timeWindow540–900; formal alliance with Ezequiel, directs the Amazon mouth east of Cayenne near0.5°S,50.0°W. |
 | `amazon-start` | world inside AMAZON_BATTLE_AREA after alliance; complete marker then start final fleet. |
 | `amazon-retry` | repeatable Cayenne57 harbor4 after final defeat/retreat/draw; explicit Yes immediate retry/No preparation. |
 | `amazon-victory` | world or any port/building after actual tagged Amazon victory; Katarina/Rocco confirm conflict resolved and direct Lisbon residence. |
@@ -184,13 +184,13 @@ The rendezvous is a rolling daily window with a saved first appointment date: `d
 `JoaoEnding` is a reusable bilingual summary rendered inside the journal only when `JOAO_ENDING_EVENT_ID` is completed, `data-test="joaoEnding"`. It gives the homecoming result, resolved family accusation/Lucia rescue/alliance and “The main story is complete. You can continue exploring.” / “约翰主线已完成，仍可继续自由探索。” Opening the journal revisits it; ordinary overlay close returns to the game. No automatic reset, new save slot, reward or permanent input suspension.
 
 - [ ] Write RED journal assertions at M2 completion, five-day latch, commissioning/wait/date-ineligible/date-eligible, first/second battle defeat, Staff held/consumed, Japan request/departure/letter/Sakai, rescued/appointment missed, final retreat/defeat/victory and homecoming. Current actionable entry must win over historical and future entries; M1 stays completed after both companions depart.
-- [ ] Implement concise journal entries with exact port/facility names and preparation guidance. Massawa uses religious11/residence8, Sakai guild7, final retry Cayenne harbor4. Include visible Massawa/Amazon target map-coordinate ranges and advice to stock food/water, hire enough crew, repair and buy ammunition. Mention Crown can be sold to fund long travel; do not require it. Explain the true month/day gate and rolling appointment window, with current/next date derived from Task1 helper instead of an unconditional “come tomorrow”.
+- [ ] Implement concise journal entries with exact port/facility names and preparation guidance. Massawa uses religious11/residence8, Sakai guild7, final retry Cayenne harbor4. Give player-facing geographic directions: Massawa's fleet is east and slightly south of the harbor near15.2°N,42.7°E; Amazon is east of Cayenne at the river mouth near0.5°S,50.0°W. Keep internal tile rectangles out of dialogue/journal because the UI has no tile-coordinate readout. Advise stocking food/water, filling minimum crew, repairing and buying ammunition; the starter ship cannot recruit above its minimum through the current UI. Mention Crown can be sold to fund long travel; do not require it. Explain the true month/day gate and rolling appointment window, with current/next date derived from Task1 helper instead of an unconditional “come tomorrow”.
 - [ ] Render a completed ending summary without an endless future M3 objective. Test both locales, max-height scrolling within the 720×560 journal, no overflowing text controls, and load from a completed save into an incomplete one removing the ending. Port75 shows Axum only after hand-in, and old saves before it still show Massawa.
 - [ ] Run focused UI/journal tests then full Jest, typecheck, lint and build. Commit `feat: guide the finale and preserve Joao's home ending`. Report exactly how root can inspect long Chinese entries and the ending in a browser.
 
 ### Task 7: Browser branch coverage and honest fresh-game acceptance
 
-**Files:** Create `tests/m3Massawa.cy.ts`, `tests/m3Finale.cy.ts`, `tests/joaoFullJourney.cy.ts`, and focused shared journey helpers under `tests/` if required. Reuse `tests/firstVoyageUtils.ts` and current fixtures. Modify `cypress.config.ts` only for explicit long-journey execution/logging, retaining existing suite defaults. Root updates `HANDOFF.md`, `docs/DECISIONS.md` and the approved Chinese release spec's milestone progress only after observing results; the worker must not claim an unrun fresh journey.
+**Files:** Create `tests/e2e/m3Massawa.cy.ts`, `tests/e2e/m3Finale.cy.ts`, `tests/e2e/joaoFullJourney.cy.ts`, and focused shared journey helpers under `tests/` if required. Reuse `tests/firstVoyageUtils.ts` and current fixtures. If reusing the opening route from `tests/e2e/storyArchitecture.cy.ts`, extract its helpers/body into a shared non-spec module rather than importing a `.cy.ts` or duplicating hundreds of route lines. Modify `cypress.config.ts` only for explicit long-journey execution/logging, retaining existing suite defaults. Root updates `HANDOFF.md`, `docs/DECISIONS.md` and the approved Chinese release spec's milestone progress only after observing results; the worker must not claim an unrun fresh journey.
 
 **Interfaces and evidence:** Ordinary browser input drives events and travel. Test helpers may read snapshots created by the visible System→Save action and use the raw map for planning, but the full fresh journey must never grant progress, resources, time, position or combat outcomes through state/localStorage edits. It starts without a savedState. If a leg needs restart, only restore the byte-identical previously earned save, label this checkpoint recovery and retain its hash/provenance. Fixture specs are explicitly separate and may position controlled saves for boundary coverage. Keep records in this plan's ignored scratch, not new production debug globals or cheats. Use an isolated test browser on M3 port8083 so the user's earlier previews and storage remain untouched.
 
@@ -215,7 +215,7 @@ saveFromSystem().then((save) => {
 
 ## Controller completion gates
 
-- [ ] Plan self-review and per-task/shared-interface preflight matrix recorded in this plan's progress ledger before Task1 dispatch.
+- [x] Plan self-review and per-task/shared-interface preflight matrix recorded in this plan's progress ledger before Task1 dispatch.
 - [ ] Every task has a fresh task review for spec compliance and quality; resolve important findings through the bounded reviewed fix loop.
 - [ ] One strongest-model whole-branch review against base1002d9e after implementation and acceptance, with at most one final fix wave and one scoped re-review.
 - [ ] Durable handoff contains actual validation, limitations and all material rulings; final user response links it and states the concrete result without implying a merge or push.

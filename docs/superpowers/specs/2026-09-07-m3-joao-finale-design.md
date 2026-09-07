@@ -58,6 +58,8 @@ Combat definitions supply the enemy, visible name keys, replay outcomes, per-out
 
 Verified ports: Lisbon `1`, Istanbul `3`, Massawa `75`, Nagasaki `100`, Sakai `99`, Cayenne `57`. Their selected collision-safe anchors respectively are `(838,358)`, `(1072,342)`, `(1148,528)`, `(1674,402)`, `(1714,390)`, `(558,642)`. These anchors belong to the same main ocean component. There is no Suez shortcut; African provision stops are essential. Cape Town supply port `103` and Tamatave `105` are on a shortest Lisbon–Massawa path. The journal must give actual port/facility names and practical supply/preparation guidance.
 
+The collision-checked battle rectangles are Massawa X1152–1156/Y527–533 and Amazon X594–602/Y641–649, inclusive. The player receives geographic directions rather than these internal tile numbers: east/slightly south from Massawa near15.2°N,42.7°E, and east of Cayenne toward the Amazon mouth near0.5°S,50.0°W. The current crew recruitment action fills the ship model's minimum only; journal preparation must not promise extra starter-ship sailors for a captain challenge.
+
 Pernambuco `53` has an existing isolated 10-cell docking pocket. M3 does not require that port and the acceptance route uses Cayenne. Retain this as an explicit map issue for M5; do not pretend a teleported fixture proves its reachability. All route calculations are planning evidence until normal player travel validates them.
 
 ## Acceptance and delivery
