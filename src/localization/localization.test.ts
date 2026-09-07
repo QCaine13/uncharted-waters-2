@@ -6,6 +6,7 @@ import {
   mergeCatalogs,
   localizeDocument,
 } from './index';
+import { chineseCatalog } from './catalogs';
 import { isInteractiveTextTarget } from './dom';
 import { lisbonOpeningDialogue } from '../story/content/arcs/joao/lisbon-opening/dialogue';
 import { regularPorts, supplyPorts } from '../data/portData';
@@ -15,9 +16,11 @@ import { shipData } from '../data/shipData';
 import { landmarks } from '../data/discoveryData';
 import { sailorData } from '../data/sailorData';
 import { firstVoyageDialogue } from '../story/content/arcs/joao/first-voyage/dialogue';
-import { conflictAndGrowthDialogue } from '../story/content/arcs/joao/conflict-and-growth/dialogue';
+import { conflictAndGrowthEvents } from '../story/content/arcs/joao/conflict-and-growth';
 import { getFirstVoyageJournal } from '../story/firstVoyageJournal';
 import { getConflictAndGrowthJournal } from '../story/conflictAndGrowthJournal';
+import type { StoryStep } from '../story/core/types';
+import type { CombatOutcome } from '../combat/types';
 import state from '../state/state';
 
 describe('locale', () => {
@@ -177,35 +180,242 @@ test('every first-voyage branch and journal entry has a placeholder-safe transla
   ).toBeLessThanOrEqual(48);
 });
 
-test('every conflict-and-growth branch and journal entry has a translation', () => {
-  setLocale('zh-CN');
-  state.storyEvents = ['joao.first-voyage.chapter-complete'];
-  state.items = ['4'];
-  state.equipment = { weaponId: null, armorId: null };
-  state.combatResults = {};
-  state.activeCombat = null;
-  const sources: string[] = [];
-  const collect = (value: unknown): void => {
-    if (Array.isArray(value)) value.forEach(collect);
-    else if (value && typeof value === 'object') {
-      Object.entries(value).forEach(([key, child]) => {
-        if (
-          ['body', 'prompt', 'label', 'title'].includes(key) &&
-          typeof child === 'string'
-        )
-          sources.push(child);
-        else collect(child);
-      });
+const collectVisibleStorySources = (steps: readonly StoryStep[]): string[] =>
+  steps.flatMap((step): string[] => {
+    if (step.type === 'dialogue') return [step.body];
+    if (step.type === 'choice') {
+      return [
+        step.prompt,
+        ...step.options.flatMap(({ label, steps: optionSteps }) => [
+          label,
+          ...collectVisibleStorySources(optionSteps),
+        ]),
+      ];
     }
-  };
-  collect(conflictAndGrowthDialogue);
-  collect(getConflictAndGrowthJournal(state));
-
-  expect(new Set(sources).size).toBe(sources.length);
-  sources.forEach((source) => {
-    expect(t(source)).toBeTruthy();
-    expect(t(source)).not.toBe(source);
+    return [];
   });
+
+const m2Event = (suffix: string): string =>
+  `joao.conflict-and-growth.${suffix}`;
+
+type JournalScenario = {
+  events: string[];
+  combatResults?: Record<string, CombatOutcome>;
+  activeCombat?: boolean;
+};
+
+const m2JournalScenarios: JournalScenario[] = [
+  { events: [] },
+  { events: ['domingo-missing'] },
+  { events: ['domingo-missing', 'lodge-search'] },
+  {
+    events: ['domingo-missing', 'lodge-search', 'kahn-shipyard-start'],
+  },
+  ...(['victory', 'defeat', 'draw'] as CombatOutcome[]).map(
+    (shipyardResult): JournalScenario => ({
+      events: ['domingo-missing', 'lodge-search', 'kahn-shipyard-start'],
+      combatResults: { 'joao.m2.kahn-shipyard': shipyardResult },
+    }),
+  ),
+  {
+    events: [
+      'domingo-missing',
+      'lodge-search',
+      'kahn-shipyard-start',
+      'identity-revealed',
+    ],
+    combatResults: { 'joao.m2.kahn-shipyard': 'defeat' },
+  },
+  {
+    events: [
+      'domingo-missing',
+      'lodge-search',
+      'kahn-shipyard-start',
+      'identity-revealed',
+      'kahn-house-start',
+    ],
+    combatResults: { 'joao.m2.kahn-shipyard': 'defeat' },
+  },
+  {
+    events: [
+      'domingo-missing',
+      'lodge-search',
+      'kahn-shipyard-start',
+      'identity-revealed',
+      'kahn-house-start',
+    ],
+    combatResults: { 'joao.m2.kahn-shipyard': 'defeat' },
+    activeCombat: true,
+  },
+  ...(['draw', 'victory', 'defeat'] as CombatOutcome[]).map(
+    (houseResult): JournalScenario => ({
+      events: [
+        'domingo-missing',
+        'lodge-search',
+        'kahn-shipyard-start',
+        'identity-revealed',
+        'kahn-house-start',
+      ],
+      combatResults: {
+        'joao.m2.kahn-shipyard': 'defeat',
+        'joao.m2.kahn-house': houseResult,
+      },
+    }),
+  ),
+  ...[
+    'father-cleared',
+    'domingo-farewell',
+    'katarina-warning',
+    'pursuit-first-sea',
+    'pursuit-first-port',
+    'katarina-battle-start',
+  ].map(
+    (_lastEvent, index, progression): JournalScenario => ({
+      events: [
+        'domingo-missing',
+        'lodge-search',
+        'kahn-shipyard-start',
+        'identity-revealed',
+        'kahn-house-start',
+        ...progression.slice(0, index + 1),
+      ],
+      combatResults: {
+        'joao.m2.kahn-shipyard': 'defeat',
+        'joao.m2.kahn-house': 'victory',
+      },
+    }),
+  ),
+  {
+    events: [
+      'domingo-missing',
+      'lodge-search',
+      'kahn-shipyard-start',
+      'identity-revealed',
+      'kahn-house-start',
+      'father-cleared',
+      'domingo-farewell',
+      'katarina-warning',
+      'pursuit-first-sea',
+      'pursuit-first-port',
+      'katarina-battle-start',
+    ],
+    combatResults: {
+      'joao.m2.kahn-shipyard': 'defeat',
+      'joao.m2.kahn-house': 'victory',
+    },
+    activeCombat: true,
+  },
+  ...(['defeat', 'victory', 'retreat'] as CombatOutcome[]).map(
+    (navalResult): JournalScenario => ({
+      events: [
+        'domingo-missing',
+        'lodge-search',
+        'kahn-shipyard-start',
+        'identity-revealed',
+        'kahn-house-start',
+        'father-cleared',
+        'domingo-farewell',
+        'katarina-warning',
+        'pursuit-first-sea',
+        'pursuit-first-port',
+        'katarina-battle-start',
+      ],
+      combatResults: {
+        'joao.m2.kahn-shipyard': 'defeat',
+        'joao.m2.kahn-house': 'victory',
+        'joao.m2.katarina': navalResult,
+      },
+    }),
+  ),
+  ...['ali-request', 'lisbon-inquiry', 'sasha-found', 'chapter-complete'].map(
+    (_lastEvent, index, progression): JournalScenario => ({
+      events: [
+        'domingo-missing',
+        'lodge-search',
+        'kahn-shipyard-start',
+        'identity-revealed',
+        'kahn-house-start',
+        'father-cleared',
+        'domingo-farewell',
+        'katarina-warning',
+        'pursuit-first-sea',
+        'pursuit-first-port',
+        'katarina-battle-start',
+        ...progression.slice(0, index + 1),
+      ],
+      combatResults: {
+        'joao.m2.kahn-shipyard': 'defeat',
+        'joao.m2.kahn-house': 'victory',
+        'joao.m2.katarina': 'retreat',
+      },
+    }),
+  ),
+];
+
+const collectM2JournalSources = (): string[] =>
+  m2JournalScenarios.flatMap(({ events, combatResults, activeCombat }) => {
+    state.storyEvents = [
+      'joao.first-voyage.chapter-complete',
+      ...events.map(m2Event),
+    ];
+    state.combatResults = combatResults ?? {};
+    state.activeCombat = activeCombat
+      ? ({} as NonNullable<typeof state.activeCombat>)
+      : null;
+    return getConflictAndGrowthJournal(state).flatMap(({ title, body }) => [
+      title,
+      body,
+    ]);
+  });
+
+const expectTranslatedSources = (sources: readonly string[]): void => {
+  sources.forEach((source) => {
+    const translated = t(source);
+    const placeholders = source.match(/\{[^}]+\}/g) ?? [];
+    expect(translated).toBeTruthy();
+    expect(translated).not.toBe(source);
+    expect(translated.match(/\{[^}]+\}/g) ?? []).toEqual(placeholders);
+
+    const values = Object.fromEntries(
+      placeholders.map((placeholder, index) => [
+        placeholder.slice(1, -1),
+        `translated-value-${index}`,
+      ]),
+    );
+    expect(t(source, values).match(/\{[^}]+\}/g) ?? []).toEqual([]);
+  });
+};
+
+test('every visible conflict-and-growth branch and journal state has a translation', () => {
+  setLocale('zh-CN');
+  const eventSources = conflictAndGrowthEvents.flatMap(({ steps }) =>
+    collectVisibleStorySources(steps),
+  );
+  const journalSources = collectM2JournalSources();
+  const uniqueEventSources = new Set(eventSources);
+  const uniqueJournalSources = new Set(journalSources);
+  const uniqueSources = new Set([...eventSources, ...journalSources]);
+
+  expect(m2JournalScenarios).toHaveLength(27);
+  expect(eventSources).toHaveLength(35);
+  expect(uniqueEventSources.size).toBe(32);
+  expect(uniqueJournalSources.size).toBe(63);
+  expect(uniqueSources.size).toBe(95);
+  expectTranslatedSources([...uniqueSources]);
+});
+
+test('the conflict-and-growth localization guard rejects an absent translation', () => {
+  setLocale('zh-CN');
+  const source = conflictAndGrowthEvents[0].steps[0];
+  if (source.type !== 'dialogue') throw new Error('Expected opening dialogue');
+
+  const savedTranslation = chineseCatalog[source.body];
+  delete chineseCatalog[source.body];
+  try {
+    expect(() => expectTranslatedSources([source.body])).toThrow();
+  } finally {
+    chineseCatalog[source.body] = savedTranslation;
+  }
 });
 
 test('every live game term and detail has an explicit Chinese translation', () => {
