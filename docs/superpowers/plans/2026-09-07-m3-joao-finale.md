@@ -66,7 +66,7 @@ expect(getCalendarParts(0)).toMatchObject({year:1522,month:5,day:17,dayIndex:0})
 
 Keep `m2-relief-captain` stable. Add `m3-relief-captain`, canonical English name `Second Relief Captain`, Chinese `第二代理船长`, portraitless companion sailor age30/all attributes50/navigation level1/battle level1/no skills. `planCompanionDeparture` first uses an existing unassigned mate, then the first unused member of the two-ID relief pool. Never create an unused relief unnecessarily or duplicate an existing one. Refuse removing João or malformed captain slots; retain every ship and a valid captain for every occupied ship.
 
-- [ ] Write RED tests for prospective inventory groups:
+- [x] Write RED tests for prospective inventory groups:
 
 ```ts
 // receive Staff -> consume Staff -> complete marker: success, no Staff, one save.
@@ -76,9 +76,9 @@ Keep `m2-relief-captain` stable. Add `m3-relief-captain`, canonical English name
 // sellItem(staffIndex) returns false and leaves gold/items/save count unchanged.
 ```
 
-- [ ] Extend static effect validation and every effect visitor. Simulate inventory counts in the existing ordered group preflight alongside mates/ships/combat; execution removes exactly one copy with no internal save. Give sale UI an explicit disabled protected-item reason while retaining original inventory indices. Render null-image item details and both locales without an `Assets.items(null)` call. Test Crown sale still pays its existing 150000 quote and ordinary duplicate items still sell correctly.
-- [ ] Write the four-ship sequential-departure regression: João/Domingo/Rocco/Enrico start as captains, Domingo's exit needs relief1, Enrico's later exit needs relief2; all four ship identities survive, all captain slots remain unique and valid, no departing actor remains. Cover unassigned-mate and officer exits, repeated absent actor refusal, and prospective add/remove effects in the same transaction.
-- [ ] Implement the bounded pool and register the new canonical character/sailor and localized names; reuse existing portraitless presentation. Run focused tests then full Jest, typecheck and diff check. Commit `feat: support protected quest items and sequential companion farewells`. Report any public inventory helper used by subsequent tasks.
+- [x] Extend static effect validation and every effect visitor. Simulate inventory counts in the existing ordered group preflight alongside mates/ships/combat; execution removes exactly one copy with no internal save. Give sale UI an explicit disabled protected-item reason while retaining original inventory indices. Render null-image item details and both locales without an `Assets.items(null)` call. Test Crown sale still pays its existing 150000 quote and ordinary duplicate items still sell correctly.
+- [x] Write the four-ship sequential-departure regression: João/Domingo/Rocco/Enrico start as captains, Domingo's exit needs relief1, Enrico's later exit needs relief2; all four ship identities survive, all captain slots remain unique and valid, no departing actor remains. Cover unassigned-mate and officer exits, repeated absent actor refusal, and prospective add/remove effects in the same transaction.
+- [x] Implement the bounded pool and register the new canonical character/sailor and localized names; reuse existing portraitless presentation. Run focused tests then full Jest, typecheck and diff check. Commit `feat: support protected quest items and sequential companion farewells`. Report any public inventory helper used by subsequent tasks.
 
 ### Task 3: Catalog-driven M3 combat and local recovery
 
