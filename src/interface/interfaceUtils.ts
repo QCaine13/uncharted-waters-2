@@ -1,5 +1,5 @@
-import { START_DATE } from '../constants';
 import { getLocale } from '../localization';
+import { getCalendarParts } from '../time/calendar';
 
 export const classNames = (...classes: string[]): string =>
   classes.filter(Boolean).join(' ');
@@ -13,16 +13,17 @@ export const classNames = (...classes: string[]): string =>
 export const hudClass = 'w-[180px] h-[800px] text-[#aaaaaa] text-lg';
 
 export const getDate = (timePassed: number) => {
-  const date = new Date(START_DATE);
-  date.setMinutes(date.getMinutes() + timePassed);
+  const { year, month, day } = getCalendarParts(timePassed);
 
   if (getLocale() === 'zh-CN') {
-    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+    return `${year}年${month}月${day}日`;
   }
 
+  const date = new Date(Date.UTC(year, month - 1, day));
   return `${date.toLocaleString('en-us', {
     month: 'short',
-  })} ${date.getDate()} ${date.getFullYear()}`;
+    timeZone: 'UTC',
+  })} ${day} ${year}`;
 };
 
 export const getHoursMinutes = (timePassed: number) => {
@@ -42,7 +43,9 @@ export const getHoursMinutes = (timePassed: number) => {
   const minutes = timePassed % 60;
 
   if (getLocale() === 'zh-CN') {
-    return `${period === 'AM' ? '上午' : '下午'} ${hours}:${String(minutes).padStart(2, '0')}`;
+    return `${period === 'AM' ? '上午' : '下午'} ${hours}:${String(
+      minutes,
+    ).padStart(2, '0')}`;
   }
 
   if (minutes < 10) {

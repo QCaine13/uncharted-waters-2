@@ -62,6 +62,24 @@ export type StoryCondition =
   | { type: 'any'; conditions: StoryCondition[] }
   | { type: 'not'; condition: StoryCondition }
   | { type: 'eventCompleted'; eventId: StoryEventId }
+  | {
+      type: 'calendarMonthsAfterEvent';
+      eventId: StoryEventId;
+      minMonths: number;
+      minDay: number;
+    }
+  | {
+      type: 'calendarDaysAfterEvent';
+      eventId: StoryEventId;
+      minDays: number;
+    }
+  | {
+      type: 'withinWorldArea';
+      minX: number;
+      maxX: number;
+      minY: number;
+      maxY: number;
+    }
   | { type: 'atPort'; portId: string }
   | { type: 'atBuilding'; buildingId: string }
   | { type: 'stage'; stage: Stage }
@@ -147,6 +165,8 @@ export interface StoryContext {
   timePassed: number;
   dayAtSea: number;
   completedEvents: ReadonlySet<StoryEventId>;
+  storyEventTimes?: Readonly<Record<string, number>>;
+  worldPosition?: { x: number; y: number };
   fame: Record<FameType, number>;
   items: ReadonlySet<ItemId>;
   companions: ReadonlySet<CharacterId>;

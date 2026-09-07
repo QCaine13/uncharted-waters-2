@@ -24,7 +24,7 @@ import {
 } from '../combat/encounters';
 import { itemData } from '../data/itemData';
 
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 
 export type AnySave = Record<string, unknown> & { version?: unknown };
 
@@ -78,6 +78,12 @@ const migrations: Record<number, (save: AnySave) => AnySave> = {
     mateProgress: {},
     combatResults: {},
     activeCombat: null,
+  }),
+  // 6 -> 7: persist the first completion time for story events.
+  6: (save) => ({
+    ...save,
+    version: 7,
+    storyEventTimes: save.storyEventTimes ?? {},
   }),
 };
 
@@ -162,6 +168,48 @@ const normalizeV6 = (save: AnySave): AnySave => {
   };
 };
 
+const isValidStoryEventTime = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0;
+
+const normalizeStoryEventTimes = (
+  value: unknown,
+  storyEvents: unknown,
+  timePassed: unknown,
+): Record<string, number> => {
+  const normalized =
+    value && typeof value === 'object' && !Array.isArray(value)
+      ? Object.fromEntries(
+          Object.entries(value).filter((entry): entry is [string, number] =>
+            isValidStoryEventTime(entry[1]),
+          ),
+        )
+      : {};
+  const fallback = isValidStoryEventTime(timePassed) ? timePassed : 0;
+  if (Array.isArray(storyEvents)) {
+    storyEvents.forEach((eventId) => {
+      if (
+        typeof eventId === 'string' &&
+        !isValidStoryEventTime(normalized[eventId])
+      ) {
+        normalized[eventId] = fallback;
+      }
+    });
+  }
+  return normalized;
+};
+
+const normalizeV7 = (save: AnySave): AnySave => {
+  const normalized = normalizeV6(save);
+  return {
+    ...normalized,
+    storyEventTimes: normalizeStoryEventTimes(
+      save.storyEventTimes,
+      save.storyEvents,
+      save.timePassed,
+    ),
+  };
+};
+
 export const migrate = (raw: AnySave | null | undefined): AnySave | null => {
   if (!raw || typeof raw.version !== 'number') {
     return null;
@@ -180,5 +228,5 @@ export const migrate = (raw: AnySave | null | undefined): AnySave | null => {
     current = step(current);
   }
 
-  return normalizeV6(current);
+  return normalizeV7(current);
 };

@@ -102,14 +102,20 @@ describe('save/load round trip', () => {
 
   test('preserves semantic story events and reported discoveries', () => {
     state.storyEvents = ['chapter.event', 'future.event'];
+    state.storyEventTimes = { 'chapter.event': 120, 'future.event': 480 };
     state.reportedDiscoveries = ['strait-of-gibraltar', 'future-landmark'];
 
     save();
     state.storyEvents = [];
+    state.storyEventTimes = {};
     state.reportedDiscoveries = [];
 
     expect(load()).toBe(true);
     expect(state.storyEvents).toEqual(['chapter.event', 'future.event']);
+    expect(state.storyEventTimes).toEqual({
+      'chapter.event': 120,
+      'future.event': 480,
+    });
     expect(state.reportedDiscoveries).toEqual([
       'strait-of-gibraltar',
       'future-landmark',
@@ -364,6 +370,7 @@ describe('save/load round trip', () => {
   });
 
   test('does not advance the load generation for a failed load', () => {
+    state.storyEventTimes = { retained: 321 };
     const before = getLoadGeneration();
     const stateBefore = JSON.stringify(state);
     window.localStorage.setItem('savedState', '{broken');
@@ -371,5 +378,55 @@ describe('save/load round trip', () => {
     expect(load()).toBe(false);
     expect(getLoadGeneration()).toBe(before);
     expect(JSON.stringify(state)).toBe(stateBefore);
+  });
+
+  test('normalizes v7 clocks on load without mutating storage', () => {
+    save();
+    const saved = JSON.parse(window.localStorage.getItem('savedState')!);
+    saved.timePassed = 700;
+    saved.storyEvents = ['completed.missing', 'completed.invalid'];
+    saved.storyEventTimes = {
+      'unknown.valid': 25,
+      'completed.invalid': null,
+      'unknown.invalid': 'bad',
+    };
+    const raw = JSON.stringify(saved);
+    window.localStorage.setItem('savedState', raw);
+
+    expect(load()).toBe(true);
+    expect(state.storyEventTimes).toEqual({
+      'unknown.valid': 25,
+      'completed.missing': 700,
+      'completed.invalid': 700,
+    });
+    expect(window.localStorage.getItem('savedState')).toBe(raw);
+  });
+
+  test('uses the same clock normalization during bootstrap and explicit load', () => {
+    const raw = JSON.stringify({
+      version: 7,
+      timePassed: 800,
+      storyEvents: ['completed.missing'],
+      storyEventTimes: { 'unknown.valid': 50, invalid: -1 },
+      items: [],
+      equipment: { weaponId: null, armorId: null },
+      mateProgress: {},
+      combatResults: {},
+      activeCombat: null,
+    });
+    window.localStorage.setItem('savedState', raw);
+    let bootstrapTimes: Record<string, number> | undefined;
+    jest.isolateModules(() => {
+      bootstrapTimes =
+        jest.requireActual<typeof import('./state')>('./state').default
+          .storyEventTimes;
+    });
+
+    expect(load()).toBe(true);
+    expect(bootstrapTimes).toEqual(state.storyEventTimes);
+    expect(state.storyEventTimes).toEqual({
+      'unknown.valid': 50,
+      'completed.missing': 800,
+    });
   });
 });

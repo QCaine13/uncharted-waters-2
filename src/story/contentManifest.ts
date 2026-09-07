@@ -60,7 +60,12 @@ const visitConditionDependencies = (
     );
   } else if (condition.type === 'not') {
     visitConditionDependencies(condition.condition, dependencies, !positive);
-  } else if (condition.type === 'eventCompleted' && positive) {
+  } else if (
+    (condition.type === 'eventCompleted' ||
+      condition.type === 'calendarMonthsAfterEvent' ||
+      condition.type === 'calendarDaysAfterEvent') &&
+    positive
+  ) {
     dependencies.add(condition.eventId);
   }
 };

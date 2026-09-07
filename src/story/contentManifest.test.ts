@@ -289,4 +289,28 @@ describe('story content manifest', () => {
       keys: ['afterFirst'],
     });
   });
+
+  test('treats calendar anchors as positive chronological dependencies', () => {
+    const fixture = multiArcFixture();
+    const firstEntry = storyEventId('joao.first.entry');
+    const afterFirst = fixture.events.find(
+      ({ id }) => id === 'joao.second.after-first',
+    );
+    if (afterFirst === undefined) throw new Error('missing fixture event');
+    afterFirst.trigger = {
+      type: 'calendarMonthsAfterEvent',
+      eventId: firstEntry,
+      minMonths: 2,
+      minDay: 11,
+    };
+
+    const secondArc = getStoryContentReport(fixture).arcs.find(
+      ({ id }) => id === 'joao.second',
+    );
+
+    expect(secondArc).toMatchObject({
+      entryEvents: ['joao.second.after-first', 'joao.second.before-first'],
+      crossArcDependencies: ['joao.first'],
+    });
+  });
 });

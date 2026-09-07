@@ -22,6 +22,7 @@ interface SaveData {
   marketPrices: State['marketPrices'];
   discoveries: State['discoveries'];
   storyEvents: State['storyEvents'];
+  storyEventTimes: State['storyEventTimes'];
   reportedDiscoveries: State['reportedDiscoveries'];
   equipment: State['equipment'];
   mateProgress: State['mateProgress'];
@@ -48,6 +49,7 @@ export const save = (): void => {
     marketPrices: JSON.parse(JSON.stringify(state.marketPrices)),
     discoveries: [...state.discoveries],
     storyEvents: [...(state.storyEvents ?? [])],
+    storyEventTimes: { ...(state.storyEventTimes ?? {}) },
     reportedDiscoveries: [...(state.reportedDiscoveries ?? [])],
     equipment: { ...state.equipment },
     mateProgress: JSON.parse(JSON.stringify(state.mateProgress)),
@@ -103,6 +105,7 @@ export const load = (): boolean => {
   state.storyEvents = Array.isArray(saveData.storyEvents)
     ? [...saveData.storyEvents]
     : [];
+  state.storyEventTimes = { ...(saveData.storyEventTimes ?? {}) };
   state.reportedDiscoveries = Array.isArray(saveData.reportedDiscoveries)
     ? [...saveData.reportedDiscoveries]
     : [];

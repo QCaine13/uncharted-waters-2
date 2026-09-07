@@ -75,6 +75,8 @@ export interface State {
   discoveries: string[];
   // Semantic story event ids, including IDs unknown to this build.
   storyEvents: string[];
+  // First-completion game time for semantic story events and unknown future IDs.
+  storyEventTimes: Record<string, number>;
   // Discovery ids whose one-time port report reward has already been paid.
   reportedDiscoveries: string[];
   equipment: Equipment;
@@ -126,6 +128,12 @@ const state = {
   storyEvents: Array.isArray(savedState.storyEvents)
     ? savedState.storyEvents
     : [],
+  storyEventTimes:
+    savedState.storyEventTimes &&
+    typeof savedState.storyEventTimes === 'object' &&
+    !Array.isArray(savedState.storyEventTimes)
+      ? { ...savedState.storyEventTimes }
+      : {},
   reportedDiscoveries: Array.isArray(savedState.reportedDiscoveries)
     ? savedState.reportedDiscoveries
     : [],

@@ -108,6 +108,75 @@ const visitCondition = (
         );
       }
       break;
+    case 'calendarMonthsAfterEvent':
+      if (!eventIds.has(condition.eventId)) {
+        add(
+          'missing-condition-event',
+          `${path}.eventId`,
+          `Condition references missing event "${condition.eventId}".`,
+          owner,
+        );
+      }
+      if (!Number.isInteger(condition.minMonths) || condition.minMonths < 0) {
+        add(
+          'invalid-calendar-months',
+          `${path}.minMonths`,
+          'Required calendar months must be a non-negative integer.',
+          owner,
+        );
+      }
+      if (
+        !Number.isInteger(condition.minDay) ||
+        condition.minDay < 1 ||
+        condition.minDay > 31
+      ) {
+        add(
+          'invalid-calendar-day',
+          `${path}.minDay`,
+          'Required calendar day must be an integer in [1, 31].',
+          owner,
+        );
+      }
+      break;
+    case 'calendarDaysAfterEvent':
+      if (!eventIds.has(condition.eventId)) {
+        add(
+          'missing-condition-event',
+          `${path}.eventId`,
+          `Condition references missing event "${condition.eventId}".`,
+          owner,
+        );
+      }
+      if (!Number.isInteger(condition.minDays) || condition.minDays < 0) {
+        add(
+          'invalid-calendar-days',
+          `${path}.minDays`,
+          'Required calendar days must be a non-negative integer.',
+          owner,
+        );
+      }
+      break;
+    case 'withinWorldArea':
+      if (
+        !Number.isFinite(condition.minX) ||
+        !Number.isFinite(condition.maxX) ||
+        !Number.isFinite(condition.minY) ||
+        !Number.isFinite(condition.maxY) ||
+        condition.minX < 0 ||
+        condition.maxX > 2159 ||
+        condition.minY < 0 ||
+        condition.maxY > 1079 ||
+        condition.minX > condition.maxX ||
+        condition.minY > condition.maxY
+      ) {
+        add(
+          'invalid-world-area',
+          path,
+          'World area bounds must be finite, ordered, and inside [0, 2159] x [0, 1079].',
+          owner,
+        );
+      }
+      break;
     case 'timeWindow':
       if (
         !Number.isFinite(condition.min) ||
@@ -242,9 +311,7 @@ const visitCondition = (
       }
       if (
         condition.outcomes.length === 0 ||
-        condition.outcomes.some(
-          (outcome) => !combatOutcomes.includes(outcome),
-        )
+        condition.outcomes.some((outcome) => !combatOutcomes.includes(outcome))
       ) {
         add(
           'invalid-combat-outcomes',
@@ -547,6 +614,9 @@ const eventDependencies = (
 ): Set<string> => {
   switch (condition.type) {
     case 'eventCompleted':
+      return positive ? new Set([String(condition.eventId)]) : new Set();
+    case 'calendarMonthsAfterEvent':
+    case 'calendarDaysAfterEvent':
       return positive ? new Set([String(condition.eventId)]) : new Set();
     case 'not':
       return eventDependencies(condition.condition, !positive);

@@ -52,7 +52,9 @@ const preflightStatefulGroup = (
   effects: readonly StoryEffect[],
 ): StoryDiagnostic[] => {
   const plannedMates = state.mates.map((mate) => ({ ...mate }));
-  const plannedShips = (state.fleets['1']?.ships ?? []).map(({ id }) => ({ id }));
+  const plannedShips = (state.fleets['1']?.ships ?? []).map(({ id }) => ({
+    id,
+  }));
   const diagnostics: StoryDiagnostic[] = [];
 
   effects.forEach((effect) => {
@@ -205,6 +207,24 @@ export const storyRuntimeActions: StoryEffectRuntime = {
   },
   completeEvent(eventId) {
     if (!Array.isArray(state.storyEvents)) state.storyEvents = [];
+    if (
+      !state.storyEventTimes ||
+      typeof state.storyEventTimes !== 'object' ||
+      Array.isArray(state.storyEventTimes)
+    ) {
+      state.storyEventTimes = {};
+    }
+    const existingTime = state.storyEventTimes[eventId];
+    if (
+      typeof existingTime !== 'number' ||
+      !Number.isFinite(existingTime) ||
+      existingTime < 0
+    ) {
+      state.storyEventTimes[eventId] =
+        Number.isFinite(state.timePassed) && state.timePassed >= 0
+          ? state.timePassed
+          : 0;
+    }
     if (!state.storyEvents.includes(eventId)) state.storyEvents.push(eventId);
     const key = getLegacyCompletionKey(eventId, compiledStoryContent);
     if (key !== null) completeLegacyQuestOnce(key as LegacyQuestCompletionKey);

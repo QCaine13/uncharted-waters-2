@@ -29,6 +29,7 @@ describe('production story runtime actions', () => {
     state.items = [];
     state.quests = [];
     state.storyEvents = [];
+    state.storyEventTimes = {};
     state.combatResults = {};
     state.activeCombat = null;
     state.equipment = { weaponId: null, armorId: null };
@@ -182,6 +183,64 @@ describe('production story runtime actions', () => {
     expect(state.mates.some(({ sailorId }) => sailorId === '32')).toBe(true);
     expect(state.quests).toEqual(['shipyardAfterQuest']);
     expect(updateInterface.general).toHaveBeenCalledTimes(1);
+  });
+
+  test('stamps each event at its first completion time and preserves valid anchors', () => {
+    const first = storyEventId('joao.lisbon-opening.house-introduction');
+    const second = storyEventId('joao.lisbon-opening.harbor-final');
+
+    state.timePassed = 700;
+    executeStoryEffects(
+      [{ type: 'completeEvent', eventId: first }],
+      storyRuntimeActions,
+    );
+    state.timePassed = 900;
+    executeStoryEffects(
+      [{ type: 'completeEvent', eventId: second }],
+      storyRuntimeActions,
+    );
+    executeStoryEffects(
+      [{ type: 'completeEvent', eventId: first }],
+      storyRuntimeActions,
+    );
+
+    expect(state.storyEvents).toEqual([first, second]);
+    expect(state.storyEventTimes).toEqual({ [first]: 700, [second]: 900 });
+  });
+
+  test('round-trips an event completion clock through storage', () => {
+    const eventId = storyEventId('joao.lisbon-opening.harbor-final');
+    state.timePassed = 1_234;
+
+    executeStoryEffects(
+      [{ type: 'completeEvent', eventId }],
+      storyRuntimeActions,
+    );
+    state.storyEvents = [];
+    state.storyEventTimes = {};
+
+    expect(load()).toBe(true);
+    expect(state.storyEvents).toEqual([eventId]);
+    expect(state.storyEventTimes).toEqual({ [eventId]: 1_234 });
+  });
+
+  test('records duplicate completions once in one saved effect group', () => {
+    const eventId = storyEventId('joao.lisbon-opening.harbor-final');
+    const setItem = jest.spyOn(Storage.prototype, 'setItem');
+    state.timePassed = 2_345;
+
+    expect(
+      executeStoryEffects(
+        [
+          { type: 'completeEvent', eventId },
+          { type: 'completeEvent', eventId },
+        ],
+        storyRuntimeActions,
+      ),
+    ).toEqual({ ok: true, executed: 2 });
+    expect(state.storyEvents).toEqual([eventId]);
+    expect(state.storyEventTimes).toEqual({ [eventId]: 2_345 });
+    expect(setItem).toHaveBeenCalledTimes(1);
   });
 
   test('rejects two ships competing for one sailor before any mutation', () => {
@@ -351,8 +410,7 @@ describe('production story runtime actions', () => {
     expect(state.fleets['1'].ships).toHaveLength(4);
     expect(
       [0, 1, 2, 3].filter(
-        (role) =>
-          state.mates.filter((mate) => mate.role === role).length === 1,
+        (role) => state.mates.filter((mate) => mate.role === role).length === 1,
       ),
     ).toHaveLength(4);
     expect(
