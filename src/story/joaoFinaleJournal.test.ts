@@ -1,4 +1,7 @@
 import state from '../state/state';
+import { notifyCombatChanged } from '../combat/combatEvents';
+import joaoFinale from '../localization/dialogue/joaoFinale';
+import { startCombatWithoutSave } from '../state/actionsCombat';
 import {
   ALI_MASSAWA_LEAD_EVENT_ID,
   DEFENSE_REPORTED_EVENT_ID,
@@ -80,6 +83,11 @@ const completeMassawa = (): void => {
   };
 };
 
+const clearActiveCombat = (): void => {
+  state.activeCombat = null;
+  notifyCombatChanged(true);
+};
+
 describe('João M3 journal', () => {
   beforeEach(() => {
     state.storyEvents = [M2_COMPLETE];
@@ -87,8 +95,28 @@ describe('João M3 journal', () => {
     state.timePassed = minutesAt(1522, 7, 20, 10);
     state.items = [];
     state.combatResults = {};
-    state.activeCombat = null;
+    clearActiveCombat();
+    state.mates = [{ sailorId: '1', role: 0 }];
+    state.fleets = {
+      '1': {
+        position: { x: 1154, y: 530 },
+        ships: [
+          {
+            id: '6',
+            name: 'Hermes II',
+            crew: 10,
+            durability: 30,
+            cargo: [
+              { type: 'shot', quantity: 8 },
+              { type: 'lumber', quantity: 2 },
+            ],
+          },
+        ],
+      },
+    };
   });
+
+  afterEach(clearActiveCombat);
 
   test('stays hidden until M2 is complete', () => {
     state.storyEvents = [];
@@ -193,6 +221,90 @@ describe('João M3 journal', () => {
     state.combatResults['joao.m3.ottoman-two'] = 'defeat';
     expect(current()).toMatchObject({ id: 'm3-ottoman-two-retry' });
     expect(current()?.body).toContain('Axum (Massawa) harbor');
+  });
+
+  test('a live first-sortie retry supersedes its retained defeat result only for the matching encounter', () => {
+    state.storyEvents.push(
+      FIVE_DAY_VOYAGE_EVENT_ID,
+      ALI_MASSAWA_LEAD_EVENT_ID,
+      RELIGIOUS_LEAD_EVENT_ID,
+      STAFF_REQUEST_EVENT_ID,
+      PIETRO_COMMISSIONED_EVENT_ID,
+      WAITING_FOR_PIETRO_EVENT_ID,
+      INVASION_AUTHORIZED_EVENT_ID,
+      FIRST_SORTIE_READY_EVENT_ID,
+      OTTOMAN_ONE_START_EVENT_ID,
+    );
+    state.combatResults['joao.m3.ottoman-one'] = 'defeat';
+    expect(current()?.id).toBe('m3-ottoman-one-retry');
+
+    expect(startCombatWithoutSave('joao.m3.ottoman-one')).toBe(true);
+    expect(state.activeCombat?.encounterId).toBe('joao.m3.ottoman-one');
+    expect(state.combatResults['joao.m3.ottoman-one']).toBe('defeat');
+    expect(current()?.id).toBe('m3-ottoman-one-battle');
+
+    clearActiveCombat();
+    state.combatResults['joao.m3.amazon'] = 'defeat';
+    expect(startCombatWithoutSave('joao.m3.amazon')).toBe(true);
+    expect(current()?.id).toBe('m3-ottoman-one-retry');
+  });
+
+  test('a live second-sortie retry supersedes its retained defeat result only for the matching encounter', () => {
+    state.storyEvents.push(
+      FIVE_DAY_VOYAGE_EVENT_ID,
+      ALI_MASSAWA_LEAD_EVENT_ID,
+      RELIGIOUS_LEAD_EVENT_ID,
+      STAFF_REQUEST_EVENT_ID,
+      PIETRO_COMMISSIONED_EVENT_ID,
+      WAITING_FOR_PIETRO_EVENT_ID,
+      INVASION_AUTHORIZED_EVENT_ID,
+      FIRST_SORTIE_READY_EVENT_ID,
+      OTTOMAN_ONE_START_EVENT_ID,
+      SECOND_SORTIE_READY_EVENT_ID,
+      OTTOMAN_TWO_START_EVENT_ID,
+    );
+    state.combatResults = {
+      'joao.m3.ottoman-one': 'victory',
+      'joao.m3.ottoman-two': 'defeat',
+    };
+    expect(current()?.id).toBe('m3-ottoman-two-retry');
+
+    expect(startCombatWithoutSave('joao.m3.ottoman-two')).toBe(true);
+    expect(state.activeCombat?.encounterId).toBe('joao.m3.ottoman-two');
+    expect(state.combatResults['joao.m3.ottoman-two']).toBe('defeat');
+    expect(current()?.id).toBe('m3-ottoman-two-battle');
+
+    clearActiveCombat();
+    state.combatResults['joao.m3.amazon'] = 'draw';
+    expect(startCombatWithoutSave('joao.m3.amazon')).toBe(true);
+    expect(current()?.id).toBe('m3-ottoman-two-retry');
+  });
+
+  test('sends the successful two-sortie report to the southwest residence', () => {
+    state.storyEvents.push(
+      FIVE_DAY_VOYAGE_EVENT_ID,
+      ALI_MASSAWA_LEAD_EVENT_ID,
+      RELIGIOUS_LEAD_EVENT_ID,
+      STAFF_REQUEST_EVENT_ID,
+      PIETRO_COMMISSIONED_EVENT_ID,
+      WAITING_FOR_PIETRO_EVENT_ID,
+      INVASION_AUTHORIZED_EVENT_ID,
+      FIRST_SORTIE_READY_EVENT_ID,
+      OTTOMAN_ONE_START_EVENT_ID,
+      SECOND_SORTIE_READY_EVENT_ID,
+      OTTOMAN_TWO_START_EVENT_ID,
+    );
+    state.combatResults = {
+      'joao.m3.ottoman-one': 'victory',
+      'joao.m3.ottoman-two': 'retreat',
+    };
+
+    expect(current()).toMatchObject({ id: 'm3-defense-report' });
+    const reportBody = current()?.body ?? '';
+    expect(reportBody).toContain('southwest residence');
+    expect(reportBody).not.toContain('harbor');
+    expect(joaoFinale[reportBody]).toContain('西南方的宅邸');
+    expect(joaoFinale[reportBody]).not.toContain('港口');
   });
 
   test('points both sorties to geographic coordinates and never exposes internal tiles', () => {
@@ -350,6 +462,16 @@ describe('João M3 journal', () => {
       state.combatResults['joao.m3.amazon'] = outcome;
       expect(current()).toMatchObject({ id: 'm3-amazon-retry' });
       expect(current()?.body).toContain('Cayenne harbor');
+
+      expect(startCombatWithoutSave('joao.m3.amazon')).toBe(true);
+      expect(state.activeCombat?.encounterId).toBe('joao.m3.amazon');
+      expect(state.combatResults['joao.m3.amazon']).toBe(outcome);
+      expect(current()?.id).toBe('m3-amazon-battle');
+
+      clearActiveCombat();
+      state.combatResults['joao.m2.kahn-house'] = 'draw';
+      expect(startCombatWithoutSave('joao.m2.kahn-house')).toBe(true);
+      expect(current()?.id).toBe('m3-amazon-retry');
     },
   );
 

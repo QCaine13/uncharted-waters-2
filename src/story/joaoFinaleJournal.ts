@@ -165,6 +165,7 @@ const currentObjective = (state: State): JournalEntry => {
   const secondBattle = state.combatResults['joao.m3.ottoman-two'];
   const rudolph = state.combatResults['joao.m3.rudolph'];
   const amazon = state.combatResults['joao.m3.amazon'];
+  const activeEncounterId = state.activeCombat?.encounterId;
 
   if (!has(FIVE_DAY_VOYAGE_EVENT_ID)) {
     return objective(
@@ -223,7 +224,7 @@ const currentObjective = (state: State): JournalEntry => {
       'Sail east and slightly south of the Axum (Massawa) harbor to water near 15.2°N, 42.7°E.',
     );
   }
-  if (!firstBattle) {
+  if (!firstBattle || activeEncounterId === 'joao.m3.ottoman-one') {
     return objective(
       'm3-ottoman-one-battle',
       'Finish the vanguard battle',
@@ -251,7 +252,7 @@ const currentObjective = (state: State): JournalEntry => {
       'Return east and slightly south of Axum (Massawa), near 15.2°N, 42.7°E.',
     );
   }
-  if (!secondBattle) {
+  if (!secondBattle || activeEncounterId === 'joao.m3.ottoman-two') {
     return objective(
       'm3-ottoman-two-battle',
       'Finish the main-fleet battle',
@@ -269,7 +270,7 @@ const currentObjective = (state: State): JournalEntry => {
     return objective(
       'm3-defense-report',
       'Report the defense',
-      'Report both withdrawn Ottoman fleets at the Axum (Massawa) harbor.',
+      'Report both withdrawn Ottoman fleets at the southwest residence in Axum (Massawa).',
     );
   }
   if (!has(STAFF_RECEIVED_EVENT_ID)) {
@@ -371,7 +372,7 @@ const currentObjective = (state: State): JournalEntry => {
       'Sail east of Cayenne to the Amazon river mouth near 0.5°S, 50.0°W.',
     );
   }
-  if (!amazon) {
+  if (!amazon || activeEncounterId === 'joao.m3.amazon') {
     return objective(
       'm3-amazon-battle',
       'Finish the Amazon battle',

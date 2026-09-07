@@ -113,8 +113,8 @@ const joaoFinale: Record<string, string> = {
     '击败奥斯曼主力舰队，或成功撤退。',
   'Retry the Ottoman main fleet': '再次迎战奥斯曼主力舰队',
   'Report the defense': '报告防卫结果',
-  'Report both withdrawn Ottoman fleets at the Axum (Massawa) harbor.':
-    '前往阿克苏姆（马沙华）的港口，报告两支奥斯曼舰队均已撤退。',
+  'Report both withdrawn Ottoman fleets at the southwest residence in Axum (Massawa).':
+    '前往阿克苏姆（马沙华）西南方的宅邸，报告两支奥斯曼舰队均已撤退。',
   'Collect the Staff': '领取圣者之杖',
   'Meet Pietro at the Axum (Massawa) pub and receive the Staff of the Saint.':
     '前往阿克苏姆（马沙华）的酒馆会见皮耶德，领取圣者之杖。',
