@@ -15,6 +15,12 @@ import useFade from './port/hooks/useFade';
 import useLocale from '../localization/useLocale';
 import SeaStory from './world/SeaStory';
 import { getLoadGeneration, subscribeGameLoad } from '../state/saveEvents';
+import {
+  getCombatGeneration,
+  getCombatSnapshot,
+  subscribeCombat,
+} from '../combat/combatEvents';
+import Combat from './combat/Combat';
 
 import './global.css';
 
@@ -30,11 +36,16 @@ type Props = {
   resolve: () => void;
 };
 
-function Interface({ resolve }: Props) {
+export function Interface({ resolve }: Props) {
   const locale = useLocale();
   const loadGeneration = useSyncExternalStore(
     subscribeGameLoad,
     getLoadGeneration,
+  );
+  const combat = useSyncExternalStore(subscribeCombat, getCombatSnapshot);
+  const combatGeneration = useSyncExternalStore(
+    subscribeCombat,
+    getCombatGeneration,
   );
   const [portId, setPortId] = useState<string | null>(null);
   const [buildingId, setBuildingId] = useState<string | null>(null);
@@ -76,9 +87,9 @@ function Interface({ resolve }: Props) {
           onAnimationEnd={onAnimationEnd}
           onContextMenu={(e) => e.preventDefault()}
         >
-          {buildingId !== null && (
+          {buildingId !== null && combat === null && (
             <Building
-              key={`${portId}:${buildingId}:${loadGeneration}`}
+              key={`${portId}:${buildingId}:${loadGeneration}:${combatGeneration}`}
               buildingId={buildingId}
             />
           )}
@@ -86,7 +97,8 @@ function Interface({ resolve }: Props) {
             <Camera />
           </div>
           <DiscoveryBanner hidden={inPort} />
-          {!inPort && <SeaStory />}
+          {!inPort && combat === null && <SeaStory />}
+          <Combat />
         </div>
         <Right>
           {inPort && <PortInfo portId={portId} />}

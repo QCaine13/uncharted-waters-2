@@ -1,4 +1,5 @@
 import joaoFirstVoyage from './dialogue/joaoFirstVoyage';
+import combatCatalog from './combat';
 import joaoLisbon from './dialogue/joaoLisbon';
 import { terms } from './terms';
 import { ui } from './ui';
@@ -19,6 +20,11 @@ export const mergeCatalogs = (
 };
 
 export const dialogueCatalog = mergeCatalogs(joaoLisbon, joaoFirstVoyage);
-export const chineseCatalog = mergeCatalogs(ui, terms, dialogueCatalog);
+export const chineseCatalog = mergeCatalogs(
+  ui,
+  terms,
+  dialogueCatalog,
+  combatCatalog,
+);
 
 export default chineseCatalog;

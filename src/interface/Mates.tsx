@@ -23,6 +23,7 @@ export default function Mates() {
     stats,
     navigationLevel,
     battleLevel,
+    battleExperience,
     skills,
   } = mates[selectedI];
 
@@ -52,7 +53,9 @@ export default function Mates() {
               <div className={classNames('text-4xl font-bold', color)}>
                 {t(name)}
               </div>
-              <div className="text-lg text-gray-500">{t('Age {age}', { age })}</div>
+              <div className="text-lg text-gray-500">
+                {t('Age {age}', { age })}
+              </div>
               <div className="mt-4">
                 <div>{getRoleDisplay(role)}</div>
                 <div>{t('Loyal to Portugal')}</div>
@@ -87,11 +90,11 @@ export default function Mates() {
                 <div>
                   <div className="flex items-center justify-between">
                     <div>{t('Battle Level')}</div>
-                    <div>{battleLevel}</div>
+                    <div data-test="battle-level">{battleLevel}</div>
                   </div>
                   <div className="flex items-center justify-between text-gray-500 text-lg mt-2 pl-4">
                     <div>{t('Experience')}</div>
-                    <div>0</div>
+                    <div data-test="battle-experience">{battleExperience}</div>
                   </div>
                 </div>
               </div>
