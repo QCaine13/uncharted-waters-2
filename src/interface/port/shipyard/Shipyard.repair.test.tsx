@@ -64,3 +64,53 @@ test('quotes affordable damage, confirms repair, and reports the actual result',
   container.remove();
   setLocale('zh-CN');
 });
+
+test('reports a full repair before one acknowledgement returns to the main menu', () => {
+  setLocale('en');
+  state.activeCombat = null;
+  state.gold = 1800;
+  updateInterface.general = jest.fn();
+  state.fleets = {
+    '1': {
+      position: undefined,
+      ships: [
+        { id: '6', name: 'Esperanza', crew: 20, durability: 25, cargo: [] },
+      ],
+    },
+  };
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  const click = (label: string) => {
+    const target = Array.from(container.querySelectorAll('[role=button]')).find(
+      (node) => node.textContent === label,
+    ) as HTMLElement | undefined;
+    expect(target).toBeDefined();
+    act(() => target!.click());
+  };
+
+  act(() => root.render(<Shipyard />));
+  click('Repair');
+  click('Esperanza — 5 damage — 5 affordable');
+  click('Yes');
+
+  expect(state.fleets['1'].ships[0].durability).toBe(30);
+  expect(state.gold).toBe(1750);
+  expect(container.textContent).toContain('Repaired 5 hull for 50 gold.');
+  expect(container.textContent).not.toContain(
+    'Your fleet’s already in tiptop shape, matey!',
+  );
+
+  act(() => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+  });
+  expect(container.textContent).toContain('What brings you to this shipyard?');
+  expect(container.textContent).not.toContain('Repaired 5 hull for 50 gold.');
+  expect(container.querySelector('[data-test=menu]')?.className).not.toContain(
+    'hidden',
+  );
+
+  act(() => root.unmount());
+  container.remove();
+  setLocale('zh-CN');
+});

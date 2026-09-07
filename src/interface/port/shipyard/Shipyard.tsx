@@ -171,7 +171,19 @@ export default function Shipyard() {
       .map((ship, index) => ({ ship, index, quote: getRepairQuote(index) }))
       .filter(({ quote }) => quote.missing > 0);
 
-    if (repairableShips.length === 0) {
+    if (step === 2 && repairResult) {
+      vendorMessage = {
+        body: t('Repaired {points} hull for {cost} gold.', {
+          points: repairResult.points,
+          cost: repairResult.cost,
+        }),
+        acknowledge: () => {
+          setRepairSelection(undefined);
+          setRepairResult(undefined);
+          back(3);
+        },
+      };
+    } else if (repairableShips.length === 0) {
       vendorMessage = {
         body: 'Your fleet’s already in tiptop shape, matey!',
         acknowledge: back,
@@ -236,20 +248,6 @@ export default function Shipyard() {
             },
           };
         }
-      }
-
-      if (step === 2 && repairResult) {
-        vendorMessage = {
-          body: t('Repaired {points} hull for {cost} gold.', {
-            points: repairResult.points,
-            cost: repairResult.cost,
-          }),
-          acknowledge: () => {
-            setRepairSelection(undefined);
-            setRepairResult(undefined);
-            back(3);
-          },
-        };
       }
     }
   }

@@ -243,3 +243,76 @@ confirmed the navy-surface text is readable.
 ## Concerns
 
 None.
+
+## Review fix round 1
+
+The review found that a repair which removed the fleet's final damage mutated
+the hull and gold correctly but did not show its exact receipt. On the render
+after `repairShip`, `repairableShips.length === 0` selected the generic
+tiptop-shape response before the existing `step === 2 && repairResult` branch.
+That generic acknowledgement also unwound only one step at a time.
+
+I added a real Shipyard regression starting at hull 25 and 1,800 gold. It
+selects and confirms the five-point repair, verifies hull 30 and 1,750 gold,
+requires the exact `Repaired 5 hull for 50 gold.` receipt instead of the
+generic response, acknowledges once, and verifies the main Shipyard menu is
+restored. I then prioritized the persisted step-two result before the
+recomputed damaged-ship list. The existing `back(3)` completion remains the
+single acknowledgement path.
+
+### Fix TDD evidence
+
+RED:
+
+```text
+PATH=/Users/qsircaine/uncharted-waters-2/.worktrees/.tools/bin:/Users/qsircaine/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin:$PATH npm test -- --runInBand src/interface/port/shipyard/Shipyard.repair.test.tsx
+FAIL src/interface/port/shipyard/Shipyard.repair.test.tsx
+Expected substring: "Repaired 5 hull for 50 gold."
+Received: "Your fleet’s already in tiptop shape, matey!..."
+Tests: 1 failed, 1 passed, 2 total
+```
+
+GREEN and final focused verification:
+
+```text
+PATH=/Users/qsircaine/uncharted-waters-2/.worktrees/.tools/bin:/Users/qsircaine/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin:$PATH npm test -- --runInBand src/interface/port/shipyard/Shipyard.repair.test.tsx
+PASS src/interface/port/shipyard/Shipyard.repair.test.tsx
+Tests: 2 passed, 2 total
+Snapshots: 0 total
+exit 0
+
+PATH=... npm run typecheck
+tsc --noEmit
+exit 0
+
+PATH=... npx eslint src/interface/port/shipyard/Shipyard.tsx src/interface/port/shipyard/Shipyard.repair.test.tsx --ext .ts --ext .tsx
+exit 0, no warnings
+
+git diff --check -- src/interface/port/shipyard/Shipyard.tsx src/interface/port/shipyard/Shipyard.repair.test.tsx .superpowers/sdd/2026-09-06-m2-conflict-and-growth/task-3-report.md
+exit 0
+
+PATH=... npm run build
+Verified 38 PNG/OGG/MP3 assets.
+webpack 5.74.0 compiled with 3 warnings
+exit 0
+```
+
+The build warnings remain the known Browserslist and bundle-size notices. Root
+browser reproduction before this fix was `/tmp/uw2-m2-preparation-browser-corrected.log`
+(two preparation cases passed, the full-repair receipt case failed). A rebuilt
+artifact was handed back to root for the corrected Cypress check.
+
+Root then ran the complete rebuilt preparation/combat browser package:
+
+```text
+7/7 Cypress cases passed in 11s
+0 failed, 0 pending, 0 skipped
+log: /tmp/uw2-m2-ui-preparation-browser-green.log
+```
+
+That run covers four combat cases plus equipment, full-repair and
+partial-repair flows.
+
+Fix-round concern: none. The review's minor duplicated reward-preview values
+remain recorded for final triage and were intentionally outside this focused
+repair fix.
