@@ -226,6 +226,30 @@ describe('production story runtime actions', () => {
     expect(state.mates).toContainEqual({ sailorId: '32', role: 0 });
   });
 
+  test('starts naval combat from the prospective ship and captain created earlier in the group', () => {
+    state.fleets = { '1': { position: undefined, ships: [] } };
+    state.mates = [{ sailorId: '1', role: 'firstMate' }];
+    const setItem = jest.spyOn(Storage.prototype, 'setItem');
+
+    expect(
+      executeStoryEffects(
+        [
+          { type: 'addCompanion', characterId: characterId('rocco') },
+          { type: 'receiveShip', shipId: '6', name: "Rocco's ship" },
+          { type: 'startCombat', encounterId: 'joao.m2.katarina' },
+        ],
+        storyRuntimeActions,
+      ),
+    ).toEqual({ ok: true, executed: 3 });
+    expect(state.fleets['1'].ships).toHaveLength(1);
+    expect(state.mates).toContainEqual({ sailorId: '32', role: 0 });
+    expect(state.activeCombat).toMatchObject({
+      kind: 'naval',
+      encounterId: 'joao.m2.katarina',
+    });
+    expect(setItem).toHaveBeenCalledTimes(1);
+  });
+
   test('rejects a combat group atomically when combat cannot start', () => {
     state.fleets = { '1': { position: undefined, ships: [] } };
     const eventId = storyEventId('joao.lisbon-opening.harbor-final');
@@ -246,6 +270,30 @@ describe('production story runtime actions', () => {
       ok: false,
       executed: 0,
       diagnostics: [expect.objectContaining({ code: 'combat-unavailable' })],
+    });
+    expect(JSON.stringify(state)).toBe(before);
+    expect(setItem).not.toHaveBeenCalled();
+  });
+
+  test('rejects a nonterminal runtime combat start before any mutation or save', () => {
+    const before = JSON.stringify(state);
+    const setItem = jest.spyOn(Storage.prototype, 'setItem');
+
+    expect(
+      executeStoryEffects(
+        [
+          { type: 'receiveGold', amount: 500 },
+          { type: 'startCombat', encounterId: 'joao.m2.kahn-house' },
+          { type: 'receiveFame', fame: 'adventure', amount: 100 },
+        ],
+        storyRuntimeActions,
+      ),
+    ).toEqual({
+      ok: false,
+      executed: 0,
+      diagnostics: [
+        expect.objectContaining({ code: 'non-terminal-combat-start' }),
+      ],
     });
     expect(JSON.stringify(state)).toBe(before);
     expect(setItem).not.toHaveBeenCalled();

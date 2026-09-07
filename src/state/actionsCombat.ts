@@ -4,6 +4,7 @@ import { getCombatSnapshot, notifyCombatChanged } from '../combat/combatEvents';
 import { createNaval, advanceNaval } from '../combat/naval';
 import { createPlayerDuelStats } from '../combat/stats';
 import type {
+  CombatOutcome,
   CombatState,
   DuelAction,
   NavalAction,
@@ -23,8 +24,11 @@ export type CombatAction = DuelAction | NavalAction;
 const hasEncounter = (encounterId: string): encounterId is CombatEncounterId =>
   Object.prototype.hasOwnProperty.call(encounterCatalog, encounterId);
 
-const canReplay = (encounterId: CombatEncounterId): boolean => {
-  const outcome = state.combatResults[encounterId];
+const canReplay = (
+  encounterId: CombatEncounterId,
+  combatResults: Readonly<Record<string, CombatOutcome>>,
+): boolean => {
+  const outcome = combatResults[encounterId];
   if (outcome === undefined) return true;
   if (encounterId === 'joao.m2.kahn-house') return outcome === 'draw';
   if (encounterId === 'joao.m2.katarina') return outcome === 'defeat';
@@ -95,26 +99,56 @@ const createNavalState = (
   });
 };
 
-export const canStartCombat = (encounterId: string): boolean => {
+export interface CombatStartEligibility {
+  activeCombat: boolean;
+  overlaySuspended: boolean;
+  combatResults: Readonly<Record<string, CombatOutcome>>;
+  ships: ReadonlyArray<Pick<Ship, 'id'>>;
+  mates: ReadonlyArray<Pick<State['mates'][number], 'role'>>;
+}
+
+export const isCombatStartEligible = (
+  encounterId: string,
+  eligibility: CombatStartEligibility,
+): boolean => {
   if (
-    state.activeCombat !== null ||
-    Input.isSuspended('overlay') ||
+    eligibility.activeCombat ||
+    eligibility.overlaySuspended ||
     !hasEncounter(encounterId) ||
-    !canReplay(encounterId)
+    !canReplay(encounterId, eligibility.combatResults)
   ) {
     return false;
   }
 
   if (encounterCatalog[encounterId].kind === 'naval') {
-    const flagship = state.fleets['1']?.ships[0];
+    const flagship = eligibility.ships[0];
     return (
       flagship !== undefined &&
       shipData[flagship.id] !== undefined &&
-      state.mates.some(({ role }) => role === 0)
+      eligibility.mates.some(({ role }) => role === 0)
     );
   }
   return true;
 };
+
+type CombatRoster = Pick<CombatStartEligibility, 'ships' | 'mates'>;
+
+export const canStartCombatWithRoster = (
+  encounterId: string,
+  roster: CombatRoster,
+): boolean =>
+  isCombatStartEligible(encounterId, {
+    ...roster,
+    activeCombat: state.activeCombat !== null,
+    overlaySuspended: Input.isSuspended('overlay'),
+    combatResults: state.combatResults,
+  });
+
+export const canStartCombat = (encounterId: string): boolean =>
+  canStartCombatWithRoster(encounterId, {
+    ships: state.fleets['1']?.ships ?? [],
+    mates: state.mates,
+  });
 
 export const startCombatWithoutSave = (encounterId: string): boolean => {
   if (!canStartCombat(encounterId) || !hasEncounter(encounterId)) return false;

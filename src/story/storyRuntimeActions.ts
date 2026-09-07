@@ -2,6 +2,10 @@ import { itemData } from '../data/itemData';
 import { regularPorts, supplyPorts } from '../data/portData';
 import { shipData } from '../data/shipData';
 import {
+  canStartCombatWithRoster,
+  startCombatWithoutSave,
+} from '../state/actionsCombat';
+import {
   addStoryCompanion,
   assignStoryMateRole,
   completeLegacyQuestOnce,
@@ -13,10 +17,6 @@ import {
 } from '../state/actionsPort';
 import { save } from '../state/saveLoad';
 import state from '../state/state';
-import {
-  canStartCombat,
-  startCombatWithoutSave,
-} from '../state/actionsCombat';
 import {
   getLegacyCompletionKey,
   type LegacyQuestCompletionKey,
@@ -52,7 +52,7 @@ const preflightStatefulGroup = (
   effects: readonly StoryEffect[],
 ): StoryDiagnostic[] => {
   const plannedMates = state.mates.map((mate) => ({ ...mate }));
-  let plannedFleetLength = state.fleets['1']?.ships.length ?? 0;
+  const plannedShips = (state.fleets['1']?.ships ?? []).map(({ id }) => ({ id }));
   const diagnostics: StoryDiagnostic[] = [];
 
   effects.forEach((effect) => {
@@ -81,7 +81,7 @@ const preflightStatefulGroup = (
       if (!sailorId) return;
       const departure = planCompanionDeparture(
         plannedMates,
-        plannedFleetLength,
+        plannedShips.length,
         sailorId,
       );
       if (!departure.ok) {
@@ -100,8 +100,24 @@ const preflightStatefulGroup = (
           diagnostic('no-available-sailor', 'No sailor can captain the ship'),
         );
       } else {
-        mate.role = plannedFleetLength;
-        plannedFleetLength += 1;
+        mate.role = plannedShips.length;
+        plannedShips.push({ id: effect.shipId });
+      }
+      return;
+    }
+    if (effect.type === 'startCombat') {
+      if (
+        !canStartCombatWithRoster(effect.encounterId, {
+          ships: plannedShips,
+          mates: plannedMates,
+        })
+      ) {
+        diagnostics.push(
+          diagnostic(
+            'combat-unavailable',
+            `Combat ${effect.encounterId} cannot start`,
+          ),
+        );
       }
     }
   });
@@ -175,14 +191,7 @@ export const storyRuntimeActions: StoryEffectRuntime = {
           ? []
           : [diagnostic('unknown-port', `Unknown port ${effect.portId}`)];
       case 'startCombat':
-        return canStartCombat(effect.encounterId)
-          ? []
-          : [
-              diagnostic(
-                'combat-unavailable',
-                `Combat ${effect.encounterId} cannot start`,
-              ),
-            ];
+        return [];
       case 'receiveFame':
       case 'receiveGold':
       case 'exitBuilding':

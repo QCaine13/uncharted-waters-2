@@ -10,6 +10,7 @@ import { load, save } from './saveLoad';
 import {
   actCombat,
   canStartCombat,
+  canStartCombatWithRoster,
   finishCombat,
   startCombat,
   startCombatWithoutSave,
@@ -213,6 +214,31 @@ describe('combat state actions', () => {
     state.mates[0].role = 0;
     state.fleets['1'].ships[0].id = 'future-model';
     expect(canStartCombat('joao.m2.katarina')).toBe(false);
+  });
+
+  test('checks prospective naval readiness with the same replay and overlay guards', () => {
+    state.fleets['1'].ships = [];
+    state.mates = [{ sailorId: '1', role: 'firstMate' }];
+    const prospective = {
+      ships: [{ id: '6' }],
+      mates: [{ sailorId: '32', role: 0 }],
+    };
+
+    expect(canStartCombat('joao.m2.katarina')).toBe(false);
+    expect(
+      canStartCombatWithRoster('joao.m2.katarina', prospective),
+    ).toBe(true);
+
+    const releaseOverlay = Input.suspend('overlay');
+    expect(
+      canStartCombatWithRoster('joao.m2.katarina', prospective),
+    ).toBe(false);
+    releaseOverlay();
+
+    state.combatResults['joao.m2.katarina'] = 'victory';
+    expect(
+      canStartCombatWithRoster('joao.m2.katarina', prospective),
+    ).toBe(false);
   });
 
   test('autosaves legal actions and syncs only flagship battle resources', () => {

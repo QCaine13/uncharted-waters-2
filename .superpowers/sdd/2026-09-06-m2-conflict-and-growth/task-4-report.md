@@ -248,3 +248,120 @@ had already passed 7/7 Cypress cases.
 - `m2-relief-captain` is intentionally reported as unreferenced until narrative
   content needs it; runtime departure is its current reference path.
 - No correctness concerns.
+
+## Fix round 1: ordered combat eligibility
+
+Review source: `task-4-review.md`, based on commit
+`4d4e32eceeb9ed87d759b23966a73e3c682613b5`.
+
+### Behavior fixed
+
+- Added one pure `isCombatStartEligible` rule set in `actionsCombat.ts` for
+  encounter existence, active combat, overlay suspension, replay policy, and
+  naval flagship/captain readiness.
+- Kept `canStartCombat` as the live-state entry point and added
+  `canStartCombatWithRoster` so story preflight can substitute the prospective
+  ships and mates while retaining the live active-combat, overlay, and replay
+  guards.
+- Changed production story group preflight to simulate ship IDs as well as mate
+  roles in effect order. A supported
+  `addCompanion -> receiveShip -> startCombat` group can now start naval combat
+  from an initially empty fleet.
+- Kept `startCombatWithoutSave` in the enclosing story transaction; the group
+  still writes exactly one final save.
+- Added the two requested coverage gaps for out-of-range/fractional numeric
+  captain roles and production nonterminal combat-start atomic rejection.
+
+### RED evidence
+
+Command:
+
+```text
+npm test -- --runInBand src/story/storyRuntimeActions.test.ts src/state/actionsCombat.test.ts src/story/companionDeparture.test.ts
+```
+
+Output before production changes:
+
+```text
+FAIL src/state/actionsCombat.test.ts
+TypeError: canStartCombatWithRoster is not a function
+FAIL src/story/storyRuntimeActions.test.ts
+Expected: { ok: true, executed: 3 }
+Received: combat-unavailable, executed: 0
+PASS src/story/companionDeparture.test.ts
+Test Suites: 2 failed, 1 passed, 3 total
+Tests: 2 failed, 50 passed, 52 total
+Snapshots: 0 total
+exit 1
+```
+
+The invalid numeric captain-role cases and the production nonterminal-start
+case passed under the existing behavior. The two failures isolated the reviewed
+ordered-group defect and the missing shared eligibility entry point.
+
+### GREEN evidence
+
+Same command after implementation:
+
+```text
+PASS src/state/actionsCombat.test.ts
+PASS src/story/storyRuntimeActions.test.ts
+PASS src/story/companionDeparture.test.ts
+Test Suites: 3 passed, 3 total
+Tests: 52 passed, 52 total
+Snapshots: 0 total
+exit 0
+```
+
+### Fix verification
+
+All commands used the required Node 22/tools PATH.
+
+```text
+npm test -- --runInBand src/state/actionsCombat.test.ts src/story/storyRuntimeActions.test.ts src/story/companionDeparture.test.ts src/story/core/effects.test.ts
+Test Suites: 4 passed, 4 total
+Tests: 58 passed, 58 total
+Snapshots: 0 total
+exit 0
+
+npm run typecheck
+tsc --noEmit
+exit 0
+
+npm run story:validate
+Test Suites: 1 passed, 1 total
+Tests: 1 passed, 3 skipped, 4 total
+exit 0
+
+npm run lint
+eslint src/ --ext .ts --ext .tsx
+exit 0, no warnings
+
+git diff --check
+exit 0
+```
+
+No build or Cypress run was performed, preserving the controller's stable
+Task 3 build on port 8082 as requested.
+
+### Fix files
+
+- `src/state/actionsCombat.ts`
+- `src/state/actionsCombat.test.ts`
+- `src/story/storyRuntimeActions.ts`
+- `src/story/storyRuntimeActions.test.ts`
+- `src/story/companionDeparture.test.ts`
+- `.superpowers/sdd/2026-09-06-m2-conflict-and-growth/task-4-report.md`
+
+### Fix self-review and integration notes
+
+- The readiness rules have one implementation; live starts and prospective
+  story preflight both delegate to it.
+- Story preflight changes only the roster inputs. Active combat, overlay,
+  encounter existence, and replay outcomes still come from the current runtime.
+- Unsupported or nonterminal combat groups return diagnostics before any state
+  mutation or storage write.
+- The runtime starts combat only after earlier group effects establish the same
+  ship and captain state that preflight approved.
+- Root-owned Task 5/6 preparation files remain outside this fix staging list.
+- No correctness concerns.

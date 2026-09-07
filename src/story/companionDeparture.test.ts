@@ -86,3 +86,16 @@ test('rejects missing companions, João, and a second relief captain', () => {
     code: 'relief-captain-unavailable',
   });
 });
+
+test.each([4, 1.5])(
+  'rejects invalid numeric captain role %p for a four-ship fleet',
+  (role) => {
+    expect(
+      planCompanionDeparture(
+        mates(['1', 0], ['32', 1], ['33', 2], ['34', role]),
+        4,
+        '34',
+      ),
+    ).toMatchObject({ ok: false, code: 'invalid-captain-role' });
+  },
+);
