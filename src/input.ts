@@ -40,7 +40,7 @@ export const directionMap: { [key in Direction | '']: number } = {
 const isWasd = (key: string): key is Wasd => key in cardinalKeyMap;
 
 let pressedWasd: Wasd[] = [];
-type Suspension = 'story' | 'overlay';
+type Suspension = 'story' | 'overlay' | 'combat';
 const suspensions = new Map<symbol, Suspension>();
 const suppressedUntilRelease = new Set<string>();
 

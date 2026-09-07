@@ -56,3 +56,13 @@ test('a held overlay key cannot autorepeat into navigation after mouse dismissal
   expect(Input.getDirection({ includeOrdinal: true })).toBe('n');
   key('keyup', 'w');
 });
+
+test('combat suspension remains observable until its token is released', () => {
+  const releaseCombat = Input.suspend('combat');
+  expect(Input.isSuspended()).toBe(true);
+  expect(Input.isSuspended('combat')).toBe(true);
+  expect(Input.isSuspended('overlay')).toBe(false);
+
+  releaseCombat();
+  expect(Input.isSuspended('combat')).toBe(false);
+});
