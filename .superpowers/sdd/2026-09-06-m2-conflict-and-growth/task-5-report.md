@@ -245,3 +245,58 @@ visible building made all ten scenarios pass without a product-code change.
   ports; it does not claim to validate a complete manually sailed world route.
 - Root-owned Task 6 documentation and browser preparation files were read only
   where needed and are excluded from Task 5 staging.
+
+## Review fix round 1: localization guard coverage
+
+The review found that the original M2 localization test walked the semantic
+`conflictAndGrowthDialogue` object and recognized only properties literally
+named `body`, `prompt`, `label`, or `title`. Most dialogue properties instead
+use semantic names such as `lead`, `threat`, and `reveal`, so only two prompts
+were collected. It also evaluated only the initial M2 journal state.
+
+The revised test walks the `StoryStep` trees of all 18 registered
+`conflictAndGrowthEvents`, including recursively nested choice-option steps.
+It records 35 visible event-source occurrences and 32 unique event sources;
+the three intentional repeats are the shared Domingo departure line and the
+Yes/No labels used by both choices. A 27-state journal matrix covers every
+milestone plus shipyard victory/defeat/draw, house draw/victory/defeat, active
+combat, and Katarina defeat/victory/retreat. That matrix yields 63 unique
+journal sources and 95 unique event-plus-journal sources.
+
+Every unique source must produce a nonempty, distinct Chinese translation.
+The guard also compares interpolation placeholder inventories and renders with
+sample values, rejecting any placeholder left unresolved. A negative-control
+regression temporarily deletes the real opening-dialogue entry from
+`chineseCatalog`, asserts that the same guard throws, and restores the entry in
+a `finally` block. This demonstrates that removing an actual M2 translation is
+detected without adding a production API for testing.
+
+Exact focused verification (Node 22 and the locked dependency PATH):
+
+```text
+npm test -- --runInBand src/localization/localization.test.ts src/story/conflictAndGrowthJournal.test.ts src/story/conflictAndGrowthTranscript.test.ts src/story/content/arcs/joao/conflict-and-growth/conflictAndGrowth.test.ts
+PASS src/localization/localization.test.ts
+PASS src/story/content/arcs/joao/conflict-and-growth/conflictAndGrowth.test.ts
+PASS src/story/conflictAndGrowthTranscript.test.ts
+PASS src/story/conflictAndGrowthJournal.test.ts
+Test Suites: 4 passed, 4 total
+Tests:       25 passed, 25 total
+Snapshots:   0 total
+exit 0
+
+npm run typecheck
+tsc --noEmit
+exit 0
+
+npm run lint
+eslint src/ --ext .ts --ext .tsx
+exit 0
+
+git diff --check
+exit 0
+```
+
+The negative-control test appears in the focused output as
+`the conflict-and-growth localization guard rejects an absent translation`.
+The change is limited to the localization test and this report, so no
+production build was required for the fix round.
