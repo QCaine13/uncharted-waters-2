@@ -205,6 +205,33 @@ test('resolves a loaded terminal captain duel back to naval controls', () => {
   click('Return to naval battle');
   expect((getCombatSnapshot() as NavalState).boardingDuel).toBeNull();
   expect(container.querySelector('[data-test=naval-fire]')).not.toBeNull();
+  expect(container.textContent).toContain('Round 1');
+  expect(container.textContent).toContain(
+    'The captain’s duel was drawn; the naval battle continues.',
+  );
+});
+
+test('shows the nested captain-duel round and log while it is active', () => {
+  state.fleets['1'].ships[0].crew = 30;
+  expect(startCombatWithoutSave('joao.m2.katarina')).toBe(true);
+  act(() => root.render(<Combat />));
+
+  click('Approach');
+  click('Approach');
+  click('Challenge the captain');
+  expect(container.textContent).toContain('Round 1');
+  click('Slash');
+  expect(container.textContent).toContain(
+    'Your Slash met the opponent’s Parry, dealing 14 damage.',
+  );
+  click('Block');
+  expect(container.textContent).toContain('Round 2');
+  expect(container.textContent).toContain(
+    'The opponent’s Thrust met your Block, dealing 20 damage.',
+  );
+  expect(container.textContent).not.toContain(
+    'You challenged the enemy captain to a duel.',
+  );
 });
 
 test('summarizes earned experience before result confirmation', () => {

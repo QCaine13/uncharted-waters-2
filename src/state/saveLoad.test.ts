@@ -3,8 +3,10 @@ import { save, load } from './saveLoad';
 import { getLoadGeneration, subscribeGameLoad } from './saveEvents';
 import { advanceDuel, createDuel } from '../combat/duel';
 import { advanceNaval, createNaval } from '../combat/naval';
-import type { DuelCombatantStats } from '../combat/types';
-import { encounterCatalog } from '../combat/encounters';
+import type { CombatState, DuelCombatantStats } from '../combat/types';
+import { encounterCatalog, type CombatEncounterId } from '../combat/encounters';
+import { notifyCombatChanged } from '../combat/combatEvents';
+import Input from '../input';
 
 const fighter: DuelCombatantStats = {
   swordplay: 82,
@@ -12,6 +14,49 @@ const fighter: DuelCombatantStats = {
   weaponRating: 15,
   armorRating: 20,
   weaponCategory: '2',
+};
+
+const earnedDuelVictory = (): CombatState => {
+  let duel = createDuel({
+    encounterId: 'joao.m2.kahn-house',
+    player: fighter,
+    enemy: encounterCatalog['joao.m2.kahn-house'].enemy,
+  });
+  while (duel.outcome === null) {
+    duel =
+      duel.phase === 'attack'
+        ? advanceDuel(duel, {
+            type: 'attack',
+            attack: duel.enemyDefense === 'parry' ? 'slash' : 'thrust',
+          })
+        : advanceDuel(duel, {
+            type: 'defend',
+            defense: {
+              thrust: 'parry' as const,
+              slash: 'block' as const,
+              heavy: 'dodge' as const,
+            }[duel.enemyAttack],
+          });
+  }
+  return duel;
+};
+
+const pendingReplay = (encounterId: CombatEncounterId): CombatState => {
+  if (encounterId === 'joao.m2.kahn-house') return earnedDuelVictory();
+  let naval = createNaval({
+    encounterId,
+    player: {
+      hull: 100,
+      maxHull: 100,
+      crew: 20,
+      guns: 10,
+      shot: 6,
+      lumber: 2,
+    },
+    playerDuel: fighter,
+  });
+  while (naval.outcome === null) naval = advanceNaval(naval, { type: 'fire' });
+  return naval;
 };
 
 describe('save/load round trip', () => {
@@ -71,7 +116,7 @@ describe('save/load round trip', () => {
     ]);
   });
 
-  test('preserves equipment, unknown progress/results, and an ongoing duel exactly', () => {
+  test('preserves equipment, unknown progress/results, and a compatible ongoing duel exactly', () => {
     state.items = ['4', '18'];
     state.equipment = { weaponId: '4', armorId: '18' };
     state.mateProgress = {
@@ -79,7 +124,7 @@ describe('save/load round trip', () => {
       'future-mate': { battleExperience: 7 },
     };
     state.combatResults = {
-      'joao.m2.kahn-house': 'victory',
+      'joao.m2.kahn-shipyard': 'victory',
       'future.encounter': 'draw',
     };
     state.activeCombat = advanceDuel(
@@ -105,11 +150,76 @@ describe('save/load round trip', () => {
       'future-mate': { battleExperience: 7 },
     });
     expect(state.combatResults).toEqual({
-      'joao.m2.kahn-house': 'victory',
+      'joao.m2.kahn-shipyard': 'victory',
       'future.encounter': 'draw',
     });
     expect(state.activeCombat).toEqual(expected);
   });
+
+  test('clears a loaded unique-encounter conflict without another save or lost progress', () => {
+    state.activeCombat = null;
+    notifyCombatChanged();
+    state.items = ['4', '18'];
+    state.storyEvents = ['future.event'];
+    state.mateProgress = {
+      '1': { battleExperience: 100 },
+      'future-mate': { battleExperience: 7 },
+    };
+    state.combatResults = {
+      'joao.m2.kahn-house': 'victory',
+      'future.encounter': 'draw',
+    };
+    state.activeCombat = earnedDuelVictory();
+    notifyCombatChanged();
+    expect(Input.isSuspended('combat')).toBe(true);
+    save();
+    const saved = window.localStorage.getItem('savedState');
+    const writes = jest.spyOn(Storage.prototype, 'setItem').mockClear();
+
+    expect(load()).toBe(true);
+
+    expect(state.activeCombat).toBeNull();
+    expect(Input.isSuspended('combat')).toBe(false);
+    expect(state.items).toEqual(['4', '18']);
+    expect(state.storyEvents).toEqual(['future.event']);
+    expect(state.mateProgress).toEqual({
+      '1': { battleExperience: 100 },
+      'future-mate': { battleExperience: 7 },
+    });
+    expect(state.combatResults).toEqual({
+      'joao.m2.kahn-house': 'victory',
+      'future.encounter': 'draw',
+    });
+    expect(writes).not.toHaveBeenCalled();
+    expect(window.localStorage.getItem('savedState')).toBe(saved);
+    writes.mockRestore();
+  });
+
+  test.each([
+    ['joao.m2.kahn-house', 'draw'],
+    ['joao.m2.katarina', 'defeat'],
+  ] as const)(
+    'loads a pending %s replay result after an allowed %s',
+    (encounterId, priorOutcome) => {
+      state.activeCombat = null;
+      notifyCombatChanged();
+      save();
+      const saved = JSON.parse(window.localStorage.getItem('savedState')!);
+      const pending = pendingReplay(encounterId);
+      saved.combatResults = { [encounterId]: priorOutcome };
+      saved.activeCombat = pending;
+      window.localStorage.setItem('savedState', JSON.stringify(saved));
+
+      expect(load()).toBe(true);
+      const restored = state.activeCombat as CombatState | null;
+      expect(restored).toEqual(pending);
+      expect(restored?.outcome).toBe('victory');
+      expect(Input.isSuspended('combat')).toBe(true);
+
+      state.activeCombat = null;
+      notifyCombatChanged();
+    },
+  );
 
   test('preserves an ongoing naval challenge through a JSON round trip', () => {
     const naval = createNaval({

@@ -1,5 +1,9 @@
 import { createDuel, advanceDuel } from '../combat/duel';
-import { encounterCatalog, type CombatEncounterId } from '../combat/encounters';
+import {
+  canReplayEncounter,
+  encounterCatalog,
+  type CombatEncounterId,
+} from '../combat/encounters';
 import { getCombatSnapshot, notifyCombatChanged } from '../combat/combatEvents';
 import { createNaval, advanceNaval } from '../combat/naval';
 import { createPlayerDuelStats } from '../combat/stats';
@@ -23,17 +27,6 @@ export type CombatAction = DuelAction | NavalAction;
 
 const hasEncounter = (encounterId: string): encounterId is CombatEncounterId =>
   Object.prototype.hasOwnProperty.call(encounterCatalog, encounterId);
-
-const canReplay = (
-  encounterId: CombatEncounterId,
-  combatResults: Readonly<Record<string, CombatOutcome>>,
-): boolean => {
-  const outcome = combatResults[encounterId];
-  if (outcome === undefined) return true;
-  if (encounterId === 'joao.m2.kahn-house') return outcome === 'draw';
-  if (encounterId === 'joao.m2.katarina') return outcome === 'defeat';
-  return false;
-};
 
 const provisionTotal = (ship: Ship, provision: Provisions): number =>
   ship.cargo.reduce(
@@ -115,7 +108,7 @@ export const isCombatStartEligible = (
     eligibility.activeCombat ||
     eligibility.overlaySuspended ||
     !hasEncounter(encounterId) ||
-    !canReplay(encounterId, eligibility.combatResults)
+    !canReplayEncounter(encounterId, eligibility.combatResults)
   ) {
     return false;
   }
@@ -274,7 +267,8 @@ export const finishCombat = (expected: CombatState): boolean => {
     current === null ||
     current !== expected ||
     current.outcome === null ||
-    Input.isSuspended('overlay')
+    Input.isSuspended('overlay') ||
+    !canReplayEncounter(current.encounterId, state.combatResults)
   ) {
     return false;
   }

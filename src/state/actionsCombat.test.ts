@@ -174,6 +174,23 @@ describe('combat state actions', () => {
     },
   );
 
+  test.each([
+    ['joao.m2.kahn-house', 'draw', 'victory'],
+    ['joao.m2.katarina', 'defeat', 'victory'],
+  ] as const)(
+    'settles a %s replay after an allowed %s result',
+    (encounterId, priorOutcome, replayOutcome) => {
+      state.combatResults[encounterId] = priorOutcome;
+      expect(startCombat(encounterId)).toBe(true);
+      const replay = getCombatSnapshot()!;
+      replay.outcome = replayOutcome;
+
+      expect(finishCombat(replay)).toBe(true);
+      expect(state.activeCombat).toBeNull();
+      expect(state.combatResults[encounterId]).toBe(replayOutcome);
+    },
+  );
+
   test('builds naval combat from the flagship, its cargo, and captain level', () => {
     expect(startCombat('joao.m2.katarina')).toBe(true);
 
@@ -348,6 +365,44 @@ describe('combat state actions', () => {
     expect(finishCombat(restored)).toBe(false);
     expect(state.mateProgress['1'].battleExperience).toBe(1000);
     expect(startCombat('joao.m2.kahn-house')).toBe(false);
+  });
+
+  test('rejects settlement after the same unique encounter was already recorded', () => {
+    expect(startCombat('joao.m2.kahn-house')).toBe(true);
+    let current = getCombatSnapshot()!;
+    while (current.outcome === null) {
+      if (current.kind !== 'duel') throw Error('Expected duel');
+      const action =
+        current.phase === 'attack'
+          ? {
+              type: 'attack' as const,
+              attack:
+                current.enemyDefense === 'parry'
+                  ? ('slash' as const)
+                  : ('thrust' as const),
+            }
+          : {
+              type: 'defend' as const,
+              defense: {
+                thrust: 'parry' as const,
+                slash: 'block' as const,
+                heavy: 'dodge' as const,
+              }[current.enemyAttack],
+            };
+      expect(actCombat(current, action)).toBe(true);
+      current = getCombatSnapshot()!;
+    }
+    expect(current.outcome).toBe('victory');
+
+    state.combatResults['joao.m2.kahn-house'] = 'victory';
+    const before = JSON.stringify(state);
+    const writes = savedWrites();
+
+    expect(finishCombat(current)).toBe(false);
+    expect(JSON.stringify(state)).toBe(before);
+    expect(getCombatSnapshot()).toBe(current);
+    expect(Input.isSuspended('combat')).toBe(true);
+    expect(writes).not.toHaveBeenCalled();
   });
 
   test('records the first duel outcome without granting experience', () => {

@@ -18,7 +18,10 @@ import {
   type Equipment,
   type MateProgress,
 } from '../combat/types';
-import { isSupportedCombatState } from '../combat/encounters';
+import {
+  canReplayEncounter,
+  isSupportedCombatState,
+} from '../combat/encounters';
 import { itemData } from '../data/itemData';
 
 export const SAVE_VERSION = 6;
@@ -141,15 +144,23 @@ const normalizeCombatResults = (
   );
 };
 
-const normalizeV6 = (save: AnySave): AnySave => ({
-  ...save,
-  equipment: normalizeEquipment(save.equipment, save.items),
-  mateProgress: normalizeMateProgress(save.mateProgress),
-  combatResults: normalizeCombatResults(save.combatResults),
-  activeCombat: isSupportedCombatState(save.activeCombat)
+const normalizeV6 = (save: AnySave): AnySave => {
+  const combatResults = normalizeCombatResults(save.combatResults);
+  const activeCombat = isSupportedCombatState(save.activeCombat)
     ? save.activeCombat
-    : null,
-});
+    : null;
+  return {
+    ...save,
+    equipment: normalizeEquipment(save.equipment, save.items),
+    mateProgress: normalizeMateProgress(save.mateProgress),
+    combatResults,
+    activeCombat:
+      activeCombat !== null &&
+      canReplayEncounter(activeCombat.encounterId, combatResults)
+        ? activeCombat
+        : null,
+  };
+};
 
 export const migrate = (raw: AnySave | null | undefined): AnySave | null => {
   if (!raw || typeof raw.version !== 'number') {

@@ -1,5 +1,10 @@
 import { isCombatState } from './types';
-import type { CombatState, DuelCombatantStats, NavalForce } from './types';
+import type {
+  CombatOutcome,
+  CombatState,
+  DuelCombatantStats,
+  NavalForce,
+} from './types';
 
 export interface DuelEncounter {
   kind: 'duel';
@@ -49,6 +54,17 @@ export const encounterCatalog = {
 } as const;
 
 export type CombatEncounterId = keyof typeof encounterCatalog;
+
+export const canReplayEncounter = (
+  encounterId: string,
+  combatResults: Readonly<Record<string, CombatOutcome>>,
+): boolean => {
+  const outcome = combatResults[encounterId];
+  if (outcome === undefined) return true;
+  if (encounterId === 'joao.m2.kahn-house') return outcome === 'draw';
+  if (encounterId === 'joao.m2.katarina') return outcome === 'defeat';
+  return false;
+};
 
 const sameStats = (
   actual: DuelCombatantStats,

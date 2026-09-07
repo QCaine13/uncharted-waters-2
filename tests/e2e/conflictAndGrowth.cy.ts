@@ -104,6 +104,7 @@ describe('M2 restored combat controls and resource settlement', () => {
   combatTest(
     'restores attack and defense, isolates the System overlay, switches language and settles one duel reward',
     () => {
+      let earnedTerminal: CombatState | null = null;
       visitCombatFixture(
         createDuel({
           encounterId: 'joao.m2.kahn-house',
@@ -163,23 +164,43 @@ describe('M2 restored combat controls and resource settlement', () => {
       });
       playDuel('victory');
       cy.get('[data-test=finish-combat]').should('be.visible');
+      readVoyageSave().then((saved) => {
+        expect(saved.activeCombat?.outcome).to.equal('victory');
+        earnedTerminal = JSON.parse(
+          JSON.stringify(saved.activeCombat),
+        ) as CombatState;
+      });
       cy.scrollTo('top', { ensureScrollable: false });
       cy.screenshot('m2-duel-result-en', {
         capture: 'viewport',
         overwrite: true,
       });
-      cy.get('[data-test=finish-combat]').dblclick();
+      cy.get('[data-test=finish-combat]').click();
       readVoyageSave().then((saved) => {
         expect(saved.activeCombat).to.be.null;
         expect(saved.combatResults['joao.m2.kahn-house']).to.equal('victory');
         expect(saved.mateProgress['1'].battleExperience).to.equal(100);
         expect(saved.gold).to.equal(1800);
       });
-      saveFromSystem();
+      cy.window().then((window) => {
+        const terminal = earnedTerminal;
+        if (terminal === null) throw new Error('Expected earned terminal duel');
+        const saved = JSON.parse(
+          window.localStorage.getItem(SAVED_STATE_KEY)!,
+        ) as State & { version: number };
+        saved.activeCombat = terminal;
+        window.localStorage.setItem(SAVED_STATE_KEY, JSON.stringify(saved));
+      });
+      cy.scrollTo('top', { ensureScrollable: false });
+      cy.contains('[data-test=left] div', /^System$/)
+        .should('be.visible')
+        .click({ scrollBehavior: false });
       loadFromOpenSystem(false);
-      readVoyageSave().then((saved) =>
-        expect(saved.mateProgress['1'].battleExperience).to.equal(100),
-      );
+      readVoyageSave().then((saved) => {
+        expect(saved.activeCombat).to.deep.equal(earnedTerminal);
+        expect(saved.combatResults['joao.m2.kahn-house']).to.equal('victory');
+        expect(saved.mateProgress['1'].battleExperience).to.equal(100);
+      });
       cy.contains('[data-test=left] div', /^Mates$/).click();
       cy.get('[data-test=battle-experience]').should('have.text', '100');
       cy.get('[data-test=battle-level]').should(
@@ -187,6 +208,10 @@ describe('M2 restored combat controls and resource settlement', () => {
         String(playerStats().level + 1),
       );
       cy.scrollTo('top', { ensureScrollable: false });
+      cy.screenshot('m2-conflicting-duel-replay-cleared-en', {
+        capture: 'viewport',
+        overwrite: true,
+      });
       cy.screenshot('m2-joao-growth-en', {
         capture: 'viewport',
         overwrite: true,
@@ -280,8 +305,30 @@ describe('M2 restored combat controls and resource settlement', () => {
       cy.get('[data-test=naval-approach]').click();
       cy.get('[data-test=naval-challenge]').click();
       cy.get('[data-test=duelControls]').should('be.visible');
+      cy.get('[data-test=duel-attack-slash]').click();
+      cy.get('[data-test=combat] header').should('contain.text', '第 1 回合');
+      cy.get('[data-test=combat-log]').should('contain.text', '受到 14 点伤害');
+      cy.get('[data-test=duel-defend-parry]').click();
+      cy.get('[data-test=combat] header').should('contain.text', '第 2 回合');
+      cy.get('[data-test=combat-log]').should('contain.text', '受到 0 点伤害');
+      cy.scrollTo('top', { ensureScrollable: false });
+      cy.screenshot('m2-captain-duel-round-log-zh', {
+        capture: 'viewport',
+        overwrite: true,
+      });
       playDuel('draw');
       cy.get('[data-test=navalControls]').should('be.visible');
+      cy.get('[data-test=combat] header').should('contain.text', '第 3 回合');
+      cy.get('[data-test=naval-range]').should('contain.text', '距离 0');
+      cy.get('[data-test=combat-log]').should(
+        'contain.text',
+        '船长决斗未分胜负，海战继续。',
+      );
+      cy.scrollTo('top', { ensureScrollable: false });
+      cy.screenshot('m2-naval-after-captain-draw-zh', {
+        capture: 'viewport',
+        overwrite: true,
+      });
       readVoyageSave().then((saved) => {
         const battle = saved.activeCombat;
         if (battle?.kind !== 'naval') throw new Error('Expected naval battle');

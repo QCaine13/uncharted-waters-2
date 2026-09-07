@@ -211,6 +211,7 @@ export default function Combat() {
   const dispatch = (action: Parameters<typeof actCombat>[1]) =>
     actCombat(combat, action);
   const nested = combat.kind === 'naval' ? combat.boardingDuel : null;
+  const presentation = nested ?? combat;
   let body: React.ReactNode;
   if (combat.outcome !== null) {
     body = <Result combat={combat} />;
@@ -267,13 +268,13 @@ export default function Combat() {
           {t(encounterNames[combat.encounterId] ?? 'Battle')}
         </h1>
         <p className="text-2xl">
-          {t('Round {round}', { round: combat.round })}
+          {t('Round {round}', { round: presentation.round })}
         </p>
       </header>
 
       {body}
 
-      {combat.log.length > 0 && (
+      {presentation.log.length > 0 && (
         <section
           className="mt-3 max-h-36 overflow-y-auto border-2 border-amber-700 bg-black/60 p-3"
           aria-label={t('Battle log')}
@@ -281,7 +282,7 @@ export default function Combat() {
         >
           <h2 className="text-lg font-bold">{t('Battle log')}</h2>
           <ol className="text-base">
-            {combat.log.map((record) => (
+            {presentation.log.map((record) => (
               <li key={JSON.stringify(record)}>{formatCombatLog(record)}</li>
             ))}
           </ol>
