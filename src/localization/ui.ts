@@ -18,6 +18,8 @@ export const ui: Record<string, string> = {
   Complete: '已完成',
   'Current objective': '当前目标',
   'Upcoming objective': '后续目标',
+  Preparation: '整备建议',
+  'Future chapter': '后续章节',
   Adventure: '冒险名声',
   Pirate: '海盗名声',
   Trade: '贸易名声',

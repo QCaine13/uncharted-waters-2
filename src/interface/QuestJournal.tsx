@@ -2,22 +2,37 @@ import React from 'react';
 
 import { t } from '../localization';
 import { getFirstVoyageJournal } from '../story/firstVoyageJournal';
+import { getConflictAndGrowthJournal } from '../story/conflictAndGrowthJournal';
+import { CHAPTER_COMPLETE_EVENT_ID } from '../story/content/arcs/joao/first-voyage';
+import type { JournalEntry } from '../story/firstVoyageJournal';
 import state from '../state/state';
 import MessageBox from './common/MessageBox';
 
-const entryMarker = (completed: boolean, current: boolean): string => {
-  if (completed) return '✓';
+const entryMarker = (entry: JournalEntry, current: boolean): string => {
+  if (entry.completed) return '✓';
+  if (entry.kind === 'advice') return '•';
+  if (entry.kind === 'future') return '◇';
   return current ? '→' : '○';
 };
 
-const entryStatus = (completed: boolean, current: boolean): string => {
-  if (completed) return t('Complete');
+const entryStatus = (entry: JournalEntry, current: boolean): string => {
+  if (entry.completed) return t('Complete');
+  if (entry.kind === 'advice') return t('Preparation');
+  if (entry.kind === 'future') return t('Future chapter');
   return t(current ? 'Current objective' : 'Upcoming objective');
 };
 
 export default function QuestJournal() {
-  const entries = getFirstVoyageJournal(state);
-  const current = entries.find(({ completed }) => !completed)?.id;
+  const firstVoyage = getFirstVoyageJournal(state);
+  const entries = state.storyEvents.includes(CHAPTER_COMPLETE_EVENT_ID)
+    ? [...getConflictAndGrowthJournal(state), ...firstVoyage]
+    : firstVoyage;
+  const current =
+    entries.find(({ current: active }) => active)?.id ??
+    entries.find(
+      ({ completed, kind }) =>
+        !completed && kind !== 'advice' && kind !== 'future',
+    )?.id;
 
   return (
     <MessageBox>
@@ -36,10 +51,10 @@ export default function QuestJournal() {
                 key={entry.id}
               >
                 <div className="flex items-baseline gap-3 text-xl font-bold">
-                  <span>{entryMarker(entry.completed, isCurrent)}</span>
+                  <span>{entryMarker(entry, isCurrent)}</span>
                   <span>{t(entry.title)}</span>
                   <span className="text-sm font-normal text-amber-700">
-                    {entryStatus(entry.completed, isCurrent)}
+                    {entryStatus(entry, isCurrent)}
                   </span>
                 </div>
                 <div className="text-lg ml-8">{t(entry.body)}</div>

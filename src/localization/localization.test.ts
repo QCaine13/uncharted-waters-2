@@ -15,7 +15,9 @@ import { shipData } from '../data/shipData';
 import { landmarks } from '../data/discoveryData';
 import { sailorData } from '../data/sailorData';
 import { firstVoyageDialogue } from '../story/content/arcs/joao/first-voyage/dialogue';
+import { conflictAndGrowthDialogue } from '../story/content/arcs/joao/conflict-and-growth/dialogue';
 import { getFirstVoyageJournal } from '../story/firstVoyageJournal';
+import { getConflictAndGrowthJournal } from '../story/conflictAndGrowthJournal';
 import state from '../state/state';
 
 describe('locale', () => {
@@ -175,6 +177,37 @@ test('every first-voyage branch and journal entry has a placeholder-safe transla
   ).toBeLessThanOrEqual(48);
 });
 
+test('every conflict-and-growth branch and journal entry has a translation', () => {
+  setLocale('zh-CN');
+  state.storyEvents = ['joao.first-voyage.chapter-complete'];
+  state.items = ['4'];
+  state.equipment = { weaponId: null, armorId: null };
+  state.combatResults = {};
+  state.activeCombat = null;
+  const sources: string[] = [];
+  const collect = (value: unknown): void => {
+    if (Array.isArray(value)) value.forEach(collect);
+    else if (value && typeof value === 'object') {
+      Object.entries(value).forEach(([key, child]) => {
+        if (
+          ['body', 'prompt', 'label', 'title'].includes(key) &&
+          typeof child === 'string'
+        )
+          sources.push(child);
+        else collect(child);
+      });
+    }
+  };
+  collect(conflictAndGrowthDialogue);
+  collect(getConflictAndGrowthJournal(state));
+
+  expect(new Set(sources).size).toBe(sources.length);
+  sources.forEach((source) => {
+    expect(t(source)).toBeTruthy();
+    expect(t(source)).not.toBe(source);
+  });
+});
+
 test('every live game term and detail has an explicit Chinese translation', () => {
   setLocale('zh-CN');
   const names = [
@@ -205,6 +238,9 @@ test('uses the approved canonical Chinese Lisbon names', () => {
   expect(t('Ernst von Bohr')).toBe('恩斯特·洛佩斯');
   expect(t('Pietro Conti')).toBe('皮耶德·康迪');
   expect(t('Ali Vezas')).toBe('阿兰·维斯特');
+  expect(t('Antonio Kahn')).toBe('安东尼奥·卡恩');
+  expect(t('Katarina Erantzo')).toBe('卡特琳娜·艾兰茨');
+  expect(t('Sasha')).toBe('莎夏');
   expect(t('Oh, and I’d like you to be first mate, Rocco.')).toContain(
     '洛克，我想请你担任助手',
   );

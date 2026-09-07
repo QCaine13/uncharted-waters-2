@@ -9,6 +9,10 @@ import joao from './joao';
 import lucia from './lucia';
 import rocco from './rocco';
 import reliefCaptain from './relief-captain';
+import kahn from './kahn';
+import katarina from './katarina';
+import ali from './ali';
+import sasha from './sasha';
 
 export const storyCharacters: StoryCharacter[] = [
   joao,
@@ -21,6 +25,10 @@ export const storyCharacters: StoryCharacter[] = [
   lucia,
   domingo,
   reliefCaptain,
+  kahn,
+  katarina,
+  ali,
+  sasha,
 ];
 
 export default storyCharacters;

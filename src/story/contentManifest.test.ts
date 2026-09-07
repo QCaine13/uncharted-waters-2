@@ -187,12 +187,23 @@ describe('story content manifest', () => {
       .sort();
 
     expect(report.counts).toEqual({
-      characters: 10,
-      relationships: 8,
-      arcs: 2,
-      events: 52,
+      characters: 14,
+      relationships: 12,
+      arcs: 3,
+      events: 70,
     });
     expect(report.arcs).toEqual([
+      {
+        id: 'joao.conflict-and-growth',
+        entryEvents: ['joao.conflict-and-growth.domingo-missing'],
+        terminalEvents: [
+          'joao.conflict-and-growth.chapter-complete',
+          'joao.conflict-and-growth.domingo-farewell-flamberge-owned',
+          'joao.conflict-and-growth.kahn-house-rematch',
+          'joao.conflict-and-growth.katarina-retry',
+        ],
+        crossArcDependencies: ['joao.first-voyage'],
+      },
       {
         id: 'joao.first-voyage',
         entryEvents: [
@@ -237,7 +248,7 @@ describe('story content manifest', () => {
 
     const formatted = formatStoryContentReport(report);
     expect(formatted).toContain(
-      'Story content: 10 characters, 8 relationships, 2 arcs, 52 events',
+      'Story content: 14 characters, 12 relationships, 3 arcs, 70 events',
     );
     expect(formatted).toContain(
       'Legacy compatibility: 10/10 once events mapped (complete)',

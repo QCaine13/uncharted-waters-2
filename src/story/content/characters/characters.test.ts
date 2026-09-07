@@ -10,8 +10,8 @@ describe('canonical Lisbon characters', () => {
     storyCharacters.find((character) => character.id === id);
 
   test('preserves every legacy identity, English name, color, role, and sailor link', () => {
-    expect(storyCharacters).toHaveLength(10);
-    expect(new Set(storyCharacters.map(({ id }) => id)).size).toBe(10);
+    expect(storyCharacters).toHaveLength(14);
+    expect(new Set(storyCharacters.map(({ id }) => id)).size).toBe(14);
 
     expect(byId('joao')).toEqual({
       id: characterId('joao'),
@@ -87,17 +87,35 @@ describe('canonical Lisbon characters', () => {
       dialogueStyle: { color: 'text-slate-600' },
       sailorId: 'm2-relief-captain',
     });
+    expect(byId('kahn')).toEqual({
+      id: characterId('kahn'),
+      names: { en: 'Antonio Kahn', zh: '安东尼奥·卡恩' },
+      role: 'antagonist',
+      dialogueStyle: { color: 'text-red-800' },
+    });
+    expect(byId('katarina')).toEqual({
+      id: characterId('katarina'),
+      names: { en: 'Katarina Erantzo', zh: '卡特琳娜·艾兰茨' },
+      role: 'antagonist',
+      dialogueStyle: { color: 'text-rose-700' },
+    });
+    expect(byId('ali')).toEqual({
+      id: characterId('ali'),
+      names: { en: 'Ali Vezas', zh: '阿兰·维斯特' },
+      role: 'npc',
+      dialogueStyle: { color: 'text-teal-700' },
+    });
+    expect(byId('sasha')).toEqual({
+      id: characterId('sasha'),
+      names: { en: 'Sasha', zh: '莎夏' },
+      role: 'npc',
+      dialogueStyle: { color: 'text-violet-700' },
+    });
 
     const sailorIds = storyCharacters
       .map(({ sailorId }) => sailorId)
       .filter((sailorId): sailorId is string => Boolean(sailorId));
-    expect(sailorIds).toEqual([
-      '1',
-      '32',
-      '33',
-      '34',
-      'm2-relief-captain',
-    ]);
+    expect(sailorIds).toEqual(['1', '32', '33', '34', 'm2-relief-captain']);
     expect(sailorIds).toHaveLength(new Set(sailorIds).size);
 
     expect(getSailor('m2-relief-captain')).toEqual({
@@ -201,6 +219,34 @@ describe('canonical Lisbon relationships', () => {
         type: 'companion',
         reciprocal: 'companion',
       },
+      {
+        id: 'joao.kahn.rival',
+        from: 'kahn',
+        to: 'joao',
+        type: 'rival',
+        reciprocal: 'rival',
+      },
+      {
+        id: 'joao.katarina.enemy',
+        from: 'katarina',
+        to: 'joao',
+        type: 'enemy',
+        reciprocal: 'enemy',
+      },
+      {
+        id: 'joao.ali.acquaintance',
+        from: 'ali',
+        to: 'joao',
+        type: 'acquaintance',
+        reciprocal: 'acquaintance',
+      },
+      {
+        id: 'ali.sasha.sibling',
+        from: 'ali',
+        to: 'sasha',
+        type: 'sibling',
+        reciprocal: 'sibling',
+      },
     ]);
 
     const compiled = compileStoryContent(
@@ -235,9 +281,17 @@ describe('canonical Lisbon relationships', () => {
         'joao:acquaintance:lucia',
         'domingo:companion:joao',
         'joao:companion:domingo',
+        'kahn:rival:joao',
+        'joao:rival:kahn',
+        'katarina:enemy:joao',
+        'joao:enemy:katarina',
+        'ali:acquaintance:joao',
+        'joao:acquaintance:ali',
+        'ali:sibling:sasha',
+        'sasha:sibling:ali',
       ]),
     );
-    expect(compiledEdges).toHaveLength(16);
+    expect(compiledEdges).toHaveLength(24);
     expect(compiled.diagnostics).toEqual([]);
   });
 });

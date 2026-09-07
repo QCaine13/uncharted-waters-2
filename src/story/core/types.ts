@@ -33,6 +33,7 @@ export type RelationshipType =
   | 'acquaintance'
   | 'rival'
   | 'enemy'
+  | 'sibling'
   | 'employer'
   | 'employee';
 
