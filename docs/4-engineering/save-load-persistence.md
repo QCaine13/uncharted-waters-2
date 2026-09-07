@@ -35,6 +35,14 @@ the current implementation status.
   lumber, and any nested captain duel. A legal action saves once. Result
   confirmation records the outcome, applies its one-time XP/recovery, and clears
   the active snapshot in one save. Stale controls and covered controls do nothing.
+- Start, normalization, and final settlement share `canReplayEncounter` from
+  `src/combat/encounters.ts`. If stored history already closes an encounter,
+  normalization discards its conflicting active snapshot and load releases the
+  combat pause; history, possessions, and earned XP remain intact. House-draw
+  rematches and naval-defeat retries remain valid, including pending results.
+  Final settlement independently rejects a closed encounter before mutation.
+  Loading normalizes the running state without immediately rewriting storage;
+  the next save persists the normalized snapshot.
 - A declarative event that starts combat uses `startCombatWithoutSave` inside
   its effect group; the story runtime performs the enclosing save. Do not add
   a second save or a narrative callback to simulate an outcome.
