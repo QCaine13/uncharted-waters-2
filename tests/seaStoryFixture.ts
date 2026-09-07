@@ -25,6 +25,7 @@ export const setupSeaStory = () => {
     companions: new Set(),
     discoveries: new Set(),
     reportedDiscoveries: new Set(),
+    combatResults: {},
   } as StoryContext;
   const content = compileStoryContent(
     {
@@ -111,12 +112,15 @@ export const setupSeaStory = () => {
     receiveGold: (amount) => {
       gold += amount;
     },
+    receiveFame: () => {},
     receiveItem: () => {},
     receiveShip: () => {},
     addCompanion: () => {},
+    removeCompanion: () => {},
     assignMate: () => {},
     exitBuilding: () => {},
     setPort: () => {},
+    startCombat: () => {},
     save: () => {
       savedGold = gold;
     },

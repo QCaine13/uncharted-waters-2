@@ -82,6 +82,7 @@ const catalogs = {
   buildingIds: new Set(['8']),
   shipIds: new Set(['6']),
   sailorIds: new Set(['1', '32']),
+  encounterIds: new Set(['joao.m2.kahn-house']),
   mateRoles: new Set(['firstMate', 'bookKeeper', 'chiefNavigator']),
   parityManifest: {
     legacyKeyToEvent: new Map([['houseBeforeQuest', String(introduction)]]),
@@ -151,6 +152,7 @@ describe('complete story content validation contract', () => {
       buildingIds: new Set(catalogs.buildingIds),
       shipIds: new Set(catalogs.shipIds),
       sailorIds: new Set(catalogs.sailorIds),
+      encounterIds: new Set(catalogs.encounterIds),
       mateRoles: new Set(catalogs.mateRoles),
       parityManifest: {
         legacyKeyToEvent: new Map(catalogs.parityManifest.legacyKeyToEvent),
@@ -208,6 +210,58 @@ describe('complete story content validation contract', () => {
     ]));
   });
 
+  test('validates combat encounter references and terminal start placement', () => {
+    const source = sourceFixture();
+    source.events[0].trigger = {
+      type: 'combatResolved',
+      encounterId: 'missing-encounter',
+      outcomes: ['victory'],
+    };
+    source.events[0].steps = [
+      {
+        type: 'effect',
+        effects: [
+          { type: 'startCombat', encounterId: 'missing-encounter' },
+          { type: 'receiveGold', amount: 1 },
+        ],
+      },
+    ];
+
+    expect(validate(source, catalogs)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'unknown-encounter',
+          path: 'events[0].trigger.encounterId',
+        }),
+        expect.objectContaining({
+          code: 'unknown-encounter',
+          path: 'events[0].steps[0].effects[0].encounterId',
+        }),
+        expect.objectContaining({
+          code: 'non-terminal-combat-start',
+          path: 'events[0].steps[0].effects[0]',
+        }),
+      ]),
+    );
+  });
+
+  test('accepts an explicit save after the final non-save combat effect', () => {
+    const source = sourceFixture();
+    source.events[0].steps = [
+      {
+        type: 'effect',
+        effects: [
+          { type: 'receiveFame', fame: 'adventure', amount: 100 },
+          { type: 'removeCompanion', characterId: rocco },
+          { type: 'startCombat', encounterId: 'joao.m2.kahn-house' },
+          { type: 'save' },
+        ],
+      },
+    ];
+
+    expect(validate(source, catalogs)).toEqual([]);
+  });
+
   test.each(
     cases.filter(({ code }) =>
       [
@@ -245,6 +299,7 @@ describe('complete story content validation contract', () => {
       buildingIds: new Set(catalogs.buildingIds),
       shipIds: new Set(catalogs.shipIds),
       sailorIds: new Set(catalogs.sailorIds),
+      encounterIds: new Set(catalogs.encounterIds),
       mateRoles: new Set(catalogs.mateRoles),
       parityManifest: {
         legacyKeyToEvent: new Map(catalogs.parityManifest.legacyKeyToEvent),

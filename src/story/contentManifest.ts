@@ -69,7 +69,11 @@ const visitEffectCharacters = (
   effect: StoryEffect,
   characters: Set<CharacterId>,
 ): void => {
-  if (effect.type === 'addCompanion' || effect.type === 'assignMate') {
+  if (
+    effect.type === 'addCompanion' ||
+    effect.type === 'removeCompanion' ||
+    effect.type === 'assignMate'
+  ) {
     characters.add(effect.characterId);
   }
 };

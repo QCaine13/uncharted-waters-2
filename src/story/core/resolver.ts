@@ -71,6 +71,10 @@ export const conditionSatisfied = (
       return context.items.has(condition.itemId);
     case 'hasCompanion':
       return context.companions.has(condition.characterId);
+    case 'combatResolved': {
+      const outcome = context.combatResults?.[condition.encounterId];
+      return outcome !== undefined && condition.outcomes.includes(outcome);
+    }
     default: {
       const exhaustive: never = condition;
       throw new Error(
@@ -170,5 +174,6 @@ export const createStoryContext = (
     ),
     discoveries: new Set(state.discoveries ?? []),
     reportedDiscoveries: new Set(state.reportedDiscoveries ?? []),
+    combatResults: { ...(state.combatResults ?? {}) },
   };
 };

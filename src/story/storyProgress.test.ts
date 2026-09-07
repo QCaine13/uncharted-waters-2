@@ -32,6 +32,7 @@ const context = (overrides: Partial<StoryContext> = {}): StoryContext => ({
   companions: new Set(),
   discoveries: new Set(),
   reportedDiscoveries: new Set(),
+  combatResults: {},
   ...overrides,
 });
 

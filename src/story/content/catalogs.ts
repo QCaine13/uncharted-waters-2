@@ -4,6 +4,7 @@ import { itemData } from '../../data/itemData';
 import { regularPorts, supplyPorts } from '../../data/portData';
 import { sailorData } from '../../data/sailorData';
 import { shipData } from '../../data/shipData';
+import { encounterCatalog } from '../../combat/encounters';
 import type { StoryValidationCatalogs } from '../core/validator';
 import { legacyToSemanticEvent } from '../legacy/lisbonCompletionKeys';
 
@@ -18,6 +19,7 @@ export const storyValidationCatalogs: StoryValidationCatalogs = {
   buildingIds: new Set(Object.keys(buildings)),
   shipIds: new Set(Object.keys(shipData)),
   sailorIds: new Set(Object.keys(sailorData)),
+  encounterIds: new Set(Object.keys(encounterCatalog)),
   mateRoles: new Set(['firstMate', 'bookKeeper', 'chiefNavigator']),
   discoveryIds: new Set(landmarks.map(({ id }) => id)),
   parityManifest: {

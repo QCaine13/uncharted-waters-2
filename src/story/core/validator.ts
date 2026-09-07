@@ -6,6 +6,7 @@ import type {
   StoryEvent,
   StoryStep,
 } from './types';
+import { combatOutcomes } from '../../combat/types';
 
 export interface StoryParityManifest {
   legacyKeyToEvent: ReadonlyMap<string, string>;
@@ -18,6 +19,7 @@ export interface StoryValidationCatalogs {
   buildingIds: ReadonlySet<string>;
   shipIds: ReadonlySet<string>;
   sailorIds: ReadonlySet<string>;
+  encounterIds?: ReadonlySet<string>;
   mateRoles: ReadonlySet<string | number | null>;
   discoveryIds?: ReadonlySet<string>;
   parityManifest: StoryParityManifest;
@@ -226,6 +228,32 @@ const visitCondition = (
         );
       }
       break;
+    case 'combatResolved':
+      if (
+        catalogs?.encounterIds !== undefined &&
+        !catalogs.encounterIds.has(condition.encounterId)
+      ) {
+        add(
+          'unknown-encounter',
+          `${path}.encounterId`,
+          `Condition references unknown combat encounter "${condition.encounterId}".`,
+          owner,
+        );
+      }
+      if (
+        condition.outcomes.length === 0 ||
+        condition.outcomes.some(
+          (outcome) => !combatOutcomes.includes(outcome),
+        )
+      ) {
+        add(
+          'invalid-combat-outcomes',
+          `${path}.outcomes`,
+          'Combat outcomes must contain at least one supported outcome.',
+          owner,
+        );
+      }
+      break;
     case 'stage':
       break;
     default: {
@@ -259,6 +287,7 @@ const visitEffect = (
       }
       break;
     case 'addCompanion':
+    case 'removeCompanion':
       if (!characterIds.has(effect.characterId)) {
         add(
           'missing-effect-character',
@@ -301,6 +330,16 @@ const visitEffect = (
         );
       }
       break;
+    case 'receiveFame':
+      if (!Number.isFinite(effect.amount) || effect.amount < 0) {
+        add(
+          'invalid-fame',
+          `${path}.amount`,
+          'Fame amount must be a non-negative finite number.',
+          owner,
+        );
+      }
+      break;
     case 'receiveItem':
       if (catalogs !== undefined && !catalogs.itemIds.has(effect.itemId)) {
         add(
@@ -339,6 +378,19 @@ const visitEffect = (
           'unknown-port',
           `${path}.portId`,
           `Effect references unknown port "${effect.portId}".`,
+          owner,
+        );
+      }
+      break;
+    case 'startCombat':
+      if (
+        catalogs?.encounterIds !== undefined &&
+        !catalogs.encounterIds.has(effect.encounterId)
+      ) {
+        add(
+          'unknown-encounter',
+          `${path}.encounterId`,
+          `Effect references unknown combat encounter "${effect.encounterId}".`,
           owner,
         );
       }
@@ -458,6 +510,20 @@ const visitSteps = (
             add,
           ),
         );
+        step.effects.forEach((effect, effectIndex) => {
+          if (effect.type !== 'startCombat') return;
+          const laterNonSave = step.effects
+            .slice(effectIndex + 1)
+            .some((candidate) => candidate.type !== 'save');
+          if (laterNonSave) {
+            add(
+              'non-terminal-combat-start',
+              `${stepPath}.effects[${effectIndex}]`,
+              'Combat start must be the final non-save effect in its group.',
+              owner,
+            );
+          }
+        });
         break;
       default: {
         const exhaustive: never = step;

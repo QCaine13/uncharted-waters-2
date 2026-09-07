@@ -116,6 +116,7 @@ export const ui: Record<string, string> = {
   luck: '运气',
   'Loyal to Portugal': '效忠葡萄牙',
   'Age {age}': '{age} 岁',
+  'Relief Captain': '代理船长',
   'You have no items.': '你没有任何物品。',
   'You have no discoveries.': '你还没有任何发现。',
   '+{fame} adventure fame, +{gold}g': '冒险名声 +{fame}，金币 +{gold}',

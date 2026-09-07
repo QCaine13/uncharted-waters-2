@@ -4,6 +4,10 @@ import { compiledStoryContent } from '.';
 import state from '../state/state';
 import updateInterface from '../state/updateInterface';
 import { storyRuntimeActions } from './storyRuntimeActions';
+import { notifyCombatChanged } from '../combat/combatEvents';
+import { load } from '../state/saveLoad';
+import { RELIEF_CAPTAIN_SAILOR_ID } from './companionDeparture';
+import { getCaptain } from '../state/selectors';
 
 const ship = () => ({
   id: '1',
@@ -21,8 +25,14 @@ describe('production story runtime actions', () => {
     state.buildingId = '4';
     state.timePassed = 600;
     state.gold = 0;
+    state.fame = { adventure: 0, pirate: 0, trade: 0 };
     state.items = [];
     state.quests = [];
+    state.storyEvents = [];
+    state.combatResults = {};
+    state.activeCombat = null;
+    state.equipment = { weaponId: null, armorId: null };
+    state.mateProgress = {};
     state.fleets = { '1': { position: undefined, ships: [ship()] } };
     state.mates = [
       { sailorId: '1', role: 0 },
@@ -34,6 +44,7 @@ describe('production story runtime actions', () => {
     } as unknown as typeof state.port;
     updateInterface.general = jest.fn();
     window.localStorage.clear();
+    notifyCombatChanged();
   });
 
   test('preflights every target kind and rejects invalid groups atomically', () => {
@@ -213,5 +224,99 @@ describe('production story runtime actions', () => {
     ).toEqual({ ok: true, executed: 2 });
     expect(state.fleets['1'].ships).toHaveLength(1);
     expect(state.mates).toContainEqual({ sailorId: '32', role: 0 });
+  });
+
+  test('rejects a combat group atomically when combat cannot start', () => {
+    state.fleets = { '1': { position: undefined, ships: [] } };
+    const eventId = storyEventId('joao.lisbon-opening.harbor-final');
+    const before = JSON.stringify(state);
+    const setItem = jest.spyOn(Storage.prototype, 'setItem');
+
+    expect(
+      executeStoryEffects(
+        [
+          { type: 'receiveGold', amount: 500 },
+          { type: 'receiveFame', fame: 'adventure', amount: 100 },
+          { type: 'completeEvent', eventId },
+          { type: 'startCombat', encounterId: 'joao.m2.katarina' },
+        ],
+        storyRuntimeActions,
+      ),
+    ).toEqual({
+      ok: false,
+      executed: 0,
+      diagnostics: [expect.objectContaining({ code: 'combat-unavailable' })],
+    });
+    expect(JSON.stringify(state)).toBe(before);
+    expect(setItem).not.toHaveBeenCalled();
+  });
+
+  test('applies semantic rewards and combat start in one saved transaction', () => {
+    const eventId = storyEventId('joao.lisbon-opening.harbor-final');
+    const setItem = jest.spyOn(Storage.prototype, 'setItem');
+
+    expect(
+      executeStoryEffects(
+        [
+          { type: 'receiveFame', fame: 'adventure', amount: 125 },
+          { type: 'completeEvent', eventId },
+          { type: 'startCombat', encounterId: 'joao.m2.kahn-house' },
+        ],
+        storyRuntimeActions,
+      ),
+    ).toEqual({ ok: true, executed: 3 });
+    expect(state.fame.adventure).toBe(125);
+    expect(state.storyEvents).toContain(eventId);
+    expect(state.activeCombat?.encounterId).toBe('joao.m2.kahn-house');
+    expect(setItem).toHaveBeenCalledTimes(1);
+  });
+
+  test('dismisses Domingo from a four-ship fleet and retains valid captains after load', () => {
+    state.fleets = {
+      '1': {
+        position: undefined,
+        ships: [ship(), ship(), ship(), ship()],
+      },
+    };
+    state.mates = [
+      { sailorId: '1', role: 0 },
+      { sailorId: '32', role: 1 },
+      { sailorId: '33', role: 2 },
+      { sailorId: '34', role: 3 },
+    ];
+
+    expect(
+      executeStoryEffects(
+        [{ type: 'removeCompanion', characterId: characterId('domingo') }],
+        storyRuntimeActions,
+      ),
+    ).toEqual({ ok: true, executed: 1 });
+    expect(state.fleets['1'].ships).toHaveLength(4);
+    expect(state.mates).toContainEqual({
+      sailorId: RELIEF_CAPTAIN_SAILOR_ID,
+      role: 3,
+    });
+    expect(state.mates.some(({ sailorId }) => sailorId === '1')).toBe(true);
+
+    state.mates = [];
+    expect(load()).toBe(true);
+    expect(state.fleets['1'].ships).toHaveLength(4);
+    expect(
+      [0, 1, 2, 3].filter(
+        (role) =>
+          state.mates.filter((mate) => mate.role === role).length === 1,
+      ),
+    ).toHaveLength(4);
+    expect(
+      state.mates.every(({ sailorId }) =>
+        ['1', '32', '33', RELIEF_CAPTAIN_SAILOR_ID].includes(sailorId),
+      ),
+    ).toBe(true);
+    expect([0, 1, 2, 3].map((role) => getCaptain(role).name)).toEqual([
+      'João Franco',
+      'Rocco Alemkel',
+      'Enrico Malione',
+      'Relief Captain',
+    ]);
   });
 });

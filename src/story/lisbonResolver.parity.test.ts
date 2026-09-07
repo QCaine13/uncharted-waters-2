@@ -107,6 +107,7 @@ describe('Lisbon resolver legacy-oracle parity', () => {
                   companions: new Set(),
                   discoveries: new Set(),
                   reportedDiscoveries: new Set(),
+                  combatResults: {},
                 } as StoryContext,
                 compiledLisbonOpening,
                 (candidates) => {

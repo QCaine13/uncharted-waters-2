@@ -14,12 +14,20 @@ import {
 import { save } from '../state/saveLoad';
 import state from '../state/state';
 import {
+  canStartCombat,
+  startCombatWithoutSave,
+} from '../state/actionsCombat';
+import {
   getLegacyCompletionKey,
   type LegacyQuestCompletionKey,
 } from './legacy/lisbonCompletionKeys';
 import { compiledStoryContent } from '.';
 import type { StoryEffectRuntime } from './core/effects';
 import type { StoryDiagnostic, StoryEffect } from './core/types';
+import {
+  applyCompanionDeparture,
+  planCompanionDeparture,
+} from './companionDeparture';
 
 const diagnostic = (code: string, message: string): StoryDiagnostic => ({
   severity: 'error',
@@ -68,6 +76,21 @@ const preflightStatefulGroup = (
       }
       return;
     }
+    if (effect.type === 'removeCompanion') {
+      const sailorId = character(effect)?.sailorId;
+      if (!sailorId) return;
+      const departure = planCompanionDeparture(
+        plannedMates,
+        plannedFleetLength,
+        sailorId,
+      );
+      if (!departure.ok) {
+        diagnostics.push(diagnostic(departure.code, departure.message));
+      } else {
+        plannedMates.splice(0, plannedMates.length, ...departure.mates);
+      }
+      return;
+    }
     if (effect.type === 'receiveShip' && shipData[effect.shipId]) {
       const mate = plannedMates.find(
         ({ role }) => role === null || Number.isNaN(role),
@@ -80,6 +103,21 @@ const preflightStatefulGroup = (
         mate.role = plannedFleetLength;
         plannedFleetLength += 1;
       }
+    }
+  });
+
+  effects.forEach((effect, index) => {
+    if (effect.type !== 'startCombat') return;
+    const laterNonSave = effects
+      .slice(index + 1)
+      .some((candidate) => candidate.type !== 'save');
+    if (laterNonSave) {
+      diagnostics.push(
+        diagnostic(
+          'non-terminal-combat-start',
+          'Combat start must be the final non-save effect in its group',
+        ),
+      );
     }
   });
 
@@ -108,6 +146,15 @@ export const storyRuntimeActions: StoryEffectRuntime = {
                 `Unknown companion ${effect.characterId}`,
               ),
             ];
+      case 'removeCompanion':
+        return character(effect)?.sailorId
+          ? []
+          : [
+              diagnostic(
+                'unknown-character',
+                `Unknown companion ${effect.characterId}`,
+              ),
+            ];
       case 'assignMate': {
         const target = character(effect);
         return target?.sailorId
@@ -127,6 +174,16 @@ export const storyRuntimeActions: StoryEffectRuntime = {
         return effect.portId === null || validPort(effect.portId)
           ? []
           : [diagnostic('unknown-port', `Unknown port ${effect.portId}`)];
+      case 'startCombat':
+        return canStartCombat(effect.encounterId)
+          ? []
+          : [
+              diagnostic(
+                'combat-unavailable',
+                `Combat ${effect.encounterId} cannot start`,
+              ),
+            ];
+      case 'receiveFame':
       case 'receiveGold':
       case 'exitBuilding':
       case 'save':
@@ -144,12 +201,26 @@ export const storyRuntimeActions: StoryEffectRuntime = {
     if (key !== null) completeLegacyQuestOnce(key as LegacyQuestCompletionKey);
   },
   receiveGold: receiveStoryGold,
+  receiveFame(fame, amount) {
+    state.fame[fame] += amount;
+  },
   receiveItem: receiveStoryItem,
   receiveShip: receiveStoryShip,
   addCompanion(characterId) {
     const sailorId =
       compiledStoryContent.charactersById.get(characterId)?.sailorId;
     if (sailorId) addStoryCompanion(sailorId);
+  },
+  removeCompanion(characterId) {
+    const sailorId =
+      compiledStoryContent.charactersById.get(characterId)?.sailorId;
+    if (!sailorId) return;
+    const departure = planCompanionDeparture(
+      state.mates,
+      state.fleets['1']?.ships.length ?? 0,
+      sailorId,
+    );
+    if (departure.ok) applyCompanionDeparture(state, departure);
   },
   assignMate(characterId, role) {
     const sailorId =
@@ -159,6 +230,9 @@ export const storyRuntimeActions: StoryEffectRuntime = {
   exitBuilding: exitBuildingWithoutSave,
   setPort(portId) {
     state.portId = portId;
+  },
+  startCombat(encounterId) {
+    startCombatWithoutSave(encounterId);
   },
   save() {
     updateGeneral();

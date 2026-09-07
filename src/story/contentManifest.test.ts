@@ -187,7 +187,7 @@ describe('story content manifest', () => {
       .sort();
 
     expect(report.counts).toEqual({
-      characters: 9,
+      characters: 10,
       relationships: 8,
       arcs: 2,
       events: 52,
@@ -213,7 +213,7 @@ describe('story content manifest', () => {
         crossArcDependencies: [],
       },
     ]);
-    expect(report.unreferencedCharacters).toEqual([]);
+    expect(report.unreferencedCharacters).toEqual(['m2-relief-captain']);
     expect(report.unreferencedRelationships).toEqual([]);
     expect(report.legacyCompatibility).toEqual({
       onceEvents: 10,
@@ -237,7 +237,7 @@ describe('story content manifest', () => {
 
     const formatted = formatStoryContentReport(report);
     expect(formatted).toContain(
-      'Story content: 9 characters, 8 relationships, 2 arcs, 52 events',
+      'Story content: 10 characters, 8 relationships, 2 arcs, 52 events',
     );
     expect(formatted).toContain(
       'Legacy compatibility: 10/10 once events mapped (complete)',

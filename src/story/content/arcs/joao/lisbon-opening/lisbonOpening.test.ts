@@ -178,9 +178,12 @@ const callbackOperation = (effect: StoryEffect): string | null => {
         ? 'receiveFirstShip'
         : null;
     case 'completeEvent':
+    case 'receiveFame':
+    case 'removeCompanion':
     case 'assignMate':
     case 'exitBuilding':
     case 'setPort':
+    case 'startCombat':
     case 'save':
       return null;
     default: {

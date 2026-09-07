@@ -1,4 +1,5 @@
 import type { ItemId } from '../../data/itemData';
+import type { CombatOutcome } from '../../combat/types';
 import type { Role, Stage, FameType } from '../../state/state';
 
 declare const storyIdBrand: unique symbol;
@@ -70,17 +71,25 @@ export type StoryCondition =
   | { type: 'hasReportedDiscovery'; discoveryId: string }
   | { type: 'fameAtLeast'; fame: FameType; value: number }
   | { type: 'hasItem'; itemId: ItemId }
-  | { type: 'hasCompanion'; characterId: CharacterId };
+  | { type: 'hasCompanion'; characterId: CharacterId }
+  | {
+      type: 'combatResolved';
+      encounterId: string;
+      outcomes: readonly CombatOutcome[];
+    };
 
 export type StoryEffect =
   | { type: 'completeEvent'; eventId: StoryEventId }
   | { type: 'receiveGold'; amount: number }
+  | { type: 'receiveFame'; fame: FameType; amount: number }
   | { type: 'receiveItem'; itemId: ItemId }
   | { type: 'receiveShip'; shipId: string; name: string }
   | { type: 'addCompanion'; characterId: CharacterId }
+  | { type: 'removeCompanion'; characterId: CharacterId }
   | { type: 'assignMate'; characterId: CharacterId; role: Role }
   | { type: 'exitBuilding' }
   | { type: 'setPort'; portId: string | null }
+  | { type: 'startCombat'; encounterId: string }
   | { type: 'save' };
 
 export interface DialogueStep {
@@ -142,6 +151,7 @@ export interface StoryContext {
   companions: ReadonlySet<CharacterId>;
   discoveries: ReadonlySet<string>;
   reportedDiscoveries: ReadonlySet<string>;
+  combatResults: Readonly<Record<string, CombatOutcome>>;
 }
 
 export interface StoryContentSource {

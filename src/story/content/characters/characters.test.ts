@@ -1,4 +1,5 @@
 import characterData from '../../../data/characterData';
+import getSailor from '../../../data/sailorData';
 import { compileStoryContent } from '../../core/registry';
 import { characterId } from '../../core/types';
 import { storyRelationships } from '../relationships';
@@ -9,8 +10,8 @@ describe('canonical Lisbon characters', () => {
     storyCharacters.find((character) => character.id === id);
 
   test('preserves every legacy identity, English name, color, role, and sailor link', () => {
-    expect(storyCharacters).toHaveLength(9);
-    expect(new Set(storyCharacters.map(({ id }) => id)).size).toBe(9);
+    expect(storyCharacters).toHaveLength(10);
+    expect(new Set(storyCharacters.map(({ id }) => id)).size).toBe(10);
 
     expect(byId('joao')).toEqual({
       id: characterId('joao'),
@@ -79,12 +80,43 @@ describe('canonical Lisbon characters', () => {
       sailorId: '34',
       legacyCharacterId: '34',
     });
+    expect(byId('m2-relief-captain')).toEqual({
+      id: characterId('m2-relief-captain'),
+      names: { en: 'Relief Captain', zh: '代理船长' },
+      role: 'companion',
+      dialogueStyle: { color: 'text-slate-600' },
+      sailorId: 'm2-relief-captain',
+    });
 
     const sailorIds = storyCharacters
       .map(({ sailorId }) => sailorId)
       .filter((sailorId): sailorId is string => Boolean(sailorId));
-    expect(sailorIds).toEqual(['1', '32', '33', '34']);
+    expect(sailorIds).toEqual([
+      '1',
+      '32',
+      '33',
+      '34',
+      'm2-relief-captain',
+    ]);
     expect(sailorIds).toHaveLength(new Set(sailorIds).size);
+
+    expect(getSailor('m2-relief-captain')).toEqual({
+      name: 'Relief Captain',
+      age: 30,
+      stats: {
+        leadership: 50,
+        seamanship: 50,
+        knowledge: 50,
+        intuition: 50,
+        courage: 50,
+        swordplay: 50,
+        charm: 50,
+        luck: 50,
+      },
+      navigationLevel: 1,
+      battleLevel: 1,
+      skills: [],
+    });
   });
 
   test('derives the unchanged legacy dialogue lookup from canonical records', () => {

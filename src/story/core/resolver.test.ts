@@ -34,6 +34,7 @@ const context = (overrides: Partial<StoryContext> = {}): StoryContext => ({
   companions: new Set(),
   discoveries: new Set(),
   reportedDiscoveries: new Set(),
+  combatResults: {},
   ...overrides,
 });
 
@@ -138,6 +139,28 @@ describe('conditionSatisfied', () => {
         context({ fame: { adventure: 1000, pirate: 0, trade: 0 } }),
       ),
     ).toBe(true);
+  });
+
+  test('matches only recorded combat outcomes allowed by the condition', () => {
+    const resolved = {
+      type: 'combatResolved',
+      encounterId: 'joao.m2.kahn-house',
+      outcomes: ['victory', 'draw'],
+    } as const;
+
+    expect(
+      conditionSatisfied(
+        resolved,
+        context({ combatResults: { 'joao.m2.kahn-house': 'draw' } }),
+      ),
+    ).toBe(true);
+    expect(
+      conditionSatisfied(
+        resolved,
+        context({ combatResults: { 'joao.m2.kahn-house': 'defeat' } }),
+      ),
+    ).toBe(false);
+    expect(conditionSatisfied(resolved, context())).toBe(false);
   });
 
   test('evaluates boolean trees and every context membership predicate', () => {
@@ -490,6 +513,10 @@ describe('createStoryContext', () => {
       fame: { adventure: 4, pirate: 5, trade: 6 },
       discoveries: ['strait-of-gibraltar'],
       reportedDiscoveries: ['strait-of-gibraltar'],
+      combatResults: {
+        'joao.m2.kahn-house': 'victory',
+        'future.encounter': 'retreat',
+      },
     } as unknown as State;
 
     const result = createStoryContext(state, content);
@@ -509,5 +536,25 @@ describe('createStoryContext', () => {
     expect(result.reportedDiscoveries).toEqual(
       new Set(['strait-of-gibraltar']),
     );
+    expect(result.combatResults).toEqual({
+      'joao.m2.kahn-house': 'victory',
+      'future.encounter': 'retreat',
+    });
+    expect(result.combatResults).not.toBe(state.combatResults);
+  });
+
+  test('defaults combat results for contexts created from older state shapes', () => {
+    const content = compileStoryContent(source(), 'strict');
+    const oldState = {
+      portId: '1',
+      buildingId: null,
+      timePassed: 0,
+      quests: [],
+      items: [],
+      mates: [],
+      fame: { adventure: 0, pirate: 0, trade: 0 },
+    } as unknown as State;
+
+    expect(createStoryContext(oldState, content).combatResults).toEqual({});
   });
 });
