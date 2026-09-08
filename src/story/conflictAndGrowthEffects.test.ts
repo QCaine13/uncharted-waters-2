@@ -82,6 +82,7 @@ describe('conflict and growth production effects', () => {
     state.combatResults = {};
     state.activeCombat = null;
     updateInterface.general = jest.fn();
+    updateInterface.fame = jest.fn();
   });
 
   test('grants both 1000 fame rewards once after either decisive house result', () => {
@@ -178,9 +179,7 @@ describe('conflict and growth production effects', () => {
   test('closes at the Istanbul report with no reward or M3 event', () => {
     state.portId = '3';
     state.buildingId = '5';
-    state.storyEvents.push(
-      'joao.conflict-and-growth.sasha-found',
-    );
+    state.storyEvents.push('joao.conflict-and-growth.sasha-found');
     const before = {
       gold: state.gold,
       fame: { ...state.fame },

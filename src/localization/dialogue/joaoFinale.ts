@@ -57,6 +57,8 @@ const joaoFinale: Record<string, string> = {
     '你用任何头衔都无法赋予的功绩恢复了家族名誉。欢迎回家，我的儿子。',
   'The voyage is complete, Captain. Whatever horizon comes next, this route is yours.':
     '航程完成了，船长。无论下一道地平线通向何方，这条道路都属于你。',
+  'Welcome home, João. Your room is always ready; explore freely whenever the horizon calls.':
+    '欢迎回家，约翰。你的房间随时为你留着；地平线召唤时，就放心去自由探索吧。',
   'Prepare for long voyages and battle': '为远航与战斗做好准备',
   'Stock food and water, fill each ship to its minimum crew at a pub, repair at a shipyard, and buy ammunition at a harbor. The starter ship cannot recruit above its minimum crew through the current menus. The Royal Crown can be sold to fund long travel, but it is not required.':
     '储备食物和水，在酒馆把每艘船补足到最低水手数，在船厂修理，并在港口购买炮弹。当前菜单无法让初始船招募超过最低水手数。可以卖掉王冠筹措远航资金，但这不是必需条件。',
@@ -73,8 +75,8 @@ const joaoFinale: Record<string, string> = {
   'Current date: {currentMonth}/{currentDay}/{currentYear}. Return to this South American harbor from 09:00–14:59 on {nextMonth}/{nextDay}/{nextYear}. Lodge Check In wakes the crew at 08:00; make ordinary facility visits until 09:00. If you miss 14:59, return during the window on a later day.':
     '当前日期：{currentYear}年{currentMonth}月{currentDay}日。请在{nextYear}年{nextMonth}月{nextDay}日09:00至14:59返回这座南美港口。旅店住宿会让船员在08:00醒来；照常进出设施，等到09:00。若错过14:59，请在之后某天的同一时段回来。',
   'Sail for five uninterrupted days': '连续航海五天',
-  'After M2, spend five uninterrupted days at sea. Docking resets the count.':
-    'M2结束后，连续在海上航行五天。靠港会重置计数。',
+  'After reporting to Ali in Istanbul, spend five uninterrupted days at sea. Docking resets the count.':
+    '在伊斯坦布尔向阿兰报告后，连续在海上航行五天。靠港会重置计数。',
   'Ask Ali about the voyage': '向阿兰询问航程',
   'Enter the next facility after the five-day voyage to hear Ali’s lead.':
     '完成五天航行后，进入下一处设施，听取阿兰的线索。',

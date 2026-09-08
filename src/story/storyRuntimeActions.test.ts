@@ -47,6 +47,7 @@ describe('production story runtime actions', () => {
       characters: () => ({ spawnNpcs: jest.fn(), despawnNpcs: jest.fn() }),
     } as unknown as typeof state.port;
     updateInterface.general = jest.fn();
+    updateInterface.fame = jest.fn();
     window.localStorage.clear();
     notifyCombatChanged();
   });
@@ -376,6 +377,11 @@ describe('production story runtime actions', () => {
       ),
     ).toEqual({ ok: true, executed: 3 });
     expect(state.fame.adventure).toBe(125);
+    expect(updateInterface.fame).toHaveBeenCalledWith({
+      adventure: 125,
+      pirate: 0,
+      trade: 0,
+    });
     expect(state.storyEvents).toContain(eventId);
     expect(state.activeCombat?.encounterId).toBe('joao.m2.kahn-house');
     expect(setItem).toHaveBeenCalledTimes(1);

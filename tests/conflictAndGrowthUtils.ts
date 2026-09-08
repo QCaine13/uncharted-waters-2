@@ -127,9 +127,9 @@ const matchingDefense: Record<DuelAttack, DuelDefense> = {
 export const playDuel = (
   desired: 'victory' | 'defeat' | 'draw',
   remaining = 45,
-): Cypress.Chainable<void> => {
+): ReturnType<typeof readVoyageSave> => {
   if (remaining === 0) throw new Error(`Duel did not reach ${desired}`);
-  return readVoyageSave().then((saved) => {
+  return readVoyageSave().then<void>((saved) => {
     const combat = saved.activeCombat;
     if (!combat) throw new Error('No active combat while playing duel');
     const duel = combat.kind === 'duel' ? combat : combat.boardingDuel;
@@ -184,8 +184,8 @@ const advanceBuildingUntil = (
   unexpectedState: UnexpectedBuildingState,
   diagnostic: string,
   remaining = 35,
-): Cypress.Chainable<void> =>
-  readVoyageSave().then((saved) => {
+): ReturnType<typeof readVoyageSave> =>
+  readVoyageSave().then<void>((saved) => {
     // Check completion first because a story event may store its marker and
     // start combat in the same effect group.
     if (terminal(saved)) return;
@@ -232,7 +232,7 @@ const advanceBuildingUntil = (
 export const completeBuildingEvent = (
   eventId: string,
   remaining = 35,
-): Cypress.Chainable<void> =>
+): ReturnType<typeof readVoyageSave> =>
   advanceBuildingUntil(
     (saved) => saved.storyEvents.includes(eventId),
     (saved) =>
@@ -248,7 +248,7 @@ export const completeBuildingEvent = (
 export const advanceBuildingUntilCombat = (
   encounterId: string,
   remaining = 35,
-): Cypress.Chainable<void> =>
+): ReturnType<typeof readVoyageSave> =>
   advanceBuildingUntil(
     (saved) => saved.activeCombat?.encounterId === encounterId,
     (saved) =>

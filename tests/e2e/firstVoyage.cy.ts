@@ -5,12 +5,14 @@ import {
   closeSidebar,
   finishSeaEncounter,
   readVoyageSave,
+  resumeCourse,
   saveFromSystem,
+  sailToCoordinate,
   sailLisbonToGibraltar,
   sailGibraltarToLisbon,
 } from '../firstVoyageUtils';
 
-const opening = [
+const opening: State['quests'] = [
   'houseBeforeQuest',
   'pubBeforeQuest',
   'pubAfterQuest',
@@ -23,51 +25,51 @@ const opening = [
   'harborFinal',
 ];
 const arc = 'joao.first-voyage.';
-const fixture = (overrides: Partial<State> = {}) => {
-  setState({
-    portId: null,
-    buildingId: null,
-    timePassed: 4560,
-    dayAtSea: 3,
-    quests: opening,
-    storyEvents: [
-      'joao.lisbon-opening.harbor-final',
-      `${arc}commission-accepted`,
-    ],
-    gold: 1000,
-    discoveries: [],
-    reportedDiscoveries: [],
-    fame: { adventure: 0, pirate: 0, trade: 0 },
-    mates: [
-      { sailorId: '1', role: 0 },
-      { sailorId: '32', role: null },
-      { sailorId: '33', role: null },
-    ],
-    fleets: {
-      '1': {
-        position: { x: 835, y: 376 },
-        ships: [
-          {
-            id: '6',
-            name: 'Hermes II',
-            crew: 10,
-            durability: 25,
-            cargo: [
-              { type: 'water', quantity: 30 },
-              { type: 'food', quantity: 30 },
-            ],
-          },
-        ],
-      },
+const fixtureState = (overrides: Partial<State> = {}): Partial<State> => ({
+  portId: null,
+  buildingId: null,
+  timePassed: 4560,
+  dayAtSea: 3,
+  quests: opening,
+  storyEvents: [
+    'joao.lisbon-opening.harbor-final',
+    `${arc}commission-accepted`,
+  ],
+  gold: 1000,
+  discoveries: [],
+  reportedDiscoveries: [],
+  fame: { adventure: 0, pirate: 0, trade: 0 },
+  mates: [
+    { sailorId: '1', role: 0 },
+    { sailorId: '32', role: null },
+    { sailorId: '33', role: null },
+  ],
+  fleets: {
+    '1': {
+      position: { x: 835, y: 376 },
+      ships: [
+        {
+          id: '6',
+          name: 'Hermes II',
+          crew: 10,
+          durability: 25,
+          cargo: [
+            { type: 'water', quantity: 30 },
+            { type: 'food', quantity: 30 },
+          ],
+        },
+      ],
     },
-    ...overrides,
-  });
-};
+  },
+  ...overrides,
+});
+const fixture = (overrides: Partial<State> = {}) =>
+  setState(fixtureState(overrides));
 
 const advanceBuilding = (
   settled: (document: Document) => boolean,
   remaining = 30,
-): Cypress.Chainable<void> => {
+): Cypress.Chainable<Document> => {
   if (!remaining) throw new Error('Guild dialogue did not settle');
   return cy.document().then((document) => {
     if (settled(document)) return;
@@ -80,7 +82,7 @@ const advanceBuilding = (
       ).to.equal(true),
     );
     return advanceBuilding(settled, remaining - 1);
-  });
+  }) as unknown as Cypress.Chainable<Document>;
 };
 const toChoice = () =>
   advanceBuilding(
@@ -93,7 +95,209 @@ const toMenu = () =>
   });
 
 describe('First voyage chapter compatibility and choices', () => {
-  const branchTest = Cypress.env('m1NavigationOnly') ? it.skip : it;
+  const branchTest = it;
+  branchTest(
+    'surfaces a day-three sea story that interrupts an accepted course',
+    () => {
+      const frozen = fixtureState({
+        timePassed: 3600,
+        dayAtSea: 2,
+        fleets: {
+          '1': {
+            position: { x: 858, y: 376 },
+            ships: [
+              {
+                id: '6',
+                name: 'Hermes II',
+                crew: 10,
+                durability: 25,
+                cargo: [
+                  { type: 'water', quantity: 30 },
+                  { type: 'food', quantity: 30 },
+                ],
+              },
+            ],
+          },
+        },
+      });
+      cy.visit('', {
+        onBeforeLoad(window) {
+          window.localStorage.setItem(
+            SAVED_STATE_KEY,
+            JSON.stringify({ version: SAVE_VERSION, ...frozen }),
+          );
+          window.localStorage.setItem('uw2.locale', 'en');
+          window.localStorage.setItem('uw2.e2e.locale', 'en');
+        },
+      });
+      saveFromSystem().then((before) => {
+        expect(before.dayAtSea).to.equal(2);
+        expect(before.storyEvents).not.to.include(`${arc}domingo-met`);
+      });
+      resumeCourse('a', 5000).then((interrupted) => {
+        expect(interrupted.outcome).to.equal('seaStory');
+        expect(interrupted.stage).to.equal('interruption');
+      });
+      cy.get('[data-test=seaStory]').should(
+        'include.text',
+        'Three days at sea',
+      );
+      saveFromSystem();
+      resumeCourse('a').then((pausedStory) => {
+        expect(pausedStory.outcome).to.equal('seaStory');
+        expect(pausedStory.stage).to.equal('interruption');
+      });
+      cy.get('[data-test=seaStory]').should(
+        'include.text',
+        'Three days at sea',
+      );
+      finishSeaEncounter();
+      saveFromSystem().then((afterStory) => {
+        expect(afterStory.storyEvents).to.include(`${arc}domingo-met`);
+        expect(afterStory.storyEvents).to.include(`${arc}domingo-recruited`);
+      });
+      resumeCourse('a', 50).then((continued) => {
+        expect(continued.outcome).to.equal('heading');
+      });
+      readVoyageSave().then((continued) => {
+        expect(continued.portId).to.be.null;
+        expect(continued.storyEvents).to.include(`${arc}domingo-met`);
+      });
+    },
+  );
+
+  branchTest(
+    'uses an ordinary coast correction after five saved stalls',
+    () => {
+      const start = { x: 857.3516666666662, y: 379 };
+      const frozen = fixtureState({
+        timePassed: 6000,
+        dayAtSea: 4,
+        storyEvents: [
+          'joao.lisbon-opening.harbor-final',
+          `${arc}commission-accepted`,
+          `${arc}domingo-met`,
+          `${arc}domingo-recruited`,
+        ],
+        discoveries: ['strait-of-gibraltar'],
+        fleets: {
+          '1': {
+            position: start,
+            ships: [
+              {
+                id: '6',
+                name: 'Hermes II',
+                crew: 10,
+                durability: 25,
+                cargo: [
+                  { type: 'water', quantity: 30 },
+                  { type: 'food', quantity: 30 },
+                ],
+              },
+            ],
+          },
+        },
+      });
+      cy.visit('', {
+        onBeforeLoad(window) {
+          window.localStorage.setItem(
+            SAVED_STATE_KEY,
+            JSON.stringify({ version: SAVE_VERSION, ...frozen }),
+          );
+          window.localStorage.setItem('uw2.locale', 'en');
+          window.localStorage.setItem('uw2.e2e.locale', 'en');
+        },
+      });
+      saveFromSystem().then((before) => {
+        expect(before.portId).to.be.null;
+        expect(before.fleets['1'].position).to.deep.equal(start);
+      });
+      sailToCoordinate('y', 376);
+      saveFromSystem().then((after) => {
+        const position = after.fleets['1'].position!;
+        expect(after.portId).to.be.null;
+        expect(Math.abs(position.y - 376)).to.be.at.most(0.8);
+        expect(
+          position.x,
+          'ordinary correction changed the blocked x',
+        ).to.be.lessThan(start.x);
+        const flagship = after.fleets['1'].ships[0];
+        expect(
+          flagship.cargo.find(({ type }) => type === 'water')!.quantity,
+        ).to.be.greaterThan(0);
+        expect(
+          flagship.cargo.find(({ type }) => type === 'food')!.quantity,
+        ).to.be.greaterThan(0);
+      });
+    },
+  );
+
+  branchTest(
+    'rejects a shallow opening and takes the collision-safe eastbound corridor',
+    () => {
+      const start = { x: 836, y: 373.9912500000004 };
+      const frozen = fixtureState({
+        timePassed: 7200,
+        dayAtSea: 5,
+        storyEvents: [
+          'joao.lisbon-opening.harbor-final',
+          `${arc}commission-accepted`,
+          `${arc}domingo-met`,
+          `${arc}domingo-recruited`,
+        ],
+        discoveries: ['strait-of-gibraltar'],
+        fleets: {
+          '1': {
+            position: start,
+            ships: [
+              {
+                id: '6',
+                name: 'Hermes II',
+                crew: 10,
+                durability: 25,
+                cargo: [
+                  { type: 'water', quantity: 30 },
+                  { type: 'food', quantity: 30 },
+                ],
+              },
+            ],
+          },
+        },
+      });
+      cy.visit('', {
+        onBeforeLoad(window) {
+          window.localStorage.setItem(
+            SAVED_STATE_KEY,
+            JSON.stringify({ version: SAVE_VERSION, ...frozen }),
+          );
+          window.localStorage.setItem('uw2.locale', 'en');
+          window.localStorage.setItem('uw2.e2e.locale', 'en');
+        },
+      });
+      saveFromSystem().then((before) => {
+        expect(before.portId).to.be.null;
+        expect(before.fleets['1'].position).to.deep.equal(start);
+      });
+      sailToCoordinate('x', 856);
+      saveFromSystem().then((after) => {
+        const position = after.fleets['1'].position!;
+        expect(after.portId).to.be.null;
+        expect(Math.abs(position.x - 856)).to.be.at.most(0.8);
+        expect(
+          position.y,
+          'ordinary correction entered the safe southern corridor',
+        ).to.be.greaterThan(374);
+        const flagship = after.fleets['1'].ships[0];
+        expect(
+          flagship.cargo.find(({ type }) => type === 'water')!.quantity,
+        ).to.be.greaterThan(0);
+        expect(
+          flagship.cargo.find(({ type }) => type === 'food')!.quantity,
+        ).to.be.greaterThan(0);
+      });
+    },
+  );
+
   branchTest(
     'reopens the System panel during repeated navigation pauses',
     () => {

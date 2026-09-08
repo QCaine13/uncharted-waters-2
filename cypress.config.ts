@@ -1,5 +1,6 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { defineConfig } from 'cypress';
+import { routePlannerTasks } from './tests/worldRoutePlanner';
 
 export default defineConfig({
   viewportWidth: 1700,
@@ -12,12 +13,14 @@ export default defineConfig({
     specPattern: 'tests/e2e/**/*.cy.ts',
     supportFile: 'tests/e2e/support.ts',
     setupNodeEvents(on) {
+      on('task', routePlannerTasks);
       on('before:browser:launch', (browser, launchOptions) => {
         if (browser.family === 'chromium' && browser.isHeadless) {
-          launchOptions.args = launchOptions.args.filter(
+          const args = launchOptions.args.filter(
             (argument) => !argument.startsWith('--window-size='),
           );
-          launchOptions.args.push('--window-size=1800,1100');
+          args.push('--window-size=1800,1100');
+          return { ...launchOptions, args };
         }
         return launchOptions;
       });

@@ -18,6 +18,7 @@ import {
 } from '../state/actionsPort';
 import { save } from '../state/saveLoad';
 import state from '../state/state';
+import updateInterface from '../state/updateInterface';
 import {
   getLegacyCompletionKey,
   type LegacyQuestCompletionKey,
@@ -256,6 +257,7 @@ export const storyRuntimeActions: StoryEffectRuntime = {
   receiveGold: receiveStoryGold,
   receiveFame(fame, amount) {
     state.fame[fame] += amount;
+    updateInterface.fame({ ...state.fame });
   },
   receiveItem: receiveStoryItem,
   consumeItem: consumeStoryItem,

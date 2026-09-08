@@ -89,6 +89,15 @@ const clearActiveCombat = (): void => {
 };
 
 describe('João M3 journal', () => {
+  test('introduces the five-day voyage from Ali’s Istanbul report without an internal milestone label', () => {
+    state.storyEvents = [M2_COMPLETE];
+
+    expect(current()).toMatchObject({
+      id: 'm3-five-day-voyage',
+      body: 'After reporting to Ali in Istanbul, spend five uninterrupted days at sea. Docking resets the count.',
+    });
+  });
+
   beforeEach(() => {
     state.storyEvents = [M2_COMPLETE];
     state.storyEventTimes = {};

@@ -85,6 +85,10 @@ export const finaleDialogue = deepFreeze({
     rocco:
       'The voyage is complete, Captain. Whatever horizon comes next, this route is yours.',
   },
+  homeRevisited: {
+    welcome:
+      'Welcome home, João. Your room is always ready; explore freely whenever the horizon calls.',
+  },
 });
 
 export default finaleDialogue;

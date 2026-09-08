@@ -124,8 +124,8 @@ const joaoConflictAndGrowth: Record<string, string> = {
   'Conflict and growth complete': '冲突与成长已完成',
   'M2 is complete: Ali knows Sasha is safe, while Lucia’s kidnapping remains unresolved.':
     'M2已完成：阿兰知道莎夏平安，路琪亚被绑架一事仍未解决。',
-  'In M2, Ali learned that Sasha was safe and João cleared his family’s name.':
-    '在M2中，阿兰得知莎夏安然无恙，约翰也洗清了家族的污名。',
+  'During the earlier investigation, Ali learned that Sasha was safe and João cleared his family’s name.':
+    '在此前的调查中，阿兰得知莎夏安然无恙，约翰也洗清了家族的污名。',
   'A future voyage': '未来的航程',
   'Ali’s new lead continues in a future chapter.':
     '阿兰的新线索将在后续章节继续。',

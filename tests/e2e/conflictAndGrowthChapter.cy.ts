@@ -1,8 +1,7 @@
 import { SAVE_VERSION } from '../../src/state/saveLoad';
-import { SAVED_STATE_KEY, type State } from '../../src/state/state';
+import type { State } from '../../src/state/state';
 import {
   advanceBuildingUntilCombat,
-  completedM1Fixture,
   completeBuildingEvent,
   installM1Fixture,
   playDuel,
@@ -117,9 +116,11 @@ const departFromHarbor = () => {
   readVoyageSave().then((saved) => expect(saved.portId).to.be.null);
 };
 
-const pulseWestUntilCombat = (remaining = 100): Cypress.Chainable<void> => {
+const pulseWestUntilCombat = (
+  remaining = 100,
+): ReturnType<typeof saveFromSystem> => {
   if (remaining === 0) throw new Error('Regional voyage did not start combat');
-  return saveFromSystem().then((saved) => {
+  return saveFromSystem().then<void>((saved) => {
     if (saved.activeCombat) {
       expect(saved.activeCombat.encounterId).to.equal('joao.m2.katarina');
       closeSidebar();
@@ -312,8 +313,12 @@ describe('M2 complete chapter and regional pursuit', () => {
     cy.contains('[data-test=left] div', /^日志$/).click();
     cy.get('[data-test=questJournal]')
       .should('contain.text', '冲突与成长已完成')
-      .and('contain.text', '路琪亚被绑架一事仍未解决')
-      .and('contain.text', '阿兰的新线索将在后续章节继续');
+      .and('contain.text', '在此前的调查中，阿兰得知莎夏安然无恙')
+      .and('contain.text', '连续航海五天')
+      .and('contain.text', '向阿兰报告后，连续在海上航行五天')
+      .and('not.contain.text', 'M2')
+      .and('not.contain.text', '阿兰的新线索将在后续章节继续')
+      .and('not.contain.text', '路琪亚被绑架一事仍未解决');
     expectInsideGame('[data-test=questJournal]');
     cy.scrollTo('top', { ensureScrollable: false });
     cy.screenshot('m2-final-journal-zh', {

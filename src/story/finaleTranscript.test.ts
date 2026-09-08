@@ -86,6 +86,7 @@ describe('João finale transcript', () => {
     const advice = new Set([
       'joao.finale.rendezvous-wait',
       'joao.finale.amazon-retry',
+      'joao.finale.home-revisited',
     ]);
     events.forEach(({ id, priority }) => {
       if (advice.has(id)) {
@@ -197,10 +198,22 @@ describe('João finale transcript', () => {
     });
   });
 
+  test('keeps the Lisbon residence welcoming after the ending without state changes', () => {
+    const revisited = event('home-revisited');
+    expect(revisited).toMatchObject({
+      priority: 0.402,
+      repeat: 'repeatable',
+    });
+    expect(visibleText(revisited.steps).join(' ')).toMatch(
+      /welcome|home|explore/i,
+    );
+    expect(effectTypes(revisited.steps)).toEqual([]);
+  });
+
   test('provides Chinese for every visible line and keeps both choices compatible', () => {
     setLocale('zh-CN');
     const events = finaleEvents();
-    expect(events).toHaveLength(15);
+    expect(events).toHaveLength(16);
     events
       .flatMap(({ steps }) => visibleText(steps))
       .forEach((source) => {

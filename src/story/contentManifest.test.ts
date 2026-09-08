@@ -190,7 +190,7 @@ describe('story content manifest', () => {
       characters: 20,
       relationships: 17,
       arcs: 5,
-      events: 103,
+      events: 104,
     });
     expect(report.arcs).toEqual([
       {
@@ -209,7 +209,7 @@ describe('story content manifest', () => {
         entryEvents: ['joao.finale.japan-request'],
         terminalEvents: [
           'joao.finale.amazon-retry',
-          'joao.finale.homecoming',
+          'joao.finale.home-revisited',
           'joao.finale.rendezvous-wait',
         ],
         crossArcDependencies: ['joao.massawa'],
@@ -272,7 +272,7 @@ describe('story content manifest', () => {
 
     const formatted = formatStoryContentReport(report);
     expect(formatted).toContain(
-      'Story content: 20 characters, 17 relationships, 5 arcs, 103 events',
+      'Story content: 20 characters, 17 relationships, 5 arcs, 104 events',
     );
     expect(formatted).toContain(
       'Legacy compatibility: 10/10 once events mapped (complete)',

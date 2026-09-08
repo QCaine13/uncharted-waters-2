@@ -360,5 +360,10 @@ describe('João finale resolver graph', () => {
     expect(resolve(building('1', '8', reported))).toBe(id('homecoming'));
     expect(resolve(building('1', '7', reported))).not.toBe(id('homecoming'));
     expect(resolve(building('57', '8', reported))).toBeNull();
+
+    const ended = completedThrough('homecoming');
+    expect(resolve(building('1', '8', ended))).toBe(id('home-revisited'));
+    expect(resolve(building('1', '7', ended))).not.toBe(id('home-revisited'));
+    expect(resolve(building('2', '8', ended))).toBeNull();
   });
 });

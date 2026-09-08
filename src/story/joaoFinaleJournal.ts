@@ -171,7 +171,7 @@ const currentObjective = (state: State): JournalEntry => {
     return objective(
       'm3-five-day-voyage',
       'Sail for five uninterrupted days',
-      'After M2, spend five uninterrupted days at sea. Docking resets the count.',
+      'After reporting to Ali in Istanbul, spend five uninterrupted days at sea. Docking resets the count.',
     );
   }
   if (!has(ALI_MASSAWA_LEAD_EVENT_ID)) {

@@ -29,6 +29,7 @@ export const AMAZON_START_EVENT_ID = eventId('amazon-start');
 export const AMAZON_RETRY_EVENT_ID = eventId('amazon-retry');
 export const AMAZON_VICTORY_EVENT_ID = eventId('amazon-victory');
 export const JOAO_ENDING_EVENT_ID = eventId('homecoming');
+export const HOME_REVISITED_EVENT_ID = eventId('home-revisited');
 
 export const SOUTH_AMERICAN_PORT_IDS = [
   '43',
@@ -561,6 +562,22 @@ const homecoming: StoryEvent = {
   ],
 };
 
+const homeRevisited: StoryEvent = {
+  id: HOME_REVISITED_EVENT_ID,
+  arcId: JOAO_FINALE_ARC_ID,
+  priority: 0.402,
+  trigger: exactScene('1', '8', completed(JOAO_ENDING_EVENT_ID)),
+  repeat: 'repeatable',
+  steps: [
+    {
+      type: 'dialogue',
+      body: dialogue.homeRevisited.welcome,
+      position: 1,
+      speaker: characterId('duchess-christiana'),
+    },
+  ],
+};
+
 export const finaleEvents: StoryEvent[] = [
   japanRequest,
   enricoFarewell,
@@ -577,6 +594,7 @@ export const finaleEvents: StoryEvent[] = [
   amazonRetry,
   amazonVictory,
   homecoming,
+  homeRevisited,
 ];
 
 export default finaleEvents;

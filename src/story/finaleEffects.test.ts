@@ -80,6 +80,7 @@ describe('João finale production effects', () => {
     state.combatResults = {};
     state.activeCombat = null;
     updateInterface.general = jest.fn();
+    updateInterface.fame = jest.fn();
   });
 
   afterEach(() => jest.restoreAllMocks());

@@ -293,7 +293,7 @@ export const getConflictAndGrowthJournal = (state: State): JournalEntry[] => {
       {
         id: 'm2-complete',
         title: 'Conflict and growth complete',
-        body: 'In M2, Ali learned that Sasha was safe and João cleared his family’s name.',
+        body: 'During the earlier investigation, Ali learned that Sasha was safe and João cleared his family’s name.',
         completed: true,
         current: false,
         kind: 'objective',

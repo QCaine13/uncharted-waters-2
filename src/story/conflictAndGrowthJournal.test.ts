@@ -139,7 +139,7 @@ describe('conflict and growth journal', () => {
       completed: true,
     });
     expect(entries[0].body).toBe(
-      'In M2, Ali learned that Sasha was safe and João cleared his family’s name.',
+      'During the earlier investigation, Ali learned that Sasha was safe and João cleared his family’s name.',
     );
     expect(entries).toHaveLength(1);
   });
