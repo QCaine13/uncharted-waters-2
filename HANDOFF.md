@@ -1,91 +1,84 @@
-# 开发交接：M2 冲突与成长
+# 开发交接：M3 约翰归家终章
 
-更新：2026-09-06。M2 已完成实现、浏览器验收和最终独立审查；准确版本与验证范围以 [M2 验证记录](docs/superpowers/verification/2026-09-06-m2-conflict-and-growth.md)为准。先读本文件，再读 [M2 设计](docs/superpowers/specs/2026-09-06-m2-conflict-and-growth-design.md)和[实现计划](docs/superpowers/plans/2026-09-06-m2-conflict-and-growth.md)。
+更新：2026-09-08。约翰路线已从中文新游戏连续完成 M0–M3，并通过任务审查与最终独立审查。准确提交、命令和证据分类见 [M3 验证记录](docs/superpowers/verification/2026-09-07-m3-joao-finale.md)。执行中的范围、接口与验证判断见 [实施裁决记录](docs/superpowers/verification/2026-09-07-m3-joao-finale-rulings.md)。先读本文件，再读 [M3 设计](docs/superpowers/specs/2026-09-07-m3-joao-finale-design.md)、[实现计划](docs/superpowers/plans/2026-09-07-m3-joao-finale.md)及 D18。
 
-## 工作位置与进度
+## 工作位置
 
-- 主仓库 `/Users/qsircaine/uncharted-waters-2` 的 M1 已合并推送，M2 基线为 `3cf4a8e`。M1 原有交付证据见 [M1 验收记录](docs/superpowers/verification/2026-09-06-m1-first-voyage.md)。
-- M2 工作树：`/Users/qsircaine/uncharted-waters-2/.worktrees/m2-conflict-and-growth`；分支：`codex/m2-conflict-and-growth`。本轮计划保留工作分支，不合并、不推送。
-- Task 1–6 已完成并通过任务审查和最终全分支审查：纯战斗和存档 v6、战斗结算及整备动作、战斗/装备/修理界面、声明式开战与伙伴离队、完整双语章节和日志，以及浏览器验收。章节实现提交为 `676cdb7`，最终功能修补为 `2dc2987`。
-- Task 6 增加浏览器验收辅助、10 项战斗/整备/章节入口检查及 2 项完整章节分支检查，并修正两处旧 Cypress 用例对当前存档版本的硬编码。浏览器验收阶段修正了旧船厂预期和 System 滚动助手；最终代码审查又补上冲突存档结算保护和船长决斗回合/日志显示。
-- 本机执行记录在 `.superpowers/sdd/2026-09-06-m2-conflict-and-growth/ledger.md`，包含任务报告、独立审查、修补裁定和接续位置。恢复会话时先核对它与 `git log`，不要重做已完成任务。
+- 工作树：`/Users/qsircaine/uncharted-waters-2/.worktrees/m3-joao-finale`；分支：`codex/m3-joao-finale`。
+- M3 叠加在已完成但未合并的 M2 `1002d9eb2f3338cd5e4dfc6fc0f17546eb6a4ed6` 上。最终代码提交：`0ad24ed6dd1622a0e0d311fb04b1400efe8cfc46`。本轮未合并或推送。
+- M1 已在主仓库合并推送；M0/M1/M2/M3 工作树和本机证据均保留。M2 历史边界见 [M2 验证记录](docs/superpowers/verification/2026-09-06-m2-conflict-and-growth.md)，不要将它的地点夹具追溯写成真实远航。
+- 本机恢复入口：`.superpowers/sdd/2026-09-07-m3-joao-finale/progress.md` 的 Current checkpoint、`task-7-report.md` 和 `git log`。日志、原始检查点和截图没有随 Git 分发。
 
-## 已实现的机制
+## 已完成的主线
 
-决斗可选择突刺、挥砍、重击及对应防御，显示敌人意图，十回合未决为平局。海战通过距离、炮击、接舷、船长决斗、修补和撤退操作，实际消耗旗舰耐久、船员、炮弹和木材。装备和战斗经验参与数值计算；系统菜单仍可存读档和切换中英，弹窗、战斗和海上对白会暂停底层输入与模拟。
+M2 伊斯坦堡报告 → 连续五个海上日期 → 下一设施的阿兰线索 → 马沙华宗教设施与西南住宅 → 里斯本委托皮耶德 → 返回马沙华等待 → 两轮奥斯曼出击 → 酒馆领取并在住宅交还圣杖 → 宝冠与和解 → 恩里克赴日请求及长崎离队 → 里斯本来信 → 堺公会线索 → 南美救援与鲁道夫决斗 → 次日码头联盟 → 亚马逊胜利 → 里斯本住宅归家。
 
-船厂每点耐久收取 10 金币，可以按现有资金部分修理。物品窗可以装备已持有武器或防具；每 100 战斗经验增加一级。当前酒馆招募只补足船型最低船员，初始 Hermes II 不能通过现有招募操作增加到 21 人；炮击和撤退可在初始船上完成，船长挑战需要足够船员的旗舰。
+归家标记是 `joao.finale.homecoming`。结局保留在日志中，可以继续探索、保存、读取和切换语言；再次进入住宅显示欢迎对白，不重发奖励。其他五位主角尚未交付，属于 M4。
 
-海战败退会回里斯本，旗舰恢复至少一半最大耐久和最低船员；成功撤退与战败是不同结果。伙伴离队时优先由空闲伙伴接替船长，无人可接任时才添加原创“代理船长”，保留全部船只。无原版头像的新人物使用姓名占位图，不伪造资源 ID。
+重要操作与规则：
 
-## 本章目标与改编边界
+- 五日资格在海上达成后先记录，靠港不会丢失。马沙华以返程住宅事件起算，必须到更晚月份且当月 11 日及以后；后续月份的 1–10 日也不能跳过。旅馆入住在次日 08:00 醒来。
+- 两轮奥斯曼战各有独立码头准备。实际获胜或主动撤退推进，战败回马沙华重试；两战后先去住宅报告，再去酒馆取杖。委托皮耶德时不会提前得到圣杖。
+- 圣杖（物品名“圣者之杖”）不能出售，交还会实际消费一件，并一次性获得宝冠（物品名“王冠”）与 5000 冒险名声。港口75显示为阿克苏姆，地图身份和市场不变。宝冠可正常出售筹资，后续不要求继续持有。
+- 恩里克在长崎永久离队并奖励 1000 冒险名声。优先安排现有空闲伙伴接任船长，否则使用有界的原创代理船长，保留全部船只。堺会面是 NPC 对话，不重新入队。
+- 鲁道夫决斗胜、负、平都由卡特琳娜介入救出路琪亚。马丁内斯事件后的下一日期起，每天 09:00–14:59 可在南美码头会合；错过后可在之后同一时段恢复，原始事件时钟不重写。
+- 亚马逊只有实际胜利才能推进。败北、撤退或平局可在开云（Cayenne）准备重试；最终撤退不给经验。初始船可在船厂修至30耐久并购买8发炮弹，通过8次炮击获胜，真实消耗后剩2耐久。恢复不补送木材或炮弹。
 
-已实现的流程是：M1 完成且多明戈在队 → 白天 08:00–16:00 休达酒馆 → 旅馆 → 船厂卡恩决斗 → 码头揭晓身份 → 里斯本宅邸再战 → 王宫洗清父亲嫌疑 → 宅邸告别 → 塞维利亚酒馆接受追击 → 连续海上一日、靠港访问码头、再次出海一日 → 卡特琳娜海战 → 非里斯本酒馆找阿兰 → 里斯本调查 → 巴士拉酒馆找到莎夏 → 伊斯坦布尔旅馆回报。
+## 引擎与地图边界
 
-第一场卡恩决斗任何结果都能继续且无经验奖励；宅邸平局重赛，胜败均能继续，胜利给约翰 100 经验。王宫和告别按事件一次性发放 1000 冒险名声、1000 海盗名声及蛇形剑。卡特琳娜胜利或主动撤退才能继续；战败后在里斯本码头直接重试，不依赖再次购买补给出航。
+沿用 M2 的三攻三防决斗、旗舰距离海战、装备、经验和修理机制；船厂每点耐久10金币，每100战斗经验升一级。当前酒馆招募只补足船型最低船员，不能建议不存在的任意加员操作。恢复港口由遭遇定义区分：卡特琳娜为里斯本、奥斯曼为马沙华、亚马逊为开云。
 
-确定性伤害、四档距离、宽容回港恢复、代理船长及以章节里程碑替代原作 2000/8000 名声门槛，均为本项目调整。尚未实现完整六角海战、多舰指令、昼夜战斗上限及缴获。本章止于阿兰寻妹报告，不声称路琪亚获救或与卡特琳娜和解；马萨瓦、圣者之杖、日本、南美及最终战属于 M3。依据与取舍见 D17 和设计文档。
+里程碑替代原作名声积累门槛、确定性数值、宽容回港恢复和代理船长属于本项目改编。尚未复刻完整六角战场、多舰指令、昼夜战斗上限、缴获或马丁内斯必打决斗。新 NPC 不伪造原版头像，圣杖使用中性徽记。
 
-## 存档与代码入口
+马沙华使用逻辑宗教设施11和西南住宅8；宗教界面的头像资源13与逻辑设施ID不同。堺（Sakai，现有通用港口译名显示为“界”）没有可用教堂门，使用公会7。南美实际验收使用开云，Pernambuco 原有隔离靠港水域仍属 M5 地图事项。没有苏伊士捷径；好望角和塔马达夫补给港没有修理或招募服务。
 
-当前存档 v6，键为 `savedState`，语言偏好独立使用 `uw2.locale`。M1 的 v5 存档升级后保留金币、舰船、物品、伙伴及旧键和语义进度，新增默认装备、经验、战斗结果和进行中快照。未知历史事件及有效结果 ID 保留；无效装备槽、不支持的进行中战斗，以及与不可重放历史结果冲突的活动快照会在载入时清理。开战、载入和最终结算共用重放规则，保留宅邸平局重赛及海战战败重试。载入不立即改写存储，下一次保存才写入规范化后的状态。一次性奖励与结果确认必须和保存保持一致。
+## 存档与扩充入口
+
+当前存档 v7，键为 `savedState`，语言独立使用 `uw2.locale`。新增 `storyEventTimes` 保存事件首次完成的游戏分钟数。合法时钟必须有限、非负且不晚于存档当前时间。已完成事件的时钟缺失、无效或错误地指向未来时，保守使用存档当前时间（无效则0），可能延长等待，不发明完成事件；没有完成标记的无效或未来时钟直接移除。运行时重复完成也遵守相同边界，并保留合法的首次时间。未知事件、合法未知时钟和结果、旧任务键、物品与合法进行中战斗继续保留；载入不立即改写存储，下次保存才持久化规范化结果。
+
+效果整组预检查，再按顺序执行，最后只保存一次。圣杖消费、奖励与完成标记保持一致。`receiveFame` 更新名声后立即通知 HUD；通知仍位于已预检查的效果组内，最终保持一次保存，避免已到账但界面仍显示旧值。重试时日志优先显示匹配的活动战斗，不能被历史结果抢占。
 
 | 工作 | 入口 |
 | --- | --- |
-| 战斗规则与敌人定义 | `src/combat/` |
-| 战斗动作、经验、恢复 | `src/state/actionsCombat.ts` |
-| 装备与修理 | `src/state/actionsEquipment.ts`、`src/state/actionsRepair.ts` |
-| 战斗界面 | `src/interface/combat/` |
-| 剧情条件、效果和预检查 | `src/story/core/`、`src/story/storyRuntimeActions.ts` |
-| 离队与头像占位 | `src/story/companionDeparture.ts`、`src/interface/common/CharacterPortrait.tsx` |
-| M2 章节及日志 | `src/story/content/arcs/joao/conflict-and-growth/`、`src/story/conflictAndGrowthJournal.ts` |
-| 存档兼容 | `src/state/saveMigrations.ts`、`src/state/saveLoad.ts` |
-| 浏览器验收 | `tests/e2e/conflictAndGrowth.cy.ts`、`tests/e2e/conflictAndGrowthChapter.cy.ts`、`tests/conflictAndGrowthUtils.ts` |
+| 日历和存档时钟 | `src/time/calendar.ts`、`src/state/saveMigrations.ts`、`src/story/core/` |
+| 事件条件、效果与预检查 | `src/story/core/`、`src/story/storyRuntimeActions.ts` |
+| 马沙华与终章声明式内容 | `src/story/content/arcs/joao/massawa/`、`src/story/content/arcs/joao/finale/` |
+| 日志、港名与结局 | `src/story/joaoFinaleJournal.ts`、`src/story/portStoryNames.ts`、`src/interface/JoaoEnding.tsx` |
+| 战斗与伙伴保全 | `src/combat/encounters.ts`、`src/state/actionsCombat.ts`、`src/story/companionDeparture.ts` |
+| 双语对白 | `src/localization/dialogue/joaoMassawa.ts`、`src/localization/dialogue/joaoFinale.ts` |
+| 实际完整旅程 | `tests/e2e/joaoFullJourney.cy.ts`、`tests/joaoOpeningJourney.ts`、`tests/worldJourneyUtils.ts` |
+| 导航与分支验证 | `tests/portRouteUtils.ts`、`tests/worldRoutePlanner.ts`、`tests/worldNavigationControl.ts`、`tests/e2e/m3Massawa.cy.ts`、`tests/e2e/m3Finale.cy.ts` |
 
-扩充时遵循[剧情编写指南](docs/story/authoring-guide.md)和[存档约定](docs/4-engineering/save-load-persistence.md)。先对整组效果做预检查，再按序执行；开战必须是最后一个非 save 效果，最后只保存一次。新内容保持声明式，不插入状态回调或自动胜利对白。
+新增内容继续遵守[剧情编写指南](docs/story/authoring-guide.md)与[存档约定](docs/4-engineering/save-load-persistence.md)，使用稳定 ID 和声明式条件/效果。新剧情使用互异小数优先级，避免被旧常驻对白抢占；不要插入状态回调或自动胜利对白。
 
-## 验证现状
+## 验证与预览
 
-完整记录见 [M2 验证文档](docs/superpowers/verification/2026-09-06-m2-conflict-and-growth.md)。最终修补 `2dc2987` 的 `npm run verify` 通过 86 组、662 项 Jest，剧情校验、TypeScript、ESLint、资源校验和生产构建均成功。Edge 专项中 `conflictAndGrowth.cy.ts` 为 10/10、`conflictAndGrowthChapter.cy.ts` 为 2/2，均无失败、待定或跳过。
+| 验证范围 | 实际结果 |
+| --- | --- |
+| 最终代码静态检查 | `npm run verify`：102套/899项单元测试、38项资源、剧情、类型、ESLint和构建全部通过；测试TypeScript独立通过 |
+| 完整验收（`9d41336`） | Edge 21文件/99项全部通过，3:56:52；其中中文新档从M0连续归家、读取、双语结局与重访通过，3:42:16 |
+| 测试辅助修补（`6e54d2e`） | 超时清理2/2、首航9/9、开场兼容6/6通过；加强实际按键断言后首航9/9再次通过 |
+| 未来时钟修补（`0ad24ed`） | 马沙华5/5、终章12/12，合计17项通过；30份原始通关存档的新旧时钟规范化结果一致 |
+| 独立审查 | Sol任务审查及复核、Astra整分支审查及最终定向复核均通过，无未解决的Critical/Important事项 |
 
-首次全量 Edge 回归共 18 个规格、80 项，76 通过、4 失败、0 待定/跳过；3 项来自旧船厂用例仍期待无需修理及其菜单级联，1 项来自中文长旅程靠港后 Cypress 在长页面自动滚动 System 触发器的动作性竞态。船厂修补专项已 6/6 通过，实际确认 5 点/50 金币修理、30 耐久/750 金币存档及 1350 金币出售；共享 System 助手回到页面顶部并点击重新取得的可见触发器，不使用强制点击。包含长页面起点、25 次重复弹层和真实往返航行的 `firstVoyage.cy.ts` 已 5/5 通过。
+完整远航、合成分支、原样存档恢复和后续修补分别记录。后续新增3项用例，当前完整套件共102项；未声称重新执行了四小时全套。准确命令、输入散列、审查结论及非阻断维护项见[M3验证记录](docs/superpowers/verification/2026-09-07-m3-joao-finale.md)。
 
-修补后的全量回归在 `08e190d` 上运行 18 个规格、80 项，全部通过，0 失败/待定/跳过，耗时 14 分 59 秒；其中 `storyArchitecture.cy.ts` 6/6，包括 580157 ms 的中文完整旅程。随后 Task 6 审查只重构 M2 测试助手：一个私有原语统一完成事件和重复开战的可见对白推进，并保留完成优先于异常守卫的顺序；两项 M2 规格再次 12/12 通过，0 失败/待定/跳过，51 秒。该次助手整理没有改变生产源码或构建。之后的最终全分支审查发现一个不一致 v6 存档的重复结算边界，以及船长决斗回合/日志显示外层海战的问题；两项均已在 `2dc2987` 修复并通过一次定向复审，未留下 Critical 或 Important 问题。
-
-末次修补后的浏览器范围回归在 `2dc2987` 上通过：两项 M2 规格 12/12、首次航海 5/5、旧剧情存档 4/4。四个规格共声明 23 项、执行并通过 21 项、失败 0、pending 2、skipped 0，耗时 89 秒；两条首次开局长旅程按预定范围未重复，其此前完整通过证据保留在 80/80 全量记录中。新增截图已独立目视检查。
-
-8082 的 PID 70724 当前服务 `2dc2987` 的生产构建；8080/8081 保留既有 M0/M1 预览。章节用例从合法合成 M1 v5 完成档进入，所有战斗结果、经验和奖励均由可见操作产生。塞维尔至里斯本一段使用实际键盘航行、时间推进与靠港重置；巴士拉和伊斯坦布尔等远距离阶段明确使用地点、建筑及白天进入时间夹具，因此不能称为完整环球实航。
-
-1700×1000 Edge 视口的中文战斗、整备、代理船长、四船、追击、阿兰/莎夏和最终日志，以及英文战斗/伙伴成长截图均已目视检查。游戏整体固定为 1640×800，主要游玩区为 1280×800；所需控制可见，未发现产品布局缺陷。Cypress 截图因运行器条带实际为 1700×969。
-
-## 本机预览与命令
-
-使用 Node.js 22 和已安装的锁定依赖：
+预览使用 [8083](http://127.0.0.1:8083/)，旧8080/8081/8082分别保留 M0/M1/M2。使用锁定依赖和 Node.js 22：
 
 ```sh
 export PATH="/Users/qsircaine/uncharted-waters-2/.worktrees/.tools/bin:/Users/qsircaine/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin:$PATH"
-cd /Users/qsircaine/uncharted-waters-2/.worktrees/m2-conflict-and-growth
+cd /Users/qsircaine/uncharted-waters-2/.worktrees/m3-joao-finale
 npm run verify
+npx tsc -p tests/tsconfig.json --noEmit
+npx cypress run --browser edge --config baseUrl=http://127.0.0.1:8083,trashAssetsBeforeRuns=false
 ```
 
-8080 保留 M0，8081 保留 M1，8082 用于 M2。现有 8082 服务已经运行，不要重复占用端口；在没有浏览器测试运行时才更新生产构建。需要重新启动服务时执行：
+完整 Cypress 套件包含实际远航，本次约四小时；日常定向调试可显式使用 `--spec`，完整旅程仍保持默认启用。
 
-```sh
-npx http-server build -a127.0.0.1 -p8082 --silent -c-1
-```
+8083 服务已经运行，不重复占用端口。只有在没有浏览器测试运行时才更新生产构建；需要重启服务时使用 `npx http-server build -a127.0.0.1 -p8083 --silent -c-1`。不同来源隔离浏览器存档，旧端口存档不会自动出现。游戏固定1640×800，主游玩区1280×800；小窗口需要滚动。
 
-完整浏览器回归：
+Webpack 三项原有体积/性能建议及 Cypress10 ARM 辅助程序提示保留，未升级依赖。旧 M2 非阻断事项仍保留：未来平衡修改需同步结果预览；多船断粮的零船员判败恢复边界；整备建议标题重复；人工构造零耐久快照的约束加固。
 
-```sh
-npx cypress run --browser edge --config baseUrl=http://127.0.0.1:8082,trashAssetsBeforeRuns=false
-```
+## 接续位置
 
-仅 M2：追加 `--spec 'tests/e2e/conflictAndGrowth.cy.ts,tests/e2e/conflictAndGrowthChapter.cy.ts'`。浏览器按域名和端口隔离存档，旧预览端口的存档不会自动出现在 8082；同一来源载入旧存档才会经过 v6 迁移。固定画面为 1640×800，验收视口 1700×1000，小窗口需要滚动。
-
-保留 M0、M1、M2 工作树及本机证据目录里的唯一日志和截图，附件没有随 Git 提交分发。大部分任务暂存资料不跟踪，但 Task 3–5 报告已经提交。已知 Webpack 体积、Browserslist 与 Cypress 10 ARM 辅助程序提示须在最终记录中如实说明。
-
-## 接续位置与保留事项
-
-下一章是 M3。先读取本交接、M2 设计和 D17，再核对马萨瓦、圣者之杖及约翰后续主线的原作触发条件。M2 终点是伊斯坦布尔向阿兰报告妹妹下落；不得把这个完成标记当作路琪亚获救、卡特琳娜和解或约翰全线通关。继续使用 v6，保留既有未知进度和合法重赛/重试，不重新实现 M0–M2。
-
-全分支审查明确保留三个非阻断事项：结果预览的经验数值与实际结算目前一致，但未来调平衡时需同步；多船断粮可能让旗舰船员先降至 0，此时新海战会在下一次合法操作后判败并进入免费恢复，不能据此推进剧情；日志整备建议的标题与状态标签有重复。审查未找到正常 M2 流程进入零耐久新海战的路径，人工构造的零耐久快照仍属于后续存档约束加固范围。既有构建和浏览器工具警告也保留。
+下一阶段是 M4 其他五位主角。先核对中文交付方案、D15–D18、v7存档约定和本次验证记录，再结合可复用经济、战斗和探索系统确定下一条独立路线。不要重做 M0–M3，也不要将约翰归家当成全部六线完成。本次没有提前开始 M4、合并或推送。
