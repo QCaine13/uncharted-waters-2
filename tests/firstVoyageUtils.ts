@@ -1,4 +1,5 @@
 import { SAVED_STATE_KEY, type State } from '../src/state/state';
+import { createBrowserInputLifecycle } from './browserInputLifecycle';
 
 const headingIndex: Record<string, number> = { w: 0, d: 2, s: 4, a: 6 };
 const indicatorUrls = new WeakMap<Window, Promise<string[]>>();
@@ -227,22 +228,16 @@ export const resumeCourse = (
                 elapsedMs: Math.round(window.performance.now() - startedAt),
                 outcome,
               });
-              let settled = false;
-              let pulseTimeout: number | undefined;
+              const lifecycle = createBrowserInputLifecycle(window, [key]);
               const finish = (outcome: CourseResumeOutcome) => {
-                if (settled) return;
-                settled = true;
-                window.clearTimeout(watchdog);
-                if (pulseTimeout !== undefined)
-                  window.clearTimeout(pulseTimeout);
+                const keepSailing =
+                  outcome === 'heading' && pauseAfterMs === undefined;
+                if (!lifecycle.settle({ releaseOwnedKeys: !keepSailing }))
+                  return;
                 resolve(snapshot(outcome));
               };
               const fail = (reason: string) => {
-                if (settled) return;
-                settled = true;
-                window.clearTimeout(watchdog);
-                if (pulseTimeout !== undefined)
-                  window.clearTimeout(pulseTimeout);
+                if (!lifecycle.settle({ releaseOwnedKeys: true })) return;
                 reject(
                   new Error(
                     `${reason}: ${JSON.stringify(snapshot('failure'))}`,
@@ -253,13 +248,14 @@ export const resumeCourse = (
               // makes browser scheduling stalls fail with stage/timing evidence
               // before Cypress can replace the useful error with cy.then's
               // generic callback timeout.
-              const watchdog = window.setTimeout(
+              lifecycle.setTimer(
                 () => fail('Course heading handshake exceeded its wall bound'),
                 (pauseAfterMs ?? 0) + 10_000,
               );
 
               expectedIndicatorUrls(window, sheetDataUrl).then(
                 (expected) => {
+                  if (lifecycle.isSettled) return;
                   trace.imageResolvedMs = Math.round(
                     window.performance.now() - startedAt,
                   );
@@ -273,9 +269,6 @@ export const resumeCourse = (
                     const interruption = renderedCourseInterruption(document);
                     if (!interruption) return false;
                     trace.stage = 'interruption';
-                    document.dispatchEvent(
-                      new window.KeyboardEvent('keyup', { key, bubbles: true }),
-                    );
                     finish(interruption);
                     return true;
                   };
@@ -293,7 +286,7 @@ export const resumeCourse = (
                   );
                   trace.stage = 'overlay-release';
                   const observePause = (remaining = 60) => {
-                    if (settled || finishInterruption()) return;
+                    if (lifecycle.isSettled || finishInterruption()) return;
                     if (document.getElementById('locale-select')) {
                       finish('heading');
                       return;
@@ -305,12 +298,10 @@ export const resumeCourse = (
                       return;
                     }
                     trace.pauseFrames += 1;
-                    window.requestAnimationFrame(() =>
-                      observePause(remaining - 1),
-                    );
+                    lifecycle.requestFrame(() => observePause(remaining - 1));
                   };
                   const observeOverlayRelease = (remaining = 60) => {
-                    if (settled || finishInterruption()) return;
+                    if (lifecycle.isSettled || finishInterruption()) return;
                     if (
                       !document.getElementById('locale-select') &&
                       !document.querySelector('[data-overlay-panel]')
@@ -326,44 +317,32 @@ export const resumeCourse = (
                       return;
                     }
                     trace.overlayFrames += 1;
-                    window.requestAnimationFrame(() =>
+                    lifecycle.requestFrame(() =>
                       observeOverlayRelease(remaining - 1),
                     );
                   };
                   const beginPulse = () => {
                     const observeInterruption = () => {
-                      if (settled || finishInterruption()) return;
-                      window.requestAnimationFrame(observeInterruption);
+                      if (lifecycle.isSettled || finishInterruption()) return;
+                      lifecycle.requestFrame(observeInterruption);
                     };
-                    window.requestAnimationFrame(observeInterruption);
-                    pulseTimeout = window.setTimeout(() => {
-                      if (settled || finishInterruption()) return;
-                      document.dispatchEvent(
-                        new window.KeyboardEvent('keyup', {
-                          key,
-                          bubbles: true,
-                        }),
-                      );
+                    lifecycle.requestFrame(observeInterruption);
+                    lifecycle.setTimer(() => {
+                      if (lifecycle.isSettled || finishInterruption()) return;
+                      lifecycle.keyUp(key);
                       clickRenderedSystem(document);
                       trace.stage = 'pause';
                       observePause();
                     }, pauseAfterMs!);
                   };
                   const steer = (remaining = 20) => {
-                    if (settled || finishInterruption()) return;
+                    if (lifecycle.isSettled || finishInterruption()) return;
                     trace.headingAttempts += 1;
-                    document.dispatchEvent(
-                      new window.KeyboardEvent('keyup', { key, bubbles: true }),
-                    );
-                    document.dispatchEvent(
-                      new window.KeyboardEvent('keydown', {
-                        key,
-                        bubbles: true,
-                      }),
-                    );
-                    window.requestAnimationFrame(() =>
-                      window.requestAnimationFrame(() => {
-                        if (settled || finishInterruption()) return;
+                    lifecycle.keyUp(key);
+                    lifecycle.keyDown(key);
+                    lifecycle.requestFrame(() =>
+                      lifecycle.requestFrame(() => {
+                        if (lifecycle.isSettled || finishInterruption()) return;
                         trace.headingFrames += 2;
                         trace.observedDirectionIndex = expected.indexOf(
                           playerHeadingImage(document).src,
@@ -381,12 +360,6 @@ export const resumeCourse = (
                           return;
                         }
                         if (remaining <= 1) {
-                          document.dispatchEvent(
-                            new window.KeyboardEvent('keyup', {
-                              key,
-                              bubbles: true,
-                            }),
-                          );
                           fail(`Rendered fleet heading did not accept ${key}`);
                           return;
                         }
@@ -419,182 +392,147 @@ export const resumeCourseWithDockCycles = (
   key: string,
 ): Cypress.Chainable<DockCycleOutcome> =>
   loadIndicatorSheet().then((sheetDataUrl) =>
-    cy.window({ log: false }).then({ timeout: 12_000 }, (window) =>
-      expectedIndicatorUrls(window, sheetDataUrl).then(
-        (expected) =>
-          new Cypress.Promise<DockCycleOutcome>((resolve, reject) => {
-            const desired = expected[headingIndex[key]];
-            const document = window.document;
-            let settled = false;
-            const finish = (outcome: DockCycleOutcome) => {
-              if (settled) return;
-              settled = true;
-              document.dispatchEvent(
-                new window.KeyboardEvent('keyup', { key, bubbles: true }),
-              );
-              resolve(outcome);
-            };
-            const fail = (reason: string) => {
-              if (settled) return;
-              settled = true;
-              document.dispatchEvent(
-                new window.KeyboardEvent('keyup', { key, bubbles: true }),
-              );
-              reject(new Error(reason));
-            };
-            if (!desired) {
-              fail(`No heading indicator mapping for ${key}`);
-              return;
-            }
-            const finishInterruption = () => {
-              const interruption = renderedCourseInterruption(document);
-              if (!interruption) return false;
-              document.dispatchEvent(
-                new window.KeyboardEvent('keyup', {
-                  key: 'e',
-                  bubbles: true,
-                }),
-              );
-              finish(interruption);
-              return true;
-            };
-            document.dispatchEvent(
-              new window.KeyboardEvent('keydown', {
-                key: 'Escape',
-                bubbles: true,
-              }),
-            );
-            document.dispatchEvent(
-              new window.KeyboardEvent('keyup', {
-                key: 'Escape',
-                bubbles: true,
-              }),
-            );
-
-            const pauseAndResolve = () => {
-              if (settled || finishInterruption()) return;
-              document.dispatchEvent(
-                new window.KeyboardEvent('keyup', { key, bubbles: true }),
-              );
-              clickRenderedSystem(document);
-              const observePause = (remaining = 60) => {
-                if (settled || finishInterruption()) return;
-                if (document.getElementById('locale-select')) {
-                  finish('paused');
-                  return;
-                }
-                if (!remaining) {
-                  fail('System did not pause after moving dock attempt');
-                  return;
-                }
-                window.requestAnimationFrame(() => observePause(remaining - 1));
+    cy.window({ log: false }).then(
+      { timeout: 12_000 },
+      (window) =>
+        new Cypress.Promise<DockCycleOutcome>((resolve, reject) => {
+          const document = window.document;
+          const lifecycle = createBrowserInputLifecycle(window, [key, 'e']);
+          const finish = (outcome: DockCycleOutcome) => {
+            if (!lifecycle.settle({ releaseOwnedKeys: true })) return;
+            resolve(outcome);
+          };
+          const fail = (reason: string) => {
+            if (!lifecycle.settle({ releaseOwnedKeys: true })) return;
+            reject(new Error(reason));
+          };
+          lifecycle.setTimer(
+            () => fail('Moving dock attempt exceeded its wall bound'),
+            10_000,
+          );
+          expectedIndicatorUrls(window, sheetDataUrl).then(
+            (expected) => {
+              if (lifecycle.isSettled) return;
+              const desired = expected[headingIndex[key]];
+              if (!desired) {
+                fail(`No heading indicator mapping for ${key}`);
+                return;
+              }
+              const finishInterruption = () => {
+                const interruption = renderedCourseInterruption(document);
+                if (!interruption) return false;
+                finish(interruption);
+                return true;
               };
-              observePause();
-            };
-
-            let totalFrames = 0;
-            let framesWithDesiredHeading = 0;
-            const startedAt = window.performance.now();
-            const steerAndTryDock = () => {
-              if (settled || finishInterruption()) return;
-              // Dock releases begin at the same ordinary System-release
-              // boundary as steering. If a pending destination carries the
-              // fleet through the harbor diamond before the new heading is
-              // rendered, one of these E cycles can still enter the port.
-              document.dispatchEvent(
-                new window.KeyboardEvent('keyup', {
-                  key: 'e',
-                  bubbles: true,
-                }),
-              );
               document.dispatchEvent(
                 new window.KeyboardEvent('keydown', {
-                  key: 'e',
+                  key: 'Escape',
                   bubbles: true,
                 }),
               );
               document.dispatchEvent(
                 new window.KeyboardEvent('keyup', {
-                  key: 'e',
+                  key: 'Escape',
                   bubbles: true,
                 }),
               );
-              if (document.querySelector('[data-test=portName]')) {
-                document.dispatchEvent(
-                  new window.KeyboardEvent('keyup', {
-                    key,
-                    bubbles: true,
-                  }),
-                );
-                finish('docked');
-                return;
-              }
 
-              if (playerHeadingImage(document).src === desired) {
-                lastRenderedHeading = key;
-                framesWithDesiredHeading += 1;
-              } else {
-                framesWithDesiredHeading = 0;
-                document.dispatchEvent(
-                  new window.KeyboardEvent('keyup', { key, bubbles: true }),
-                );
-                document.dispatchEvent(
-                  new window.KeyboardEvent('keydown', {
-                    key,
-                    bubbles: true,
-                  }),
-                );
-              }
-              // Four rendered frames can still commit only the destination
-              // queued by the previous heading. Keep the ordinary E cycles
-              // active through a bounded accepted-heading window so the
-              // requested targetward step is observed at tight harbors.
-              if (framesWithDesiredHeading >= 12) {
-                pauseAndResolve();
-                return;
-              }
-              totalFrames += 1;
-              if (totalFrames >= 48) {
-                fail(
-                  `Rendered fleet heading did not accept ${key} during moving dock attempt after ${totalFrames} frames and ${Math.round(
-                    window.performance.now() - startedAt,
-                  )}ms`,
-                );
-                return;
-              }
-              window.requestAnimationFrame(steerAndTryDock);
-            };
-            steerAndTryDock();
-          }),
-      ),
+              const pauseAndResolve = () => {
+                if (lifecycle.isSettled || finishInterruption()) return;
+                lifecycle.keyUp(key);
+                clickRenderedSystem(document);
+                const observePause = (remaining = 60) => {
+                  if (lifecycle.isSettled || finishInterruption()) return;
+                  if (document.getElementById('locale-select')) {
+                    finish('paused');
+                    return;
+                  }
+                  if (!remaining) {
+                    fail('System did not pause after moving dock attempt');
+                    return;
+                  }
+                  lifecycle.requestFrame(() => observePause(remaining - 1));
+                };
+                observePause();
+              };
+
+              let totalFrames = 0;
+              let framesWithDesiredHeading = 0;
+              const startedAt = window.performance.now();
+              const steerAndTryDock = () => {
+                if (lifecycle.isSettled || finishInterruption()) return;
+                // Dock releases begin at the same ordinary System-release
+                // boundary as steering. If a pending destination carries the
+                // fleet through the harbor diamond before the new heading is
+                // rendered, one of these E cycles can still enter the port.
+                lifecycle.keyUp('e');
+                lifecycle.keyDown('e');
+                lifecycle.keyUp('e');
+                if (document.querySelector('[data-test=portName]')) {
+                  finish('docked');
+                  return;
+                }
+
+                if (playerHeadingImage(document).src === desired) {
+                  lastRenderedHeading = key;
+                  framesWithDesiredHeading += 1;
+                } else {
+                  framesWithDesiredHeading = 0;
+                  lifecycle.keyUp(key);
+                  lifecycle.keyDown(key);
+                }
+                // Four rendered frames can still commit only the destination
+                // queued by the previous heading. Keep the ordinary E cycles
+                // active through a bounded accepted-heading window so the
+                // requested targetward step is observed at tight harbors.
+                if (framesWithDesiredHeading >= 12) {
+                  pauseAndResolve();
+                  return;
+                }
+                totalFrames += 1;
+                if (totalFrames >= 48) {
+                  fail(
+                    `Rendered fleet heading did not accept ${key} during moving dock attempt after ${totalFrames} frames and ${Math.round(
+                      window.performance.now() - startedAt,
+                    )}ms`,
+                  );
+                  return;
+                }
+                lifecycle.requestFrame(steerAndTryDock);
+              };
+              steerAndTryDock();
+            },
+            () => fail('Could not prepare shipped heading indicators'),
+          );
+        }),
     ),
   );
 
 export const releaseSystemAndDock = () =>
   cy.window({ log: false }).then(
+    { timeout: 12_000 },
     (window) =>
       new Cypress.Promise<DockCycleOutcome>((resolve, reject) => {
         const document = window.document;
-        let settled = false;
+        const lifecycle = createBrowserInputLifecycle(window, ['e']);
         const finish = (outcome: DockCycleOutcome) => {
-          if (settled) return;
-          settled = true;
+          if (!lifecycle.settle({ releaseOwnedKeys: true })) return;
           resolve(outcome);
         };
         const finishInterruption = () => {
           const interruption = renderedCourseInterruption(document);
           if (!interruption) return false;
-          document.dispatchEvent(
-            new window.KeyboardEvent('keyup', { key: 'e', bubbles: true }),
-          );
           finish(interruption);
           return true;
         };
         const fail = (reason: string) => {
-          if (settled) return;
-          settled = true;
+          if (!lifecycle.settle({ releaseOwnedKeys: true })) return;
           reject(new Error(reason));
         };
+        lifecycle.setTimer(
+          () => fail('Direct dock attempt exceeded its wall bound'),
+          10_000,
+        );
         document.dispatchEvent(
           new window.KeyboardEvent('keydown', {
             key: 'Escape',
@@ -611,27 +549,21 @@ export const releaseSystemAndDock = () =>
         // release. The first unsuspended release remains live for250ms, so the
         // next world update can dock before a heading transition moves again.
         const tryDock = (remaining = 8) => {
-          if (settled || finishInterruption()) return;
-          document.dispatchEvent(
-            new window.KeyboardEvent('keyup', { key: 'e', bubbles: true }),
-          );
-          document.dispatchEvent(
-            new window.KeyboardEvent('keydown', { key: 'e', bubbles: true }),
-          );
-          document.dispatchEvent(
-            new window.KeyboardEvent('keyup', { key: 'e', bubbles: true }),
-          );
+          if (lifecycle.isSettled || finishInterruption()) return;
+          lifecycle.keyUp('e');
+          lifecycle.keyDown('e');
+          lifecycle.keyUp('e');
           if (document.querySelector('[data-test=portName]')) {
             finish('docked');
             return;
           }
           if (remaining) {
-            window.requestAnimationFrame(() => tryDock(remaining - 1));
+            lifecycle.requestFrame(() => tryDock(remaining - 1));
             return;
           }
           clickRenderedSystem(document);
           const observePause = (frames = 60) => {
-            if (settled || finishInterruption()) return;
+            if (lifecycle.isSettled || finishInterruption()) return;
             if (document.getElementById('locale-select')) {
               finish('paused');
               return;
@@ -640,7 +572,7 @@ export const releaseSystemAndDock = () =>
               fail('System did not pause after direct dock attempt');
               return;
             }
-            window.requestAnimationFrame(() => observePause(frames - 1));
+            lifecycle.requestFrame(() => observePause(frames - 1));
           };
           observePause();
         };

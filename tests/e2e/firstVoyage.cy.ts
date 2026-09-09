@@ -299,6 +299,76 @@ describe('First voyage chapter compatibility and choices', () => {
   );
 
   branchTest(
+    'keeps an accepted unpaused course active until key release',
+    () => {
+      const directionEvents: string[] = [];
+      const recordDirectionEvent = (event: Event) => {
+        if ((event as KeyboardEvent).key === 'd')
+          directionEvents.push(event.type);
+      };
+      const start = { x: 840, y: 376 };
+      const frozen = fixtureState({
+        timePassed: 6000,
+        dayAtSea: 4,
+        storyEvents: [
+          'joao.lisbon-opening.harbor-final',
+          `${arc}commission-accepted`,
+          `${arc}domingo-met`,
+          `${arc}domingo-recruited`,
+        ],
+        discoveries: ['strait-of-gibraltar'],
+        fleets: {
+          '1': {
+            position: start,
+            ships: [
+              {
+                id: '6',
+                name: 'Hermes II',
+                crew: 10,
+                durability: 25,
+                cargo: [
+                  { type: 'water', quantity: 30 },
+                  { type: 'food', quantity: 30 },
+                ],
+              },
+            ],
+          },
+        },
+      });
+      cy.visit('', {
+        onBeforeLoad(window) {
+          window.localStorage.setItem(
+            SAVED_STATE_KEY,
+            JSON.stringify({ version: SAVE_VERSION, ...frozen }),
+          );
+          window.localStorage.setItem('uw2.locale', 'en');
+          window.localStorage.setItem('uw2.e2e.locale', 'en');
+        },
+      });
+      saveFromSystem().then((before) => {
+        expect(before.fleets['1'].position).to.deep.equal(start);
+      });
+      cy.document({ log: false }).then((document) => {
+        document.addEventListener('keydown', recordDirectionEvent);
+        document.addEventListener('keyup', recordDirectionEvent);
+      });
+      resumeCourse('d').then((course) => {
+        expect(course.outcome).to.equal('heading');
+        expect(directionEvents[directionEvents.length - 1]).to.equal('keydown');
+      });
+      cy.document({ log: false }).then((document) => {
+        document.removeEventListener('keydown', recordDirectionEvent);
+        document.removeEventListener('keyup', recordDirectionEvent);
+      });
+      cy.wait(350, { log: false });
+      cy.document({ log: false }).trigger('keyup', { key: 'd', log: false });
+      saveFromSystem().then((after) => {
+        expect(after.fleets['1'].position!.x).to.be.greaterThan(start.x);
+      });
+    },
+  );
+
+  branchTest(
     'reopens the System panel during repeated navigation pauses',
     () => {
       fixture({ dayAtSea: 0, timePassed: 220 });
