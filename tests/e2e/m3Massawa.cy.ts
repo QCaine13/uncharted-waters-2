@@ -75,6 +75,30 @@ describe('M3 Massawa browser boundaries', () => {
     completeBuildingEvent(id('invasion-authorized'));
   });
 
+  it('repairs a future Massawa wait anchor before the later-month gate', () => {
+    const current = minutesAt(1522, 6, 20, 10);
+    visitM3Fixture({
+      portId: '75',
+      buildingId: '8',
+      timePassed: current,
+      storyEvents: massawaThrough('waiting-for-pietro'),
+      storyEventTimes: {
+        [id('waiting-for-pietro')]: minutesAt(1523, 1, 1, 10),
+      },
+    });
+    cy.get('[data-test=building]').should('contain.text', '11日');
+    saveFromSystem().then((saved) => {
+      expect(saved.storyEventTimes[id('waiting-for-pietro')]).to.equal(current);
+      expect(saved.storyEvents).not.to.include(id('invasion-authorized'));
+    });
+    closeSidebar();
+
+    relocateM3Fixture('75', '8', {
+      timePassed: minutesAt(1522, 7, 11, 10),
+    });
+    completeBuildingEvent(id('invasion-authorized'));
+  });
+
   it('allows readiness deferral, then accepts and returns to the ordinary Sail menu', () => {
     visitM3Fixture({
       portId: '75',

@@ -194,6 +194,34 @@ describe('M3 finale browser branches', () => {
     });
   });
 
+  it('repairs a future Martinez anchor before the next-date appointment', () => {
+    const current = minutesAt(1523, 1, 1, 10);
+    visitM3Fixture({
+      portId: '57',
+      buildingId: '4',
+      timePassed: current,
+      storyEvents: finaleThrough('martinez-exposed'),
+      storyEventTimes: {
+        [id('martinez-exposed')]: minutesAt(1523, 2, 1, 10),
+      },
+    });
+    cy.get('[data-test=building]').should('contain.text', '09:00至14:59');
+    saveFromSystem().then((saved) => {
+      expect(saved.storyEventTimes[id('martinez-exposed')]).to.equal(current);
+      expect(saved.storyEvents).not.to.include(id('spanish-alliance'));
+    });
+    closeSidebar();
+
+    relocateM3Fixture('57', '4', {
+      timePassed: minutesAt(1523, 1, 2, 9),
+    });
+    cy.get('[data-test=building]').should(
+      'contain.text',
+      '西班牙会与你共同对抗',
+    );
+    completeBuildingEvent(id('spanish-alliance'));
+  });
+
   it('earns retreat and defeat, retries from Cayenne, wins with actual shot, and preserves the ending across reload and re-entry', () => {
     visitM3Fixture({
       portId: null,

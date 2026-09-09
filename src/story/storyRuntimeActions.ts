@@ -240,15 +240,17 @@ export const storyRuntimeActions: StoryEffectRuntime = {
       state.storyEventTimes = {};
     }
     const existingTime = state.storyEventTimes[eventId];
+    const currentTime =
+      Number.isFinite(state.timePassed) && state.timePassed >= 0
+        ? state.timePassed
+        : 0;
     if (
       typeof existingTime !== 'number' ||
       !Number.isFinite(existingTime) ||
-      existingTime < 0
+      existingTime < 0 ||
+      existingTime > currentTime
     ) {
-      state.storyEventTimes[eventId] =
-        Number.isFinite(state.timePassed) && state.timePassed >= 0
-          ? state.timePassed
-          : 0;
+      state.storyEventTimes[eventId] = currentTime;
     }
     if (!state.storyEvents.includes(eventId)) state.storyEvents.push(eventId);
     const key = getLegacyCompletionKey(eventId, compiledStoryContent);

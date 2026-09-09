@@ -168,30 +168,39 @@ const normalizeV6 = (save: AnySave): AnySave => {
   };
 };
 
-const isValidStoryEventTime = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value) && value >= 0;
+const validCurrentTime = (value: unknown): number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : 0;
+
+const isValidStoryEventTime = (
+  value: unknown,
+  currentTime: number,
+): value is number =>
+  typeof value === 'number' &&
+  Number.isFinite(value) &&
+  value >= 0 &&
+  value <= currentTime;
 
 const normalizeStoryEventTimes = (
   value: unknown,
   storyEvents: unknown,
   timePassed: unknown,
 ): Record<string, number> => {
+  const currentTime = validCurrentTime(timePassed);
   const normalized =
     value && typeof value === 'object' && !Array.isArray(value)
       ? Object.fromEntries(
           Object.entries(value).filter((entry): entry is [string, number] =>
-            isValidStoryEventTime(entry[1]),
+            isValidStoryEventTime(entry[1], currentTime),
           ),
         )
       : {};
-  const fallback = isValidStoryEventTime(timePassed) ? timePassed : 0;
   if (Array.isArray(storyEvents)) {
     storyEvents.forEach((eventId) => {
       if (
         typeof eventId === 'string' &&
-        !isValidStoryEventTime(normalized[eventId])
+        !isValidStoryEventTime(normalized[eventId], currentTime)
       ) {
-        normalized[eventId] = fallback;
+        normalized[eventId] = currentTime;
       }
     });
   }

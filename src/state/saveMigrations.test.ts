@@ -151,10 +151,17 @@ describe('save migrations (D6)', () => {
     const current = {
       version: 7,
       timePassed: 900,
-      storyEvents: ['completed.missing', 'completed.invalid'],
+      storyEvents: [
+        'completed.missing',
+        'completed.invalid',
+        'completed.future',
+      ],
       storyEventTimes: {
         'unknown.valid': 123,
+        'unknown.current': 900,
+        'unknown.future': 901,
         'completed.invalid': -1,
+        'completed.future': 901,
         'unknown.invalid': Number.NaN,
         'unknown.string': '12',
       },
@@ -167,7 +174,9 @@ describe('save migrations (D6)', () => {
 
     expect(migrate(current)?.storyEventTimes).toEqual({
       'unknown.valid': 123,
+      'unknown.current': 900,
       'completed.invalid': 900,
+      'completed.future': 900,
       'completed.missing': 900,
     });
     expect(migrate(current)?.storyEvents).toEqual(current.storyEvents);
@@ -181,20 +190,21 @@ describe('save migrations (D6)', () => {
           version: 7,
           timePassed,
           storyEvents: ['completed'],
-          storyEventTimes: {},
+          storyEventTimes: { 'unknown.zero': 0, 'unknown.future': 1 },
           items: [],
           equipment: { weaponId: null, armorId: null },
           mateProgress: {},
           combatResults: {},
           activeCombat: null,
         })?.storyEventTimes,
-      ).toEqual({ completed: 0 });
+      ).toEqual({ 'unknown.zero': 0, completed: 0 });
     },
   );
 
   it('returns clocks that are deeply independent from the input save', () => {
     const raw = {
       version: 7,
+      timePassed: 123,
       storyEvents: [],
       storyEventTimes: { 'unknown.valid': 123 },
       items: [],

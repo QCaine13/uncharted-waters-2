@@ -7,6 +7,12 @@ import type { CombatState, DuelCombatantStats } from '../combat/types';
 import { encounterCatalog, type CombatEncounterId } from '../combat/encounters';
 import { notifyCombatChanged } from '../combat/combatEvents';
 import Input from '../input';
+import { conditionSatisfied } from '../story/core/resolver';
+import {
+  storyEventId,
+  type StoryCondition,
+  type StoryContext,
+} from '../story/core/types';
 
 const fighter: DuelCombatantStats = {
   swordplay: 82,
@@ -15,6 +21,30 @@ const fighter: DuelCombatantStats = {
   armorRating: 20,
   weaponCategory: '2',
 };
+
+const storyMinutesAt = (
+  year: number,
+  month: number,
+  day: number,
+  hour = 10,
+): number =>
+  (Date.UTC(year, month - 1, day, hour) - Date.UTC(1522, 4, 17)) / 60_000;
+
+const clockContext = (timePassed: number): StoryContext => ({
+  stage: 'building',
+  portId: '75',
+  buildingId: '8',
+  timePassed,
+  dayAtSea: 0,
+  completedEvents: new Set(state.storyEvents.map(storyEventId)),
+  storyEventTimes: state.storyEventTimes,
+  fame: state.fame,
+  items: new Set(),
+  companions: new Set(),
+  discoveries: new Set(),
+  reportedDiscoveries: new Set(),
+  combatResults: {},
+});
 
 const earnedDuelVictory = (): CombatState => {
   let duel = createDuel({
@@ -502,6 +532,63 @@ describe('save/load round trip', () => {
       'completed.invalid': 700,
     });
     expect(window.localStorage.getItem('savedState')).toBe(raw);
+  });
+
+  test('repairs future calendar anchors on load before evaluating their intended boundaries', () => {
+    const waiting = storyEventId('joao.massawa.waiting-for-pietro');
+    const martinez = storyEventId('joao.finale.martinez-exposed');
+    const current = storyMinutesAt(1522, 6, 20);
+    save();
+    const saved = JSON.parse(window.localStorage.getItem('savedState')!);
+    saved.timePassed = current;
+    saved.storyEvents = [waiting, martinez];
+    saved.storyEventTimes = {
+      [waiting]: current + 100_000,
+      [martinez]: current + 200_000,
+      'unknown.valid': current - 1,
+      'unknown.current': current,
+      'unknown.future': current + 1,
+    };
+    window.localStorage.setItem('savedState', JSON.stringify(saved));
+
+    expect(load()).toBe(true);
+    expect(state.storyEventTimes).toEqual({
+      [waiting]: current,
+      [martinez]: current,
+      'unknown.valid': current - 1,
+      'unknown.current': current,
+    });
+
+    const laterMonth: StoryCondition = {
+      type: 'calendarMonthsAfterEvent',
+      eventId: waiting,
+      minMonths: 1,
+      minDay: 11,
+    };
+    const nextDateAtNine: StoryCondition = {
+      type: 'all',
+      conditions: [
+        {
+          type: 'calendarDaysAfterEvent',
+          eventId: martinez,
+          minDays: 1,
+        },
+        { type: 'timeWindow', min: 540, max: 900 },
+      ],
+    };
+    expect(conditionSatisfied(laterMonth, clockContext(current))).toBe(false);
+    expect(conditionSatisfied(nextDateAtNine, clockContext(current))).toBe(
+      false,
+    );
+    expect(
+      conditionSatisfied(laterMonth, clockContext(storyMinutesAt(1522, 7, 11))),
+    ).toBe(true);
+    expect(
+      conditionSatisfied(
+        nextDateAtNine,
+        clockContext(storyMinutesAt(1522, 6, 21, 9)),
+      ),
+    ).toBe(true);
   });
 
   test('uses the same clock normalization during bootstrap and explicit load', () => {

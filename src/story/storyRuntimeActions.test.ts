@@ -212,6 +212,43 @@ describe('production story runtime actions', () => {
     expect(state.storyEventTimes).toEqual({ [first]: 700, [second]: 900 });
   });
 
+  test('repairs future and invalid completion clocks without replacing valid first stamps', () => {
+    const exact = storyEventId('joao.lisbon-opening.house-introduction');
+    const future = storyEventId('joao.lisbon-opening.harbor-final');
+    const invalidCurrent = storyEventId(
+      'joao.first-voyage.commission-accepted',
+    );
+    state.timePassed = 900;
+    state.storyEventTimes = {
+      [exact]: 900,
+      [future]: 901,
+    };
+
+    executeStoryEffects(
+      [
+        { type: 'completeEvent', eventId: exact },
+        { type: 'completeEvent', eventId: future },
+      ],
+      storyRuntimeActions,
+    );
+    expect(state.storyEventTimes).toEqual({ [exact]: 900, [future]: 900 });
+
+    state.timePassed = 1_000;
+    executeStoryEffects(
+      [{ type: 'completeEvent', eventId: future }],
+      storyRuntimeActions,
+    );
+    expect(state.storyEventTimes[future]).toBe(900);
+
+    state.timePassed = Number.NaN;
+    state.storyEventTimes[invalidCurrent] = 1;
+    executeStoryEffects(
+      [{ type: 'completeEvent', eventId: invalidCurrent }],
+      storyRuntimeActions,
+    );
+    expect(state.storyEventTimes[invalidCurrent]).toBe(0);
+  });
+
   test('round-trips an event completion clock through storage', () => {
     const eventId = storyEventId('joao.lisbon-opening.harbor-final');
     state.timePassed = 1_234;
