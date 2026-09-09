@@ -1,4 +1,80 @@
-# Proposal: Robust Save/Load & Persistence Layer
+# Save/Load & Persistence
+
+## Current contract — M3 / save v7
+
+Updated 2026-09-07. The implementation is in
+[`saveMigrations.ts`](../../src/state/saveMigrations.ts),
+[`saveLoad.ts`](../../src/state/saveLoad.ts), and
+[`state.ts`](../../src/state/state.ts). The proposal below is retained as
+historical design context; its version-1 status and remaining-work list are not
+the current implementation status.
+
+- A single `savedState` key holds the game snapshot. Language preference uses
+  the separate `uw2.locale` key. Browser origins, including different preview
+  ports, have separate storage.
+- Startup and explicit Load share the migration chain. Versions 1 through 6
+  migrate to version 7; an unsupported version or invalid JSON is rejected.
+  Explicit failed Load leaves the running game unchanged. Live world/port
+  objects are rebuilt after a successful load, and load subscribers reconcile
+  input pauses and open sessions.
+- Version 5 introduced `storyEvents` and `reportedDiscoveries`. Old Lisbon
+  quest keys remain in `quests`; unknown progress IDs are retained. Version-4
+  discoveries are treated as already reported because their gold was paid by
+  that version.
+- Version 6 adds `equipment` (`weaponId`, `armorId`), `mateProgress` (battle XP
+  by sailor ID), `combatResults` (outcome by encounter ID), and `activeCombat`
+  (a serializable duel/naval snapshot or `null`). Version-5 migration initializes
+  those fields without changing possessions, money, companions, or story history.
+- Version 7 adds `storyEventTimes: Record<string, number>`, measured in game
+  minutes. First completion stamps the event once; repeated completion preserves
+  a valid existing timestamp. Save/load deep-copies the map. Migration and
+  normalization preserve finite nonnegative timestamps no later than the saved
+  current time, including unknown IDs. Completed events with missing or invalid
+  clocks are anchored conservatively at that saved time (or zero when invalid);
+  normalization never invents completed events. Such old saves may wait longer
+  for a calendar gate, rather than bypass it.
+- Current-version normalization clears unsupported or malformed active combats,
+  invalid equipment slots, invalid XP entries, and invalid outcome values.
+  Equipped items must be owned and match the slot category. Unknown historical
+  combat IDs with supported outcome values remain saved; unknown inventory IDs
+  remain owned. This is defensive normalization of the M2 fields, not a claim
+  that every legacy state field has a complete runtime schema. Story clocks
+  receive the additional normalization described above.
+- Combat snapshots retain phase, intent, round, revision, HP, range, crew, shot,
+  lumber, and any nested captain duel. A legal action saves once. Result
+  confirmation records the outcome, applies its one-time XP/recovery, and clears
+  the active snapshot in one save. Stale controls and covered controls do nothing.
+- Start, normalization, and final settlement share `canReplayEncounter` from
+  `src/combat/encounters.ts`. If stored history already closes an encounter,
+  normalization discards its conflicting active snapshot and load releases the
+  combat pause; history, possessions, and earned XP remain intact. House-draw
+  rematches and naval-defeat retries remain valid, including pending results.
+  Final settlement independently rejects a closed encounter before mutation.
+  Loading normalizes the running state without immediately rewriting storage;
+  the next save persists the normalized snapshot.
+- M3 uses the same encounter replay contract. Each Ottoman fleet accepts
+  victory or voluntary retreat for story progression, with defeat retry at
+  Massawa. Amazon defeat, retreat and draw permit retry at Cayenne; only victory
+  unlocks homecoming, and a final retreat awards no XP. The historical
+  outcome stays stored while a legal retry is active. Naval starts with zero flagship hull
+  or crew are immediate defeats with no paid action.
+- The Staff is a protected item, not a completion flag. Ordered effect preflight
+  simulates receive/consume before any mutation; hand-in consumes one Staff,
+  awards the existing Crown and fame, completes the event and saves once. Its
+  sale action and UI both refuse sale. Axum display and the journal ending are
+  derived from completion markers, with no extra persisted UI state.
+- A declarative event that starts combat uses `startCombatWithoutSave` inside
+  its effect group; the story runtime performs the enclosing save. Do not add
+  a second save or a narrative callback to simulate an outcome.
+
+When adding persistent state, update the state type, save/load field list,
+migration defaults, normalization where needed, and round-trip tests together.
+The explicit field list is still maintained in code; the proposed
+`SERIALIZABLE_KEYS` refactor and multiple save slots below have not shipped.
+Combat coverage lives in `src/state/saveMigrations.test.ts`,
+`src/state/saveLoad.test.ts`, and `src/state/actionsCombat.test.ts`.
+
+## Historical proposal — June 2026
 
 **Status**: Revised — MVP already shipped; this doc now covers the *remaining* hardening work  
 **Date**: 2026-06-13 (revised 2026-06-13 against commit `9593a11`)  

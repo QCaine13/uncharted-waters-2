@@ -13,6 +13,9 @@ export interface JournalEntry {
   title: string;
   body: string;
   completed: boolean;
+  current?: boolean;
+  kind?: 'objective' | 'advice' | 'future';
+  values?: Record<string, string | number>;
 }
 
 const openingSteps = [
@@ -56,10 +59,12 @@ const openingSteps = [
 
 export const getFirstVoyageJournal = (state: State): JournalEntry[] => {
   const completedEvents = new Set(state.storyEvents ?? []);
+  const chapterCompleted = completedEvents.has(CHAPTER_COMPLETE_EVENT_ID);
   const domingoMet = completedEvents.has(DOMINGO_MET_EVENT_ID);
   const domingoRecruited =
-    completedEvents.has(DOMINGO_RECRUITED_EVENT_ID) &&
-    state.mates.some(({ sailorId }) => sailorId === '34');
+    chapterCompleted ||
+    (completedEvents.has(DOMINGO_RECRUITED_EVENT_ID) &&
+      state.mates.some(({ sailorId }) => sailorId === '34'));
   const discoveredGibraltar = state.discoveries.includes(
     GIBRALTAR_DISCOVERY_ID,
   );
@@ -72,13 +77,14 @@ export const getFirstVoyageJournal = (state: State): JournalEntry[] => {
       id,
       title,
       body,
-      completed: completedEvents.has(eventId),
+      completed: chapterCompleted || completedEvents.has(eventId),
     })),
     {
       id: 'commission',
       title: 'First voyage commission',
       body: 'Accept the first-voyage commission at the Lisbon Guild.',
-      completed: completedEvents.has(COMMISSION_ACCEPTED_EVENT_ID),
+      completed:
+        chapterCompleted || completedEvents.has(COMMISSION_ACCEPTED_EVENT_ID),
     },
     {
       id: 'domingo',
@@ -92,13 +98,13 @@ export const getFirstVoyageJournal = (state: State): JournalEntry[] => {
       id: 'gibraltar',
       title: 'Chart Gibraltar',
       body: 'Sail south from Lisbon around Iberia’s southwest coast, then east toward Seville and Ceuta. Chart Gibraltar near 36° N, 5.6° W.',
-      completed: discoveredGibraltar,
+      completed: chapterCompleted || discoveredGibraltar,
     },
     {
       id: 'report',
       title: 'Report Gibraltar',
       body: 'Return to the Lisbon Guild and report the Strait of Gibraltar.',
-      completed: reportedGibraltar,
+      completed: chapterCompleted || reportedGibraltar,
     },
     {
       id: 'chapter',

@@ -8,6 +8,7 @@ import type {
 } from './types';
 import { storyEventId } from './types';
 import { getCompletedStoryEvents } from '../legacy/lisbonCompletionKeys';
+import { getCalendarParts } from '../../time/calendar';
 
 export type RandomSelector = (
   candidates: readonly StoryEvent[],
@@ -30,6 +31,40 @@ export const conditionSatisfied = (
       return !conditionSatisfied(condition.condition, context);
     case 'eventCompleted':
       return context.completedEvents.has(condition.eventId);
+    case 'calendarMonthsAfterEvent':
+    case 'calendarDaysAfterEvent': {
+      const anchor = context.storyEventTimes?.[condition.eventId];
+      if (
+        !context.completedEvents.has(condition.eventId) ||
+        !Number.isFinite(anchor) ||
+        (anchor as number) < 0 ||
+        !Number.isFinite(context.timePassed) ||
+        (anchor as number) > context.timePassed
+      ) {
+        return false;
+      }
+      const now = getCalendarParts(context.timePassed);
+      const completed = getCalendarParts(anchor as number);
+      if (condition.type === 'calendarDaysAfterEvent') {
+        return now.dayIndex - completed.dayIndex >= condition.minDays;
+      }
+      return (
+        now.monthIndex - completed.monthIndex >= condition.minMonths &&
+        now.day >= condition.minDay
+      );
+    }
+    case 'withinWorldArea': {
+      const position = context.worldPosition;
+      return (
+        position !== undefined &&
+        Number.isFinite(position.x) &&
+        Number.isFinite(position.y) &&
+        position.x >= condition.minX &&
+        position.x <= condition.maxX &&
+        position.y >= condition.minY &&
+        position.y <= condition.maxY
+      );
+    }
     case 'atPort':
       return context.portId === condition.portId;
     case 'atBuilding':
@@ -71,6 +106,10 @@ export const conditionSatisfied = (
       return context.items.has(condition.itemId);
     case 'hasCompanion':
       return context.companions.has(condition.characterId);
+    case 'combatResolved': {
+      const outcome = context.combatResults?.[condition.encounterId];
+      return outcome !== undefined && condition.outcomes.includes(outcome);
+    }
     default: {
       const exhaustive: never = condition;
       throw new Error(
@@ -161,6 +200,11 @@ export const createStoryContext = (
       ...(state.storyEvents ?? []).map(storyEventId),
       ...getCompletedStoryEvents(state.quests ?? [], content),
     ]),
+    storyEventTimes: { ...(state.storyEventTimes ?? {}) },
+    worldPosition:
+      state.fleets?.['1']?.position === undefined
+        ? undefined
+        : { ...state.fleets['1'].position },
     fame: state.fame,
     items: new Set(state.items ?? []),
     companions: new Set(
@@ -170,5 +214,6 @@ export const createStoryContext = (
     ),
     discoveries: new Set(state.discoveries ?? []),
     reportedDiscoveries: new Set(state.reportedDiscoveries ?? []),
+    combatResults: { ...(state.combatResults ?? {}) },
   };
 };

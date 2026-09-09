@@ -34,14 +34,23 @@ const createRuntime = (
     receiveGold: (amount: number) => {
       operations.push(['receiveGold', amount]);
     },
+    receiveFame: (fame, amount) => {
+      operations.push(['receiveFame', fame, amount]);
+    },
     receiveItem: (itemId: ItemId) => {
       operations.push(['receiveItem', itemId]);
+    },
+    consumeItem: (itemId: ItemId) => {
+      operations.push(['consumeItem', itemId]);
     },
     receiveShip: (shipId: string, name: string) => {
       operations.push(['receiveShip', shipId, name]);
     },
     addCompanion: (companionId: CharacterId) => {
       operations.push(['addCompanion', companionId]);
+    },
+    removeCompanion: (companionId: CharacterId) => {
+      operations.push(['removeCompanion', companionId]);
     },
     assignMate: (companionId: CharacterId, role: Role) => {
       operations.push(['assignMate', companionId, role]);
@@ -51,6 +60,9 @@ const createRuntime = (
     },
     setPort: (portId: string | null) => {
       operations.push(['setPort', portId]);
+    },
+    startCombat: (encounterId: string) => {
+      operations.push(['startCombat', encounterId]);
     },
     save: () => {
       operations.push(['save']);
@@ -65,14 +77,18 @@ describe('story effect interpreter', () => {
   test('executes every effect in source order and persists once', () => {
     const effects: StoryEffect[] = [
       { type: 'receiveGold', amount: 1000 },
+      { type: 'receiveFame', fame: 'adventure', amount: 200 },
       { type: 'receiveItem', itemId: '4' },
+      { type: 'consumeItem', itemId: '4' },
       { type: 'receiveShip', shipId: '6', name: 'Hermes II' },
       { type: 'addCompanion', characterId: companionId },
+      { type: 'removeCompanion', characterId: companionId },
       { type: 'assignMate', characterId: companionId, role: 'firstMate' },
       { type: 'exitBuilding' },
       { type: 'setPort', portId: '2' },
       { type: 'save' },
       { type: 'completeEvent', eventId },
+      { type: 'startCombat', encounterId: 'joao.m2.kahn-house' },
     ];
     const runtime = createRuntime();
 
@@ -82,13 +98,17 @@ describe('story effect interpreter', () => {
     });
     expect(runtime.operations).toEqual([
       ['receiveGold', 1000],
+      ['receiveFame', 'adventure', 200],
       ['receiveItem', '4'],
+      ['consumeItem', '4'],
       ['receiveShip', '6', 'Hermes II'],
       ['addCompanion', companionId],
+      ['removeCompanion', companionId],
       ['assignMate', companionId, 'firstMate'],
       ['exitBuilding'],
       ['setPort', '2'],
       ['completeEvent', eventId],
+      ['startCombat', 'joao.m2.kahn-house'],
       ['save'],
     ]);
   });

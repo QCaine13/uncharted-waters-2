@@ -107,4 +107,13 @@ describe('first voyage journal', () => {
       getFirstVoyageJournal(state).every(({ completed }) => completed),
     ).toBe(true);
   });
+
+  test('keeps every M1 milestone historical after a completed chapter loses Domingo', () => {
+    state.storyEvents = [CHAPTER_COMPLETE_EVENT_ID];
+    state.mates = [{ sailorId: '1', role: 0 }];
+
+    expect(
+      getFirstVoyageJournal(state).every(({ completed }) => completed),
+    ).toBe(true);
+  });
 });

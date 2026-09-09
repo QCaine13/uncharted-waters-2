@@ -60,3 +60,59 @@ test('renders the recruited four-person roster and Domingo portrait safely', () 
 
   act(() => root.unmount());
 });
+
+test('shows effective battle level and accumulated battle experience', () => {
+  state.fleets = {
+    '1': {
+      position: undefined,
+      ships: [
+        { id: '6', name: 'Hermes II', crew: 20, cargo: [], durability: 30 },
+      ],
+    },
+  };
+  state.mates = [{ sailorId: '1', role: 0 }];
+  state.mateProgress = { '1': { battleExperience: 250 } };
+  localStorage.setItem('uw2.locale', 'en');
+  const container = document.createElement('div');
+  const root = createRoot(container);
+
+  act(() => root.render(<Mates />));
+
+  expect(container.querySelector('[data-test=battle-level]')?.textContent).toBe(
+    '3',
+  );
+  expect(
+    container.querySelector('[data-test=battle-experience]')?.textContent,
+  ).toBe('250');
+
+  act(() => root.unmount());
+});
+
+test('renders a portraitless relief captain with localized initials', () => {
+  state.fleets = {
+    '1': {
+      position: undefined,
+      ships: [
+        { id: '6', name: 'Hermes II', crew: 20, cargo: [], durability: 30 },
+      ],
+    },
+  };
+  state.mates = [{ sailorId: 'm2-relief-captain', role: 0 }];
+  state.mateProgress = {};
+  localStorage.setItem('uw2.locale', 'zh-CN');
+  const container = document.createElement('div');
+  const root = createRoot(container);
+
+  act(() => root.render(<Mates />));
+
+  expect(container.textContent).toContain('代理船长');
+  expect(
+    container.querySelector('[data-test=character-portrait-placeholder]')
+      ?.textContent,
+  ).toBe('代理');
+  expect(
+    container.querySelector('img[src="portrait:m2-relief-captain"]'),
+  ).toBeNull();
+
+  act(() => root.unmount());
+});

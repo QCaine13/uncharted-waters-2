@@ -120,11 +120,23 @@ export const getDiscoveries = (): Landmark[] =>
 
 export const getPlayerItem = (i: number) => itemData[state.items[i]];
 
+export const getMateBattleLevel = (sailorId: string): number => {
+  const baseLevel = getSailor(sailorId)?.battleLevel ?? 1;
+  const experience = state.mateProgress[sailorId]?.battleExperience ?? 0;
+  return baseLevel + Math.floor(experience / 100);
+};
+
 export const getMates = () =>
-  state.mates.map((mate) => ({
-    ...mate,
-    ...getSailor(mate.sailorId),
-  }));
+  state.mates.map((mate) => {
+    const sailor = getSailor(mate.sailorId);
+    return {
+      ...mate,
+      ...sailor,
+      battleExperience:
+        state.mateProgress[mate.sailorId]?.battleExperience ?? 0,
+      battleLevel: getMateBattleLevel(mate.sailorId),
+    };
+  });
 
 export const getCaptain = (shipI: Number) => {
   const mate = state.mates.find(({ role }) => role === shipI);
@@ -133,7 +145,10 @@ export const getCaptain = (shipI: Number) => {
     throw Error('No captain was found for the provided ship');
   }
 
-  return getSailor(mate.sailorId);
+  return {
+    ...getSailor(mate.sailorId),
+    battleLevel: getMateBattleLevel(mate.sailorId),
+  };
 };
 
 export const getRoleDisplay = (role: Role) => {

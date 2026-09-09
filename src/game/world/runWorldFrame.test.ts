@@ -47,3 +47,16 @@ test('reading a sidebar overlay pauses even when no sea event is available', () 
   runWorldFrame(world, () => false);
   expect(elapsed).toBe(20);
 });
+
+test('active combat pause prevents both sea-story initiation and simulation', () => {
+  const world = { update: jest.fn(), draw: jest.fn() };
+  const startStory = jest.fn(() => false);
+  const releaseCombat = Input.suspend('combat');
+
+  runWorldFrame(world, startStory);
+
+  expect(startStory).not.toHaveBeenCalled();
+  expect(world.update).not.toHaveBeenCalled();
+  expect(world.draw).toHaveBeenCalledTimes(1);
+  releaseCombat();
+});

@@ -287,13 +287,26 @@ export const receiveStoryItem = (id: ItemId) => {
   state.items.push(id);
 };
 
+export const consumeStoryItem = (id: ItemId): boolean => {
+  const index = state.items.indexOf(id);
+  if (index < 0) return false;
+
+  state.items.splice(index, 1);
+  if (!state.items.includes(id)) {
+    if (state.equipment.weaponId === id) state.equipment.weaponId = null;
+    if (state.equipment.armorId === id) state.equipment.armorId = null;
+  }
+  return true;
+};
+
 export const ITEM_SHOP_SELL_MULTIPLIER = 0.5;
 
 export const sellItem = (i: number) => {
   const id = state.items[i];
-  const { price } = itemData[id];
+  const item = itemData[id];
+  if (!item || item.sellable === false) return false;
 
-  state.gold += price * ITEM_SHOP_SELL_MULTIPLIER;
+  state.gold += item.price * ITEM_SHOP_SELL_MULTIPLIER;
   state.items.splice(i, 1);
 
   updateGeneral();

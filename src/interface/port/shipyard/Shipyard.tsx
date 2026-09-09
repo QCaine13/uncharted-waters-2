@@ -19,6 +19,11 @@ import { VendorMessageBoxType } from '../../quest/getMessageBoxes';
 import ShipyardShipInputName from './ShipyardShipInputName';
 import { canAfford, getUsedShips } from '../../../state/selectors';
 import { t } from '../../../localization';
+import {
+  getRepairQuote,
+  repairShip,
+  type RepairQuote,
+} from '../../../state/actionsRepair';
 
 const shipyardOptions = [
   'New Ship',
@@ -29,6 +34,11 @@ const shipyardOptions = [
   'Invest',
 ] as const;
 type ShipyardOptions = typeof shipyardOptions[number];
+
+interface RepairSelection {
+  index: number;
+  quote: RepairQuote;
+}
 
 const shipyardDisabledOptions: ShipyardOptions[] = [
   'New Ship',
@@ -43,6 +53,8 @@ export default function Shipyard() {
 
   const [selectedShipNumberToSell, setSelectedShipNumberToSell] =
     useState<number>();
+  const [repairSelection, setRepairSelection] = useState<RepairSelection>();
+  const [repairResult, setRepairResult] = useState<RepairQuote>();
 
   const { option, step } = state;
 
@@ -99,7 +111,10 @@ export default function Shipyard() {
 
       if (step === 2) {
         vendorMessage = {
-          body: t('I’d sell this ship for {price} gold pieces. What do ye say?', { price: shipData[usedShips[usedShipId]].basePrice }),
+          body: t(
+            'I’d sell this ship for {price} gold pieces. What do ye say?',
+            { price: shipData[usedShips[usedShipId]].basePrice },
+          ),
           confirm: {
             yes: next,
             no: () => {
@@ -152,10 +167,89 @@ export default function Shipyard() {
   }
 
   if (option === 'Repair') {
-    vendorMessage = {
-      body: 'Your fleet’s already in tiptop shape, matey!',
-      acknowledge: back,
-    };
+    const repairableShips = getPlayerFleet()
+      .map((ship, index) => ({ ship, index, quote: getRepairQuote(index) }))
+      .filter(({ quote }) => quote.missing > 0);
+
+    if (step === 2 && repairResult) {
+      vendorMessage = {
+        body: t('Repaired {points} hull for {cost} gold.', {
+          points: repairResult.points,
+          cost: repairResult.cost,
+        }),
+        acknowledge: () => {
+          setRepairSelection(undefined);
+          setRepairResult(undefined);
+          back(3);
+        },
+      };
+    } else if (repairableShips.length === 0) {
+      vendorMessage = {
+        body: 'Your fleet’s already in tiptop shape, matey!',
+        acknowledge: back,
+      };
+    } else {
+      menu2 = (
+        <BuildingMenu
+          title="Your Ships"
+          options={repairableShips.map(({ ship, index, quote }) => ({
+            label: t('{name} — {missing} damage — {points} affordable', {
+              name: ship.name,
+              missing: quote.missing,
+              points: quote.points,
+            }),
+            value: index,
+          }))}
+          onSelect={(index) => {
+            setRepairSelection({ index, quote: getRepairQuote(index) });
+            next();
+          }}
+          onCancel={back}
+          level2
+          hidden={step !== 0}
+          translateLabels={false}
+        />
+      );
+
+      if (step === 0) {
+        vendorMessage = { body: 'Which ship needs repairs?' };
+      }
+
+      if (step === 1 && repairSelection) {
+        const { quote } = repairSelection;
+        if (quote.points === 0) {
+          vendorMessage = {
+            body: 'You need at least 10 gold to repair one hull point.',
+            acknowledge: () => {
+              setRepairSelection(undefined);
+              back();
+            },
+          };
+        } else {
+          vendorMessage = {
+            body: `${t(
+              'You can afford {points} of the {missing} damaged hull points.',
+              { points: quote.points, missing: quote.missing },
+            )} ${t('Repair {points} hull for {cost} gold?', {
+              points: quote.points,
+              cost: quote.cost,
+            })}`,
+            confirm: {
+              yes: () => {
+                if (repairShip(repairSelection.index)) {
+                  setRepairResult(quote);
+                  next();
+                }
+              },
+              no: () => {
+                setRepairSelection(undefined);
+                back();
+              },
+            },
+          };
+        }
+      }
+    }
   }
 
   if (option === 'Sell') {
@@ -200,7 +294,9 @@ export default function Shipyard() {
         const ship = getPlayerFleetShip(selectedShipNumberToSell);
 
         vendorMessage = {
-          body: t('For this ship, I’ll give you {price} gold pieces. OK?', { price: shipData[ship.id].basePrice * SELL_SHIP_MODIFIER }),
+          body: t('For this ship, I’ll give you {price} gold pieces. OK?', {
+            price: shipData[ship.id].basePrice * SELL_SHIP_MODIFIER,
+          }),
           confirm: {
             yes: () => {
               sellShipNumber(selectedShipNumberToSell);

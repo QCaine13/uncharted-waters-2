@@ -187,12 +187,33 @@ describe('story content manifest', () => {
       .sort();
 
     expect(report.counts).toEqual({
-      characters: 9,
-      relationships: 8,
-      arcs: 2,
-      events: 52,
+      characters: 20,
+      relationships: 17,
+      arcs: 5,
+      events: 104,
     });
     expect(report.arcs).toEqual([
+      {
+        id: 'joao.conflict-and-growth',
+        entryEvents: ['joao.conflict-and-growth.domingo-missing'],
+        terminalEvents: [
+          'joao.conflict-and-growth.chapter-complete',
+          'joao.conflict-and-growth.domingo-farewell-flamberge-owned',
+          'joao.conflict-and-growth.kahn-house-rematch',
+          'joao.conflict-and-growth.katarina-retry',
+        ],
+        crossArcDependencies: ['joao.first-voyage'],
+      },
+      {
+        id: 'joao.finale',
+        entryEvents: ['joao.finale.japan-request'],
+        terminalEvents: [
+          'joao.finale.amazon-retry',
+          'joao.finale.home-revisited',
+          'joao.finale.rendezvous-wait',
+        ],
+        crossArcDependencies: ['joao.massawa'],
+      },
       {
         id: 'joao.first-voyage',
         entryEvents: [
@@ -212,8 +233,22 @@ describe('story content manifest', () => {
         ),
         crossArcDependencies: [],
       },
+      {
+        id: 'joao.massawa',
+        entryEvents: ['joao.massawa.five-day-voyage'],
+        terminalEvents: [
+          'joao.massawa.chapter-complete',
+          'joao.massawa.ottoman-one-retry',
+          'joao.massawa.ottoman-two-retry',
+          'joao.massawa.waiting-advice',
+        ],
+        crossArcDependencies: ['joao.conflict-and-growth'],
+      },
     ]);
-    expect(report.unreferencedCharacters).toEqual([]);
+    expect(report.unreferencedCharacters).toEqual([
+      'm2-relief-captain',
+      'm3-relief-captain',
+    ]);
     expect(report.unreferencedRelationships).toEqual([]);
     expect(report.legacyCompatibility).toEqual({
       onceEvents: 10,
@@ -237,7 +272,7 @@ describe('story content manifest', () => {
 
     const formatted = formatStoryContentReport(report);
     expect(formatted).toContain(
-      'Story content: 9 characters, 8 relationships, 2 arcs, 52 events',
+      'Story content: 20 characters, 17 relationships, 5 arcs, 104 events',
     );
     expect(formatted).toContain(
       'Legacy compatibility: 10/10 once events mapped (complete)',
@@ -276,6 +311,30 @@ describe('story content manifest', () => {
       coverageComplete: true,
       unmappedEvents: [],
       keys: ['afterFirst'],
+    });
+  });
+
+  test('treats calendar anchors as positive chronological dependencies', () => {
+    const fixture = multiArcFixture();
+    const firstEntry = storyEventId('joao.first.entry');
+    const afterFirst = fixture.events.find(
+      ({ id }) => id === 'joao.second.after-first',
+    );
+    if (afterFirst === undefined) throw new Error('missing fixture event');
+    afterFirst.trigger = {
+      type: 'calendarMonthsAfterEvent',
+      eventId: firstEntry,
+      minMonths: 2,
+      minDay: 11,
+    };
+
+    const secondArc = getStoryContentReport(fixture).arcs.find(
+      ({ id }) => id === 'joao.second',
+    );
+
+    expect(secondArc).toMatchObject({
+      entryEvents: ['joao.second.after-first', 'joao.second.before-first'],
+      crossArcDependencies: ['joao.first'],
     });
   });
 });

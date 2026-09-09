@@ -9,6 +9,7 @@ import { updateGeneral } from './state/actionsPort';
 import { setDockedFleetPositions } from './state/actionsWorld';
 import { localizeDocument, subscribeLocale } from './localization';
 import { runWorldFrame } from './game/world/runWorldFrame';
+import './combat/combatEvents';
 
 localizeDocument();
 subscribeLocale(localizeDocument);

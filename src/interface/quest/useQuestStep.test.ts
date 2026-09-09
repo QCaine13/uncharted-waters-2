@@ -16,12 +16,16 @@ describe('structured quest session advancement', () => {
       canExecute: () => [],
       completeEvent: () => operations.push('complete'),
       receiveGold: () => operations.push('gold'),
+      receiveFame: () => operations.push('fame'),
       receiveItem: () => operations.push('item'),
+      consumeItem: () => operations.push('consumeItem'),
       receiveShip: () => operations.push('ship'),
       addCompanion: () => operations.push('companion'),
+      removeCompanion: () => operations.push('removeCompanion'),
       assignMate: (_character, role) => operations.push(String(role)),
       exitBuilding: () => operations.push('exit'),
       setPort: () => operations.push('port'),
+      startCombat: () => operations.push('combat'),
       save: () => operations.push('save'),
     };
     let session = createStorySession(event);

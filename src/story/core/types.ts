@@ -1,4 +1,5 @@
 import type { ItemId } from '../../data/itemData';
+import type { CombatOutcome } from '../../combat/types';
 import type { Role, Stage, FameType } from '../../state/state';
 
 declare const storyIdBrand: unique symbol;
@@ -32,6 +33,7 @@ export type RelationshipType =
   | 'acquaintance'
   | 'rival'
   | 'enemy'
+  | 'sibling'
   | 'employer'
   | 'employee';
 
@@ -60,6 +62,24 @@ export type StoryCondition =
   | { type: 'any'; conditions: StoryCondition[] }
   | { type: 'not'; condition: StoryCondition }
   | { type: 'eventCompleted'; eventId: StoryEventId }
+  | {
+      type: 'calendarMonthsAfterEvent';
+      eventId: StoryEventId;
+      minMonths: number;
+      minDay: number;
+    }
+  | {
+      type: 'calendarDaysAfterEvent';
+      eventId: StoryEventId;
+      minDays: number;
+    }
+  | {
+      type: 'withinWorldArea';
+      minX: number;
+      maxX: number;
+      minY: number;
+      maxY: number;
+    }
   | { type: 'atPort'; portId: string }
   | { type: 'atBuilding'; buildingId: string }
   | { type: 'stage'; stage: Stage }
@@ -70,17 +90,26 @@ export type StoryCondition =
   | { type: 'hasReportedDiscovery'; discoveryId: string }
   | { type: 'fameAtLeast'; fame: FameType; value: number }
   | { type: 'hasItem'; itemId: ItemId }
-  | { type: 'hasCompanion'; characterId: CharacterId };
+  | { type: 'hasCompanion'; characterId: CharacterId }
+  | {
+      type: 'combatResolved';
+      encounterId: string;
+      outcomes: readonly CombatOutcome[];
+    };
 
 export type StoryEffect =
   | { type: 'completeEvent'; eventId: StoryEventId }
   | { type: 'receiveGold'; amount: number }
+  | { type: 'receiveFame'; fame: FameType; amount: number }
   | { type: 'receiveItem'; itemId: ItemId }
+  | { type: 'consumeItem'; itemId: ItemId }
   | { type: 'receiveShip'; shipId: string; name: string }
   | { type: 'addCompanion'; characterId: CharacterId }
+  | { type: 'removeCompanion'; characterId: CharacterId }
   | { type: 'assignMate'; characterId: CharacterId; role: Role }
   | { type: 'exitBuilding' }
   | { type: 'setPort'; portId: string | null }
+  | { type: 'startCombat'; encounterId: string }
   | { type: 'save' };
 
 export interface DialogueStep {
@@ -137,11 +166,14 @@ export interface StoryContext {
   timePassed: number;
   dayAtSea: number;
   completedEvents: ReadonlySet<StoryEventId>;
+  storyEventTimes?: Readonly<Record<string, number>>;
+  worldPosition?: { x: number; y: number };
   fame: Record<FameType, number>;
   items: ReadonlySet<ItemId>;
   companions: ReadonlySet<CharacterId>;
   discoveries: ReadonlySet<string>;
   reportedDiscoveries: ReadonlySet<string>;
+  combatResults: Readonly<Record<string, CombatOutcome>>;
 }
 
 export interface StoryContentSource {

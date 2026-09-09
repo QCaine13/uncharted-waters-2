@@ -1,5 +1,5 @@
 import type { ItemId } from '../../data/itemData';
-import type { Role } from '../../state/state';
+import type { FameType, Role } from '../../state/state';
 import type {
   CharacterId,
   StoryDiagnostic,
@@ -12,12 +12,16 @@ export interface StoryEffectRuntime {
   preflightGroup?(effects: readonly StoryEffect[]): StoryDiagnostic[];
   completeEvent(eventId: StoryEventId): void;
   receiveGold(amount: number): void;
+  receiveFame(fame: FameType, amount: number): void;
   receiveItem(itemId: ItemId): void;
+  consumeItem(itemId: ItemId): void;
   receiveShip(shipId: string, name: string): void;
   addCompanion(characterId: CharacterId): void;
+  removeCompanion(characterId: CharacterId): void;
   assignMate(characterId: CharacterId, role: Role): void;
   exitBuilding(): void;
   setPort(portId: string | null): void;
+  startCombat(encounterId: string): void;
   save(): void;
 }
 
@@ -47,14 +51,23 @@ const executeStoryEffect = (
     case 'receiveGold':
       runtime.receiveGold(effect.amount);
       break;
+    case 'receiveFame':
+      runtime.receiveFame(effect.fame, effect.amount);
+      break;
     case 'receiveItem':
       runtime.receiveItem(effect.itemId);
+      break;
+    case 'consumeItem':
+      runtime.consumeItem(effect.itemId);
       break;
     case 'receiveShip':
       runtime.receiveShip(effect.shipId, effect.name);
       break;
     case 'addCompanion':
       runtime.addCompanion(effect.characterId);
+      break;
+    case 'removeCompanion':
+      runtime.removeCompanion(effect.characterId);
       break;
     case 'assignMate':
       runtime.assignMate(effect.characterId, effect.role);
@@ -64,6 +77,9 @@ const executeStoryEffect = (
       break;
     case 'setPort':
       runtime.setPort(effect.portId);
+      break;
+    case 'startCombat':
+      runtime.startCombat(effect.encounterId);
       break;
     default: {
       const exhaustive: never = effect;

@@ -147,8 +147,12 @@ export default function ItemShop() {
         <BuildingMenu
           title="Item"
           options={items.map((item, i) => ({
-            label: item.name,
+            label:
+              itemData[item.id].sellable === false
+                ? `${t(item.name)} · ${t('Quest item — cannot be sold')}`
+                : t(item.name),
             value: i,
+            disabled: itemData[item.id].sellable === false,
           }))}
           onSelect={(i) => {
             setSelectedItemI(i);
@@ -157,6 +161,7 @@ export default function ItemShop() {
           onCancel={back}
           level2
           hidden={step !== 0}
+          translateLabels={false}
         />
       );
     }

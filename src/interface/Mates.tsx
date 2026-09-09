@@ -3,12 +3,13 @@ import React, { useState } from 'react';
 import { getMates, getRoleDisplay } from '../state/selectors';
 import MessageBox from './common/MessageBox';
 import Menu from './common/Menu';
-import Assets from '../assets';
 import ProgressBar from './common/ProgressBar';
 import { classNames } from './interfaceUtils';
 import { sailorSkills } from '../data/sailorData';
 import characterData from '../data/characterData';
 import { t } from '../localization';
+import { compiledStoryContent } from '../story';
+import CharacterPortrait from './common/CharacterPortrait';
 
 export default function Mates() {
   const mates = getMates();
@@ -23,10 +24,22 @@ export default function Mates() {
     stats,
     navigationLevel,
     battleLevel,
+    battleExperience,
     skills,
   } = mates[selectedI];
 
-  const { color } = characterData[sailorId];
+  const storyCharacter = [...compiledStoryContent.charactersById.values()].find(
+    (character) => character.sailorId === sailorId,
+  );
+  const color =
+    storyCharacter?.dialogueStyle.color ??
+    characterData[sailorId]?.color ??
+    'text-black';
+  const portraitId =
+    storyCharacter?.portraitId ??
+    storyCharacter?.legacyCharacterId ??
+    (characterData[sailorId] ? sailorId : undefined);
+  const displayName = t(name);
 
   return (
     <MessageBox>
@@ -34,7 +47,7 @@ export default function Mates() {
         <div className="w-[280px]">
           <Menu
             options={mates.map((mate, i) => ({
-              label: mate.name,
+              label: t(mate.name),
               value: i,
             }))}
             onSelect={() => {}}
@@ -43,16 +56,18 @@ export default function Mates() {
         </div>
         <div className="relative text-black text-2xl p-8">
           <div className="flex items-center">
-            <img
-              src={Assets.characters(sailorId)}
+            <CharacterPortrait
+              portraitId={portraitId}
+              name={displayName}
               className="w-32 h-40"
-              alt=""
             />
             <div className="pl-8">
               <div className={classNames('text-4xl font-bold', color)}>
-                {t(name)}
+                {displayName}
               </div>
-              <div className="text-lg text-gray-500">{t('Age {age}', { age })}</div>
+              <div className="text-lg text-gray-500">
+                {t('Age {age}', { age })}
+              </div>
               <div className="mt-4">
                 <div>{getRoleDisplay(role)}</div>
                 <div>{t('Loyal to Portugal')}</div>
@@ -87,11 +102,11 @@ export default function Mates() {
                 <div>
                   <div className="flex items-center justify-between">
                     <div>{t('Battle Level')}</div>
-                    <div>{battleLevel}</div>
+                    <div data-test="battle-level">{battleLevel}</div>
                   </div>
                   <div className="flex items-center justify-between text-gray-500 text-lg mt-2 pl-4">
                     <div>{t('Experience')}</div>
-                    <div>0</div>
+                    <div data-test="battle-experience">{battleExperience}</div>
                   </div>
                 </div>
               </div>

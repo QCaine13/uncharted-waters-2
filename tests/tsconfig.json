@@ -4,6 +4,11 @@
     "noEmit": true,
     "types": ["cypress"]
   },
-  "include": ["../node_modules/cypress", "./**/*.ts"],
+  "include": [
+    "../cypress.config.ts",
+    "../global.d.ts",
+    "../node_modules/cypress",
+    "./**/*.ts"
+  ],
   "exclude": []
 }

@@ -8,7 +8,8 @@ import characterData from '../../data/characterData';
 import getSailor from '../../data/sailorData';
 import { compiledStoryContent } from '../../story';
 import { characterId as toCharacterId } from '../../story/core/types';
-import { t } from '../../localization';
+import { getLocale, t } from '../../localization';
+import CharacterPortrait from '../common/CharacterPortrait';
 
 export type Position = 1 | 2;
 
@@ -28,13 +29,25 @@ export default function CharacterMessageBox({ messageBox, position }: Props) {
   }
 
   const { body, characterId, acknowledge } = messageBox;
-  const presentationCharacterId =
-    compiledStoryContent.charactersById.get(toCharacterId(characterId))
-      ?.legacyCharacterId ?? characterId;
-
-  const { name, color = 'text-black' } =
-    characterData[presentationCharacterId] ||
-    getSailor(presentationCharacterId);
+  const canonical = compiledStoryContent.charactersById.get(
+    toCharacterId(characterId),
+  );
+  const legacy = canonical ? undefined : characterData[characterId];
+  const sailor = canonical ? undefined : getSailor(characterId);
+  const sourceName =
+    canonical?.names.en ?? legacy?.name ?? sailor?.name ?? characterId;
+  const name =
+    canonical && getLocale() === 'zh-CN' && canonical.names.zh
+      ? canonical.names.zh
+      : t(sourceName);
+  const color =
+    canonical?.dialogueStyle.color ?? legacy?.color ?? 'text-black';
+  let portraitId: string | undefined;
+  if (canonical) {
+    portraitId = canonical.portraitId ?? canonical.legacyCharacterId;
+  } else if (legacy || sailor) {
+    portraitId = characterId;
+  }
 
   return (
     <div
@@ -43,13 +56,13 @@ export default function CharacterMessageBox({ messageBox, position }: Props) {
     >
       <MessageBox>
         <div className="flex w-[592px] h-[256px] text-2xl p-4">
-          <img
-            src={Assets.characters(presentationCharacterId)}
+          <CharacterPortrait
+            portraitId={portraitId}
+            name={name}
             className="w-32 h-40"
-            alt=""
           />
           <div className="flex-1 text-2xl pl-4">
-            <div className={classNames('text-base mb-2', color)}>{t(name)}</div>
+            <div className={classNames('text-base mb-2', color)}>{name}</div>
             {t(body)}
             {acknowledge && (
               <img

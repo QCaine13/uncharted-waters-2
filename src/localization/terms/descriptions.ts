@@ -1,4 +1,6 @@
 const descriptions: Record<string, string> = {
+  'The Staff entrusted to João for the ruler of Massawa.':
+    '皮耶德托付给约翰、须交还马沙华统治者的圣杖。',
   'A short sheathed knife used for protection, wielding an 8 inch blade.':
     '护身用短刀，刀刃长8英寸，配有刀鞘。',
   'A short sword with a 32 inch blade. Light and versatile, it’s often used in close fighting.':

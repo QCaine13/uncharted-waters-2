@@ -94,6 +94,40 @@ export const sailorData: { [key: string]: Sailor } = {
     battleLevel: 1,
     skills: ['Negotiation'],
   },
+  'm2-relief-captain': {
+    name: 'Relief Captain',
+    age: 30,
+    stats: {
+      leadership: 50,
+      seamanship: 50,
+      knowledge: 50,
+      intuition: 50,
+      courage: 50,
+      swordplay: 50,
+      charm: 50,
+      luck: 50,
+    },
+    navigationLevel: 1,
+    battleLevel: 1,
+    skills: [],
+  },
+  'm3-relief-captain': {
+    name: 'Second Relief Captain',
+    age: 30,
+    stats: {
+      leadership: 50,
+      seamanship: 50,
+      knowledge: 50,
+      intuition: 50,
+      courage: 50,
+      swordplay: 50,
+      charm: 50,
+      luck: 50,
+    },
+    navigationLevel: 1,
+    battleLevel: 1,
+    skills: [],
+  },
 };
 
 const getSailor = (id: string) => sailorData[id];

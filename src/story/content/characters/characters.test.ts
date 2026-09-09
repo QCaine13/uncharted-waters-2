@@ -1,4 +1,5 @@
 import characterData from '../../../data/characterData';
+import getSailor from '../../../data/sailorData';
 import { compileStoryContent } from '../../core/registry';
 import { characterId } from '../../core/types';
 import { storyRelationships } from '../relationships';
@@ -9,8 +10,8 @@ describe('canonical Lisbon characters', () => {
     storyCharacters.find((character) => character.id === id);
 
   test('preserves every legacy identity, English name, color, role, and sailor link', () => {
-    expect(storyCharacters).toHaveLength(9);
-    expect(new Set(storyCharacters.map(({ id }) => id)).size).toBe(9);
+    expect(storyCharacters).toHaveLength(20);
+    expect(new Set(storyCharacters.map(({ id }) => id)).size).toBe(20);
 
     expect(byId('joao')).toEqual({
       id: characterId('joao'),
@@ -79,12 +80,122 @@ describe('canonical Lisbon characters', () => {
       sailorId: '34',
       legacyCharacterId: '34',
     });
+    expect(byId('m2-relief-captain')).toEqual({
+      id: characterId('m2-relief-captain'),
+      names: { en: 'Relief Captain', zh: '代理船长' },
+      role: 'companion',
+      dialogueStyle: { color: 'text-slate-600' },
+      sailorId: 'm2-relief-captain',
+    });
+    expect(byId('m3-relief-captain')).toEqual({
+      id: characterId('m3-relief-captain'),
+      names: { en: 'Second Relief Captain', zh: '第二代理船长' },
+      role: 'companion',
+      dialogueStyle: { color: 'text-slate-600' },
+      sailorId: 'm3-relief-captain',
+    });
+    expect(byId('kahn')).toEqual({
+      id: characterId('kahn'),
+      names: { en: 'Antonio Kahn', zh: '安东尼奥·卡恩' },
+      role: 'antagonist',
+      dialogueStyle: { color: 'text-red-800' },
+    });
+    expect(byId('katarina')).toEqual({
+      id: characterId('katarina'),
+      names: { en: 'Katarina Erantzo', zh: '卡特琳娜·艾兰茨' },
+      role: 'antagonist',
+      dialogueStyle: { color: 'text-rose-700' },
+    });
+    expect(byId('ali')).toEqual({
+      id: characterId('ali'),
+      names: { en: 'Ali Vezas', zh: '阿兰·维斯特' },
+      role: 'npc',
+      dialogueStyle: { color: 'text-teal-700' },
+    });
+    expect(byId('sasha')).toEqual({
+      id: characterId('sasha'),
+      names: { en: 'Sasha', zh: '莎夏' },
+      role: 'npc',
+      dialogueStyle: { color: 'text-violet-700' },
+    });
+    expect(byId('pietro')).toEqual({
+      id: characterId('pietro'),
+      names: { en: 'Pietro', zh: '皮耶德' },
+      role: 'npc',
+      dialogueStyle: { color: 'text-slate-600' },
+    });
+    expect(byId('taphiel')).toEqual({
+      id: characterId('taphiel'),
+      names: { en: 'Taphiel', zh: '塔菲尔' },
+      role: 'npc',
+      dialogueStyle: { color: 'text-slate-600' },
+    });
+    expect(byId('rudolph')).toEqual({
+      id: characterId('rudolph'),
+      names: { en: 'Rudolph', zh: '鲁道夫' },
+      role: 'antagonist',
+      dialogueStyle: { color: 'text-red-700' },
+    });
+    expect(byId('ezequiel')).toEqual({
+      id: characterId('ezequiel'),
+      names: { en: 'Ezequiel', zh: '艾泽格' },
+      role: 'npc',
+      dialogueStyle: { color: 'text-sky-800' },
+    });
+    expect(byId('martinez')).toEqual({
+      id: characterId('martinez'),
+      names: { en: 'Martinez', zh: '马丁内斯' },
+      role: 'antagonist',
+      dialogueStyle: { color: 'text-stone-700' },
+    });
 
     const sailorIds = storyCharacters
       .map(({ sailorId }) => sailorId)
       .filter((sailorId): sailorId is string => Boolean(sailorId));
-    expect(sailorIds).toEqual(['1', '32', '33', '34']);
+    expect(sailorIds).toEqual([
+      '1',
+      '32',
+      '33',
+      '34',
+      'm2-relief-captain',
+      'm3-relief-captain',
+    ]);
     expect(sailorIds).toHaveLength(new Set(sailorIds).size);
+
+    expect(getSailor('m2-relief-captain')).toEqual({
+      name: 'Relief Captain',
+      age: 30,
+      stats: {
+        leadership: 50,
+        seamanship: 50,
+        knowledge: 50,
+        intuition: 50,
+        courage: 50,
+        swordplay: 50,
+        charm: 50,
+        luck: 50,
+      },
+      navigationLevel: 1,
+      battleLevel: 1,
+      skills: [],
+    });
+    expect(getSailor('m3-relief-captain')).toEqual({
+      name: 'Second Relief Captain',
+      age: 30,
+      stats: {
+        leadership: 50,
+        seamanship: 50,
+        knowledge: 50,
+        intuition: 50,
+        courage: 50,
+        swordplay: 50,
+        charm: 50,
+        luck: 50,
+      },
+      navigationLevel: 1,
+      battleLevel: 1,
+      skills: [],
+    });
   });
 
   test('derives the unchanged legacy dialogue lookup from canonical records', () => {
@@ -169,6 +280,69 @@ describe('canonical Lisbon relationships', () => {
         type: 'companion',
         reciprocal: 'companion',
       },
+      {
+        id: 'joao.kahn.rival',
+        from: 'kahn',
+        to: 'joao',
+        type: 'rival',
+        reciprocal: 'rival',
+      },
+      {
+        id: 'joao.katarina.enemy',
+        from: 'katarina',
+        to: 'joao',
+        type: 'enemy',
+        reciprocal: 'enemy',
+      },
+      {
+        id: 'joao.ali.acquaintance',
+        from: 'ali',
+        to: 'joao',
+        type: 'acquaintance',
+        reciprocal: 'acquaintance',
+      },
+      {
+        id: 'ali.sasha.sibling',
+        from: 'ali',
+        to: 'sasha',
+        type: 'sibling',
+        reciprocal: 'sibling',
+      },
+      {
+        id: 'joao.pietro.acquaintance',
+        from: 'pietro',
+        to: 'joao',
+        type: 'acquaintance',
+        reciprocal: 'acquaintance',
+      },
+      {
+        id: 'joao.taphiel.acquaintance',
+        from: 'taphiel',
+        to: 'joao',
+        type: 'acquaintance',
+        reciprocal: 'acquaintance',
+      },
+      {
+        id: 'joao.rudolph.enemy',
+        from: 'rudolph',
+        to: 'joao',
+        type: 'enemy',
+        reciprocal: 'enemy',
+      },
+      {
+        id: 'joao.ezequiel.acquaintance',
+        from: 'ezequiel',
+        to: 'joao',
+        type: 'acquaintance',
+        reciprocal: 'acquaintance',
+      },
+      {
+        id: 'joao.martinez.enemy',
+        from: 'martinez',
+        to: 'joao',
+        type: 'enemy',
+        reciprocal: 'enemy',
+      },
     ]);
 
     const compiled = compileStoryContent(
@@ -203,9 +377,27 @@ describe('canonical Lisbon relationships', () => {
         'joao:acquaintance:lucia',
         'domingo:companion:joao',
         'joao:companion:domingo',
+        'kahn:rival:joao',
+        'joao:rival:kahn',
+        'katarina:enemy:joao',
+        'joao:enemy:katarina',
+        'ali:acquaintance:joao',
+        'joao:acquaintance:ali',
+        'ali:sibling:sasha',
+        'sasha:sibling:ali',
+        'pietro:acquaintance:joao',
+        'joao:acquaintance:pietro',
+        'taphiel:acquaintance:joao',
+        'joao:acquaintance:taphiel',
+        'rudolph:enemy:joao',
+        'joao:enemy:rudolph',
+        'ezequiel:acquaintance:joao',
+        'joao:acquaintance:ezequiel',
+        'martinez:enemy:joao',
+        'joao:enemy:martinez',
       ]),
     );
-    expect(compiledEdges).toHaveLength(16);
+    expect(compiledEdges).toHaveLength(34);
     expect(compiled.diagnostics).toEqual([]);
   });
 });

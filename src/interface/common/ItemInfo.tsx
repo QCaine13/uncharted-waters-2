@@ -27,7 +27,9 @@ export default function ItemInfo({ item }: Props) {
         </div>
         {attackOrDefenseDisplay !== null && (
           <div>
-            <span className="text-black">{t(attackOrDefenseDisplay.label)}</span>
+            <span className="text-black">
+              {t(attackOrDefenseDisplay.label)}
+            </span>
             <span className="text-red-600 ml-2">
               {attackOrDefenseDisplay.letter}
             </span>
@@ -35,7 +37,17 @@ export default function ItemInfo({ item }: Props) {
         )}
       </div>
       <div className="flex items-center h-full px-16">
-        <img src={Assets.items(imageSlice)} className="w-24 h-24" alt="" />
+        {imageSlice === null ? (
+          <div
+            className="flex w-24 h-24 items-center justify-center rounded-full border-4 border-amber-700 bg-amber-100 text-5xl text-amber-800"
+            data-test="item-emblem"
+            aria-hidden="true"
+          >
+            ✦
+          </div>
+        ) : (
+          <img src={Assets.items(imageSlice)} className="w-24 h-24" alt="" />
+        )}
         <div className="flex-1 pl-16 text-2xl -mt-2 text-black">
           {t(description)}
         </div>

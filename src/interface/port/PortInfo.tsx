@@ -6,6 +6,8 @@ import {
 } from '../../game/port/portUtils';
 import { getPortPriceIndex } from '../../state/actionsMarket';
 import { t } from '../../localization';
+import state from '../../state/state';
+import { getStoryPortName } from '../../story/portStoryNames';
 
 interface Props {
   portId: string;
@@ -22,12 +24,17 @@ export default function PortInfo({ portId }: Props) {
     ({ economy, industry } = port);
   }
 
-  const { name } = port;
+  const name = getStoryPortName(portId, state.storyEvents);
   const priceIndex = getPortPriceIndex(portId);
 
   return (
     <div className="p-5">
-      <div className="text-2xl font-bold whitespace-nowrap">{t(name)}</div>
+      <div
+        className="text-2xl font-bold whitespace-nowrap"
+        data-test="portName"
+      >
+        {t(name)}
+      </div>
       <div className="mb-20">{t(getRegionOrIfSupplyPort(portId))}</div>
       <div className="text-sm">{t('Economy')}</div>
       <div className="mb-4 text-right text-xl">{economy}</div>

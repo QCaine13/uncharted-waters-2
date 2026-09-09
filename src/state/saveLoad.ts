@@ -22,7 +22,12 @@ interface SaveData {
   marketPrices: State['marketPrices'];
   discoveries: State['discoveries'];
   storyEvents: State['storyEvents'];
+  storyEventTimes: State['storyEventTimes'];
   reportedDiscoveries: State['reportedDiscoveries'];
+  equipment: State['equipment'];
+  mateProgress: State['mateProgress'];
+  combatResults: State['combatResults'];
+  activeCombat: State['activeCombat'];
 }
 
 export const save = (): void => {
@@ -44,7 +49,15 @@ export const save = (): void => {
     marketPrices: JSON.parse(JSON.stringify(state.marketPrices)),
     discoveries: [...state.discoveries],
     storyEvents: [...(state.storyEvents ?? [])],
+    storyEventTimes: { ...(state.storyEventTimes ?? {}) },
     reportedDiscoveries: [...(state.reportedDiscoveries ?? [])],
+    equipment: { ...state.equipment },
+    mateProgress: JSON.parse(JSON.stringify(state.mateProgress)),
+    combatResults: { ...state.combatResults },
+    activeCombat:
+      state.activeCombat === null
+        ? null
+        : JSON.parse(JSON.stringify(state.activeCombat)),
   };
 
   window.localStorage.setItem(SAVED_STATE_KEY, JSON.stringify(saveData));
@@ -92,9 +105,17 @@ export const load = (): boolean => {
   state.storyEvents = Array.isArray(saveData.storyEvents)
     ? [...saveData.storyEvents]
     : [];
+  state.storyEventTimes = { ...(saveData.storyEventTimes ?? {}) };
   state.reportedDiscoveries = Array.isArray(saveData.reportedDiscoveries)
     ? [...saveData.reportedDiscoveries]
     : [];
+  state.equipment = { ...saveData.equipment };
+  state.mateProgress = JSON.parse(JSON.stringify(saveData.mateProgress));
+  state.combatResults = { ...saveData.combatResults };
+  state.activeCombat =
+    saveData.activeCombat === null
+      ? null
+      : JSON.parse(JSON.stringify(saveData.activeCombat));
 
   // Clear non-serializable objects so game loop recreates them
   state.world = undefined as unknown as State['world'];

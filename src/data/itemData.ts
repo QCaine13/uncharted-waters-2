@@ -20,9 +20,10 @@ export type Item = {
   name: string;
   description: string;
   price: number;
-  imageSlice: number;
+  imageSlice: number | null;
   rating: number;
   categoryId: CategoryId;
+  sellable?: boolean;
 };
 
 export const itemData = asInferredKeysWithValue<Item>()({
@@ -639,6 +640,15 @@ export const itemData = asInferredKeysWithValue<Item>()({
     imageSlice: 13,
     rating: 55,
     categoryId: '7',
+  },
+  'm3-staff-of-the-saint': {
+    name: 'Staff of the Saint',
+    description: 'The Staff entrusted to João for the ruler of Massawa.',
+    price: 0,
+    imageSlice: null,
+    rating: 0,
+    categoryId: '11',
+    sellable: false,
   },
 });
 

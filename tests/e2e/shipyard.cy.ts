@@ -5,6 +5,7 @@ import {
   setState,
   vendorMessageIncludes,
 } from '../utils';
+import { readVoyageSave } from '../firstVoyageUtils';
 
 describe('Shipyard', () => {
   const boughtShipName = 'Test Balsa';
@@ -87,7 +88,25 @@ describe('Shipyard', () => {
   it('repair', () => {
     clickMenu('Repair');
 
-    vendorMessageIncludes('already in tiptop shape');
+    vendorMessageIncludes('Which ship needs repairs?');
+
+    clickMenu2(boughtShipName);
+
+    vendorMessageIncludes(
+      'You can afford 5 of the 5 damaged hull points. Repair 5 hull for 50 gold?',
+    );
+
+    cy.get('[data-test=confirmYes]').click();
+
+    vendorMessageIncludes('Repaired 5 hull for 50 gold.');
+
+    readVoyageSave().then((saved) => {
+      expect(saved.gold).to.equal(750);
+      expect(saved.fleets?.['1'].ships[1]).to.deep.include({
+        name: boughtShipName,
+        durability: 30,
+      });
+    });
 
     cy.get('[data-test=building]').click();
   });
@@ -103,7 +122,7 @@ describe('Shipyard', () => {
 
     cy.get('[data-test=confirmYes]').click();
 
-    goldIs(1400);
+    goldIs(1350);
 
     vendorMessageIncludes('only have the flag ship');
 

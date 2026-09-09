@@ -6,6 +6,7 @@ import type {
   StoryEvent,
   StoryStep,
 } from './types';
+import { combatOutcomes } from '../../combat/types';
 
 export interface StoryParityManifest {
   legacyKeyToEvent: ReadonlyMap<string, string>;
@@ -18,6 +19,7 @@ export interface StoryValidationCatalogs {
   buildingIds: ReadonlySet<string>;
   shipIds: ReadonlySet<string>;
   sailorIds: ReadonlySet<string>;
+  encounterIds?: ReadonlySet<string>;
   mateRoles: ReadonlySet<string | number | null>;
   discoveryIds?: ReadonlySet<string>;
   parityManifest: StoryParityManifest;
@@ -102,6 +104,75 @@ const visitCondition = (
           'missing-condition-event',
           `${path}.eventId`,
           `Condition references missing event "${condition.eventId}".`,
+          owner,
+        );
+      }
+      break;
+    case 'calendarMonthsAfterEvent':
+      if (!eventIds.has(condition.eventId)) {
+        add(
+          'missing-condition-event',
+          `${path}.eventId`,
+          `Condition references missing event "${condition.eventId}".`,
+          owner,
+        );
+      }
+      if (!Number.isInteger(condition.minMonths) || condition.minMonths < 0) {
+        add(
+          'invalid-calendar-months',
+          `${path}.minMonths`,
+          'Required calendar months must be a non-negative integer.',
+          owner,
+        );
+      }
+      if (
+        !Number.isInteger(condition.minDay) ||
+        condition.minDay < 1 ||
+        condition.minDay > 31
+      ) {
+        add(
+          'invalid-calendar-day',
+          `${path}.minDay`,
+          'Required calendar day must be an integer in [1, 31].',
+          owner,
+        );
+      }
+      break;
+    case 'calendarDaysAfterEvent':
+      if (!eventIds.has(condition.eventId)) {
+        add(
+          'missing-condition-event',
+          `${path}.eventId`,
+          `Condition references missing event "${condition.eventId}".`,
+          owner,
+        );
+      }
+      if (!Number.isInteger(condition.minDays) || condition.minDays < 0) {
+        add(
+          'invalid-calendar-days',
+          `${path}.minDays`,
+          'Required calendar days must be a non-negative integer.',
+          owner,
+        );
+      }
+      break;
+    case 'withinWorldArea':
+      if (
+        !Number.isFinite(condition.minX) ||
+        !Number.isFinite(condition.maxX) ||
+        !Number.isFinite(condition.minY) ||
+        !Number.isFinite(condition.maxY) ||
+        condition.minX < 0 ||
+        condition.maxX > 2159 ||
+        condition.minY < 0 ||
+        condition.maxY > 1079 ||
+        condition.minX > condition.maxX ||
+        condition.minY > condition.maxY
+      ) {
+        add(
+          'invalid-world-area',
+          path,
+          'World area bounds must be finite, ordered, and inside [0, 2159] x [0, 1079].',
           owner,
         );
       }
@@ -226,6 +297,30 @@ const visitCondition = (
         );
       }
       break;
+    case 'combatResolved':
+      if (
+        catalogs?.encounterIds !== undefined &&
+        !catalogs.encounterIds.has(condition.encounterId)
+      ) {
+        add(
+          'unknown-encounter',
+          `${path}.encounterId`,
+          `Condition references unknown combat encounter "${condition.encounterId}".`,
+          owner,
+        );
+      }
+      if (
+        condition.outcomes.length === 0 ||
+        condition.outcomes.some((outcome) => !combatOutcomes.includes(outcome))
+      ) {
+        add(
+          'invalid-combat-outcomes',
+          `${path}.outcomes`,
+          'Combat outcomes must contain at least one supported outcome.',
+          owner,
+        );
+      }
+      break;
     case 'stage':
       break;
     default: {
@@ -259,6 +354,7 @@ const visitEffect = (
       }
       break;
     case 'addCompanion':
+    case 'removeCompanion':
       if (!characterIds.has(effect.characterId)) {
         add(
           'missing-effect-character',
@@ -301,7 +397,18 @@ const visitEffect = (
         );
       }
       break;
+    case 'receiveFame':
+      if (!Number.isFinite(effect.amount) || effect.amount < 0) {
+        add(
+          'invalid-fame',
+          `${path}.amount`,
+          'Fame amount must be a non-negative finite number.',
+          owner,
+        );
+      }
+      break;
     case 'receiveItem':
+    case 'consumeItem':
       if (catalogs !== undefined && !catalogs.itemIds.has(effect.itemId)) {
         add(
           'unknown-item',
@@ -339,6 +446,19 @@ const visitEffect = (
           'unknown-port',
           `${path}.portId`,
           `Effect references unknown port "${effect.portId}".`,
+          owner,
+        );
+      }
+      break;
+    case 'startCombat':
+      if (
+        catalogs?.encounterIds !== undefined &&
+        !catalogs.encounterIds.has(effect.encounterId)
+      ) {
+        add(
+          'unknown-encounter',
+          `${path}.encounterId`,
+          `Effect references unknown combat encounter "${effect.encounterId}".`,
           owner,
         );
       }
@@ -458,6 +578,20 @@ const visitSteps = (
             add,
           ),
         );
+        step.effects.forEach((effect, effectIndex) => {
+          if (effect.type !== 'startCombat') return;
+          const laterNonSave = step.effects
+            .slice(effectIndex + 1)
+            .some((candidate) => candidate.type !== 'save');
+          if (laterNonSave) {
+            add(
+              'non-terminal-combat-start',
+              `${stepPath}.effects[${effectIndex}]`,
+              'Combat start must be the final non-save effect in its group.',
+              owner,
+            );
+          }
+        });
         break;
       default: {
         const exhaustive: never = step;
@@ -481,6 +615,9 @@ const eventDependencies = (
 ): Set<string> => {
   switch (condition.type) {
     case 'eventCompleted':
+      return positive ? new Set([String(condition.eventId)]) : new Set();
+    case 'calendarMonthsAfterEvent':
+    case 'calendarDaysAfterEvent':
       return positive ? new Set([String(condition.eventId)]) : new Set();
     case 'not':
       return eventDependencies(condition.condition, !positive);
