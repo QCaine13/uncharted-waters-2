@@ -4,10 +4,11 @@
 
 ## 工作位置
 
-- 工作树：`/Users/qsircaine/uncharted-waters-2/.worktrees/m3-joao-finale`；分支：`codex/m3-joao-finale`。
-- M3 叠加在已完成但未合并的 M2 `1002d9eb2f3338cd5e4dfc6fc0f17546eb6a4ed6` 上。最终代码提交：`0ad24ed6dd1622a0e0d311fb04b1400efe8cfc46`。本轮未合并或推送。
+- 当前集成工作区：`/Users/qsircaine/uncharted-waters-2`；主分支：`master`；推送目标：`origin/master`。M3 工作树 `.worktrees/m3-joao-finale` 保留原始验收证据。
+- M2 `1002d9e` 与 M3 `3f7cf45` 已通过合并提交 `33a3942bdc6c84220fd2a033b6327c79e4842729` 一并合入 `master`，没有冲突。最终生产代码提交仍为 `0ad24ed6dd1622a0e0d311fb04b1400efe8cfc46`。
 - M1 已在主仓库合并推送；M0/M1/M2/M3 工作树和本机证据均保留。M2 历史边界见 [M2 验证记录](docs/superpowers/verification/2026-09-06-m2-conflict-and-growth.md)，不要将它的地点夹具追溯写成真实远航。
-- 本机恢复入口：`.superpowers/sdd/2026-09-07-m3-joao-finale/progress.md` 的 Current checkpoint、`task-7-report.md` 和 `git log`。日志、原始检查点和截图没有随 Git 分发。
+- 本机证据入口：M3 工作树内 `.superpowers/sdd/2026-09-07-m3-joao-finale/`；当前整合状态以主工作区的本文件与 `git log` 为准。日志、原始检查点和截图没有随 Git 分发。
+- 持续交付约定（用户明确要求，见 D19）：每个阶段完成后，自动完成提交、合并到 `master`、验证并推送 `origin/master`；不能以仅本地完成作为收尾。
 
 ## 已完成的主线
 
@@ -53,6 +54,8 @@ M2 伊斯坦堡报告 → 连续五个海上日期 → 下一设施的阿兰线�
 
 ## 验证与预览
 
+合并验证（2026-09-08）：主工作区 `npm run verify` 退出0，102套/899项测试、38个资源、剧情校验、类型检查、ESLint和生产构建通过，保留3项原有Webpack提示。合并后的396个代码、测试和配置输入与最终M3验收版本逐文件SHA一致；本次没有重新执行约四小时的完整浏览器旅程。日志保留于M3工作树证据目录的 `master-merge-verify.log`。
+
 | 验证范围 | 实际结果 |
 | --- | --- |
 | 最终代码静态检查 | `npm run verify`：102套/899项单元测试、38项资源、剧情、类型、ESLint和构建全部通过；测试TypeScript独立通过 |
@@ -81,4 +84,4 @@ Webpack 三项原有体积/性能建议及 Cypress10 ARM 辅助程序提示保�
 
 ## 接续位置
 
-下一阶段是 M4 其他五位主角。先核对中文交付方案、D15–D18、v7存档约定和本次验证记录，再结合可复用经济、战斗和探索系统确定下一条独立路线。不要重做 M0–M3，也不要将约翰归家当成全部六线完成。本次没有提前开始 M4、合并或推送。
+下一阶段是 M4 其他五位主角。先核对中文交付方案、D15–D18、v7存档约定和本次验证记录，再结合可复用经济、战斗和探索系统确定下一条独立路线。不要重做 M0–M3，也不要将约翰归家当成全部六线完成。M4 尚未开始；M2/M3 已合入主分支，后续阶段继续遵守 D19 的提交、合并、验证和推送约定。
