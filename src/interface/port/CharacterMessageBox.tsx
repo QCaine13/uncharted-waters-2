@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
-import Assets from '../../assets';
 import { classNames } from '../interfaceUtils';
 import MessageBox from '../common/MessageBox';
+import DialogueIndicator from '../dialog/DialogueIndicator';
 import { CharacterMessageBoxType } from '../quest/getMessageBoxes';
 import characterData from '../../data/characterData';
 import getSailor from '../../data/sailorData';
@@ -10,6 +10,7 @@ import { compiledStoryContent } from '../../story';
 import { characterId as toCharacterId } from '../../story/core/types';
 import { getLocale, t } from '../../localization';
 import CharacterPortrait from '../common/CharacterPortrait';
+import { sfcAudio } from '../../sound/sfcAudio';
 
 export type Position = 1 | 2;
 
@@ -24,14 +25,20 @@ const positionClassMap: { [key in Position]: string } = {
 };
 
 export default function CharacterMessageBox({ messageBox, position }: Props) {
+  useEffect(() => {
+    if (messageBox?.body) {
+      sfcAudio.playDialogueBeep(messageBox.characterId);
+    }
+  }, [messageBox?.body, messageBox?.characterId]);
+
   if (messageBox === null) {
     return null;
   }
 
   const { body, characterId, acknowledge } = messageBox;
-  const canonical = compiledStoryContent.charactersById.get(
-    toCharacterId(characterId),
-  );
+  const canonical = characterId
+    ? compiledStoryContent.charactersById.get(toCharacterId(characterId))
+    : undefined;
   const legacy = canonical ? undefined : characterData[characterId];
   const sailor = canonical ? undefined : getSailor(characterId);
   const sourceName =
@@ -40,8 +47,7 @@ export default function CharacterMessageBox({ messageBox, position }: Props) {
     canonical && getLocale() === 'zh-CN' && canonical.names.zh
       ? canonical.names.zh
       : t(sourceName);
-  const color =
-    canonical?.dialogueStyle.color ?? legacy?.color ?? 'text-black';
+  const color = canonical?.dialogueStyle.color ?? legacy?.color ?? 'text-black';
   let portraitId: string | undefined;
   if (canonical) {
     portraitId = canonical.portraitId ?? canonical.legacyCharacterId;
@@ -61,15 +67,22 @@ export default function CharacterMessageBox({ messageBox, position }: Props) {
             name={name}
             className="w-32 h-40"
           />
-          <div className="flex-1 text-2xl pl-4">
-            <div className={classNames('text-base mb-2', color)}>{name}</div>
-            {t(body)}
+          <div className="flex-1 text-2xl pl-4 flex flex-col justify-between">
+            <div>
+              <div className={classNames('text-base mb-2 font-bold', color)}>
+                {name}
+              </div>
+              <div className="leading-[1.6]">
+                {t(body)}
+                {acknowledge && <DialogueIndicator />}
+              </div>
+            </div>
             {acknowledge && (
-              <img
-                src={Assets.images('dialogCaretDown').toDataURL()}
-                alt=""
-                className="w-8 h-8 animate-ping mx-auto mt-8"
-              />
+              <div className="text-right pr-2">
+                <span className="inline-block text-[#d4a742] text-2xl animate-bounce select-none">
+                  ▼
+                </span>
+              </div>
             )}
           </div>
         </div>

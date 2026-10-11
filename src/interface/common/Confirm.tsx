@@ -12,6 +12,7 @@ import useCancel from '../port/hooks/useCancel';
 import { t } from '../../localization';
 import { isInteractiveTextTarget } from '../../localization/dom';
 import Input from '../../input';
+import { sfcAudio } from '../../sound/sfcAudio';
 
 // e.g., if Yes is highlighted but the user clicks No
 const SUBMIT_DELAY_IF_NOT_HIGHLIGHTED = 50;
@@ -42,6 +43,7 @@ export default function Confirm({ onYes, onNo, initialPosition }: Props) {
 
     const timer = setTimeout(() => {
       if (delayedValueToSubmit) {
+        sfcAudio.playConfirmSound();
         onYes();
       } else {
         onNo();
@@ -70,6 +72,7 @@ export default function Confirm({ onYes, onNo, initialPosition }: Props) {
         setDelayedValueToSubmit(undefined);
 
         if (yesHighlighted) {
+          sfcAudio.playConfirmSound();
           onYes();
         } else {
           onNo();
@@ -175,6 +178,7 @@ export default function Confirm({ onYes, onNo, initialPosition }: Props) {
           onClick={() => {
             if (yesHighlighted) {
               setDelayedValueToSubmit(undefined);
+              sfcAudio.playConfirmSound();
               onYes();
             } else {
               setYesHighlighted(true);

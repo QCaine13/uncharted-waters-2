@@ -21,6 +21,7 @@ import {
   subscribeCombat,
 } from '../combat/combatEvents';
 import Combat from './combat/Combat';
+import { useCrtFilter } from './crtFilter';
 
 import './global.css';
 
@@ -65,6 +66,7 @@ export function Interface({ resolve }: Props) {
     setGeneralGeneration((generation) => generation + 1);
   };
 
+  const crtFilter = useCrtFilter();
   const { fade, onAnimationEnd } = useFade();
 
   const inPort = portId !== null;
@@ -85,6 +87,7 @@ export function Interface({ resolve }: Props) {
           className={classNames(
             'w-[1280px] h-[800px] relative select-none',
             fade ? 'fade-out' : '',
+            crtFilter ? 'sfc-crt-scanlines' : '',
           )}
           onAnimationEnd={onAnimationEnd}
           onContextMenu={(e) => e.preventDefault()}

@@ -18,7 +18,10 @@ const initialsFor = (name: string): string => {
       .join('')
       .toUpperCase();
   }
-  return Array.from(words[0] ?? '').slice(0, 2).join('').toUpperCase();
+  return Array.from(words[0] ?? '')
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
 };
 
 export default function CharacterPortrait({
@@ -28,7 +31,12 @@ export default function CharacterPortrait({
 }: Props) {
   if (portraitId !== undefined) {
     return (
-      <img src={Assets.characters(portraitId)} className={className} alt="" />
+      <img
+        src={Assets.characters(portraitId)}
+        className={classNames('[image-rendering:pixelated]', className ?? '')}
+        style={{ imageRendering: 'pixelated' }}
+        alt=""
+      />
     );
   }
 

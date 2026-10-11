@@ -1,13 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { save, load, reset, hasSave } from '../state/saveLoad';
 import { updateGeneral } from '../state/actionsPort';
 import { setLocale, t, type Locale } from '../localization';
 import useLocale from '../localization/useLocale';
+import { useCrtFilter, toggleCrtFilter } from './crtFilter';
+import { sfcAudio } from '../sound/sfcAudio';
 
 export default function System() {
   const locale = useLocale();
+  const crtFilter = useCrtFilter();
+  const [audioOn, setAudioOn] = useState(() => sfcAudio.isAudioEnabled());
   const [message, setMessage] = useState<string | null>(null);
   const [confirmingReset, setConfirmingReset] = useState(false);
+
+  useEffect(
+    () =>
+      sfcAudio.subscribe(() => {
+        setAudioOn(sfcAudio.isAudioEnabled());
+      }),
+    [],
+  );
 
   const showMessage = (msg: string) => {
     setMessage(msg);
@@ -41,6 +53,16 @@ export default function System() {
     }
   };
 
+  const handleToggleCrt = () => {
+    const next = toggleCrtFilter();
+    showMessage(next ? 'CRT Filter: ON' : 'CRT Filter: OFF');
+  };
+
+  const handleToggleAudio = () => {
+    const next = sfcAudio.toggleAudioEnabled();
+    showMessage(next ? 'Retro Audio: ON' : 'Retro Audio: OFF');
+  };
+
   return (
     <div className="p-3">
       <div className="flex flex-col gap-2">
@@ -68,6 +90,30 @@ export default function System() {
           onClick={handleReset}
         >
           {t(confirmingReset ? 'Confirm Reset?' : 'Reset')}
+        </button>
+        <button
+          type="button"
+          className={`rounded px-3 py-1.5 text-sm font-medium text-white ${
+            crtFilter
+              ? 'bg-emerald-700 hover:bg-emerald-600'
+              : 'bg-stone-700 hover:bg-stone-600'
+          }`}
+          onClick={handleToggleCrt}
+          data-test="crtFilterToggle"
+        >
+          {t(crtFilter ? 'CRT Filter: ON' : 'CRT Filter: OFF')}
+        </button>
+        <button
+          type="button"
+          className={`rounded px-3 py-1.5 text-sm font-medium text-white ${
+            audioOn
+              ? 'bg-emerald-700 hover:bg-emerald-600'
+              : 'bg-stone-700 hover:bg-stone-600'
+          }`}
+          onClick={handleToggleAudio}
+          data-test="sfcAudioToggle"
+        >
+          {t(audioOn ? 'Retro Audio: ON' : 'Retro Audio: OFF')}
         </button>
         <label className="mt-2 text-sm" htmlFor="locale-select">
           {t('Language')}
