@@ -3,14 +3,15 @@ import { shipyardsToShips } from '../../../data/portShipyardData';
 import { generateId, random, sample } from '../../../utils';
 import { UsedShips } from '../../../state/state';
 
-const generateUsedShips = (portId: string) => {
+const generateUsedShips = (portId: string, effectiveIndustry?: number) => {
   const port = getPortData(portId);
 
   if (port.isSupplyPort) {
     throw Error('Supply port was provided');
   }
 
-  const { industryId, industry } = port;
+  const { industryId } = port;
+  const industry = effectiveIndustry ?? port.industry;
   const shipPool = shipyardsToShips[industryId];
 
   const shipPoolMeetingRequirements = shipPool

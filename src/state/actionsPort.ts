@@ -1,7 +1,14 @@
 import updateInterface from './updateInterface';
 import { sample } from '../utils';
 import state, { type Role } from './state';
-import { getUsedShips, isDay } from './selectors';
+import {
+  getAvailableNewShips,
+  getPortInvestment,
+  getTotalFame,
+  getUsedShips,
+  isDay,
+} from './selectors';
+import { getPortData } from '../game/port/portUtils';
 import { shipData } from '../data/shipData';
 import { Provisions, Ship } from '../game/world/fleets';
 import { minutesUntilNextMorning } from '../interface/interfaceUtils';
@@ -10,12 +17,13 @@ import {
   getAvailableSpace,
   getPlayerFleet,
   getPlayerFleetShip,
+  getTotalCrew,
 } from './selectorsFleet';
 import { itemData, ItemId } from '../data/itemData';
 import { save } from './saveLoad';
 
 export const updateGeneral = () => {
-  updateInterface.general({
+  updateInterface.general?.({
     portId: state.portId,
     buildingId: state.buildingId,
     timePassed: state.timePassed,
@@ -329,7 +337,7 @@ export const recruitCrew = (amount: number) => {
       return;
     }
 
-    let assign = shipData[ships[i].id].minimumCrew - ships[i].crew;
+    let assign = Math.max(0, shipData[ships[i].id].minimumCrew - ships[i].crew);
 
     if (assign > remaining) {
       assign = remaining;
@@ -343,4 +351,184 @@ export const recruitCrew = (amount: number) => {
 
   updateGeneral();
   save();
+};
+
+export const dismissCrew = (amount: number): boolean => {
+  if (
+    !Number.isFinite(amount) ||
+    !Number.isInteger(amount) ||
+    amount <= 0 ||
+    amount > getTotalCrew()
+  ) {
+    return false;
+  }
+
+  let remaining = amount;
+  const ships = getPlayerFleet();
+
+  for (let i = ships.length - 1; i >= 0 && remaining > 0; i -= 1) {
+    const remove = Math.min(ships[i].crew, remaining);
+    ships[i].crew -= remove;
+    remaining -= remove;
+  }
+
+  updateGeneral();
+  save();
+  return true;
+};
+
+export const TREAT_COST = 100;
+
+export const treatPub = (): { cost: number; bonusCrew: number } | null => {
+  if (state.gold <= 0) return null;
+  const cost = Math.min(state.gold, TREAT_COST);
+  state.gold -= cost;
+
+  let bonusCrew = 0;
+  const ships = getPlayerFleet();
+  if (ships.length > 0 && cost >= TREAT_COST) {
+    const flagship = ships[0];
+    const maxNormalCrew = shipData[flagship.id]?.usedCrew ?? 0;
+    const room = Math.max(0, maxNormalCrew - flagship.crew);
+    bonusCrew = Math.min(5, room);
+    flagship.crew += bonusCrew;
+  }
+
+  updateGeneral();
+  save();
+  return { cost, bonusCrew };
+};
+
+export const buyNewShip = (shipId: string, shipName: string): boolean => {
+  const model = shipData[shipId];
+  if (!model || !state.portId) return false;
+  if (!getAvailableNewShips(state.portId).includes(shipId)) return false;
+  if (state.gold < model.basePrice || !getAvailableSailorId()) return false;
+
+  state.gold -= model.basePrice;
+  addShip({
+    id: shipId,
+    name: shipName,
+    crew: 0,
+    cargo: [],
+    durability: model.durability,
+    guns: model.usedGuns,
+  });
+
+  updateGeneral();
+  save();
+  return true;
+};
+
+export const REMODEL_GUN_COST = 50;
+
+export interface RemodelQuote {
+  currentGuns: number;
+  maxGuns: number;
+  addedGuns: number;
+  cost: number;
+}
+
+export const getRemodelQuote = (shipNumber: number): RemodelQuote => {
+  const ship = getPlayerFleetShip(shipNumber);
+  if (!ship) {
+    return { currentGuns: 0, maxGuns: 0, addedGuns: 0, cost: 0 };
+  }
+  const model = shipData[ship.id];
+  const currentGuns = ship.guns ?? model.usedGuns;
+  const maxGuns = model.maximumGuns;
+  const addedGuns = Math.max(0, maxGuns - currentGuns);
+  return {
+    currentGuns,
+    maxGuns,
+    addedGuns,
+    cost: addedGuns * REMODEL_GUN_COST,
+  };
+};
+
+export const remodelShip = (shipNumber: number): boolean => {
+  const ship = getPlayerFleetShip(shipNumber);
+  if (!ship) return false;
+  const quote = getRemodelQuote(shipNumber);
+  if (quote.addedGuns <= 0 || state.gold < quote.cost) return false;
+
+  state.gold -= quote.cost;
+  ship.guns = quote.maxGuns;
+
+  updateGeneral();
+  save();
+  return true;
+};
+
+export const investInMarket = (amount: number): boolean => {
+  if (
+    !state.portId ||
+    !Number.isFinite(amount) ||
+    !Number.isInteger(amount) ||
+    amount <= 0 ||
+    amount > state.gold
+  ) {
+    return false;
+  }
+  const port = getPortData(state.portId);
+  if (port.isSupplyPort) return false;
+
+  const current = getPortInvestment(state.portId);
+  const points = Math.max(1, Math.floor(amount / 10));
+  const maxAddable = Math.max(0, 1000 - port.economy);
+  if (!state.portInvestments) state.portInvestments = {};
+  state.portInvestments[state.portId] = {
+    economy: Math.min(maxAddable, current.economy + points),
+    industry: current.industry,
+  };
+
+  state.gold -= amount;
+  state.fame.trade += Math.max(1, Math.floor(amount / 100));
+
+  updateGeneral();
+  save();
+  return true;
+};
+
+export const investInShipyard = (amount: number): boolean => {
+  if (
+    !state.portId ||
+    !Number.isFinite(amount) ||
+    !Number.isInteger(amount) ||
+    amount <= 0 ||
+    amount > state.gold
+  ) {
+    return false;
+  }
+  const port = getPortData(state.portId);
+  if (port.isSupplyPort) return false;
+
+  const current = getPortInvestment(state.portId);
+  const points = Math.max(1, Math.floor(amount / 10));
+  const maxAddable = Math.max(0, 1000 - port.industry);
+  if (!state.portInvestments) state.portInvestments = {};
+  state.portInvestments[state.portId] = {
+    economy: current.economy,
+    industry: Math.min(maxAddable, current.industry + points),
+  };
+
+  state.gold -= amount;
+  state.fame.trade += Math.max(1, Math.floor(amount / 100));
+  delete state.usedShipsAtPort[state.portId];
+
+  updateGeneral();
+  save();
+  return true;
+};
+
+export const ROYAL_FUNDING_GRANT = 500;
+
+export const requestRoyalFunding = (): number => {
+  if (state.gold >= ROYAL_FUNDING_GRANT || getTotalFame() < 20) {
+    return 0;
+  }
+  state.gold += ROYAL_FUNDING_GRANT;
+  updateGeneral();
+  save();
+  return ROYAL_FUNDING_GRANT;
 };

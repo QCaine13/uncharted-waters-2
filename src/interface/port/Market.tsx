@@ -10,11 +10,18 @@ import {
   buyGood,
   sellGood,
 } from '../../state/actionsMarket';
+import { investInMarket } from '../../state/actionsPort';
 import { getGold } from '../../state/selectors';
 import { goodData, GoodId } from '../../data/goodsData';
 import { getLocale, t } from '../../localization';
+import InputNumber from '../common/InputNumber';
 
-const marketOptions = ['Buy Goods', 'Sell Goods', 'Market Rate'] as const;
+const marketOptions = [
+  'Buy Goods',
+  'Sell Goods',
+  'Invest',
+  'Market Rate',
+] as const;
 type MarketOption = typeof marketOptions[number];
 
 const QUANTITY_PRESETS = [1, 5, 10, 25, 50];
@@ -300,6 +307,46 @@ export default function Market() {
     }
   }
 
+  let children: ReactNode;
+
+  if (option === 'Invest') {
+    const gold = getGold();
+
+    if (step === 0) {
+      if (!gold) {
+        vendorMessage = {
+          body: "You don't have any gold.",
+          acknowledge: back,
+        };
+      } else {
+        vendorMessage = {
+          body: 'Investing in our market will boost the local economy. How much will you invest?',
+        };
+
+        children = (
+          <InputNumber
+            limit={gold}
+            onComplete={(amount) => {
+              if (amount > 0 && investInMarket(amount)) {
+                next();
+              } else {
+                reset();
+              }
+            }}
+            onCancel={reset}
+          />
+        );
+      }
+    }
+
+    if (step === 1) {
+      vendorMessage = {
+        body: 'Thank you for your generous investment! Our market will prosper.',
+        acknowledge: reset,
+      };
+    }
+  }
+
   if (option === 'Market Rate') {
     const goods = getMarketGoods();
     const supplyGoods = goods.filter((g) => g.isSupply);
@@ -326,6 +373,8 @@ export default function Market() {
       vendorMessageBox={vendorMessage}
       menu={menu}
       menu2={menu2}
-    />
+    >
+      {children}
+    </BuildingWrapper>
   );
 }

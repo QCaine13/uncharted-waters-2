@@ -4,13 +4,19 @@ import { t } from '../localization';
 import { getFirstVoyageJournal } from '../story/firstVoyageJournal';
 import { getConflictAndGrowthJournal } from '../story/conflictAndGrowthJournal';
 import { getJoaoFinaleJournal } from '../story/joaoFinaleJournal';
+import { getCatalinaJournal } from '../story/catalinaJournal';
+import { getPietroJournal } from '../story/pietroJournal';
 import { CHAPTER_COMPLETE_EVENT_ID } from '../story/content/arcs/joao/first-voyage';
 import { CONFLICT_AND_GROWTH_COMPLETE_EVENT_ID } from '../story/content/arcs/joao/conflict-and-growth';
 import { JOAO_ENDING_EVENT_ID } from '../story/content/arcs/joao/finale';
+import { KATARINA_ENDING_EVENT_ID } from '../story/content/arcs/katarina/vengeance';
+import { PIETRO_ENDING_EVENT_ID } from '../story/content/arcs/pietro/adventure';
 import type { JournalEntry } from '../story/firstVoyageJournal';
 import state from '../state/state';
 import MessageBox from './common/MessageBox';
 import JoaoEnding from './JoaoEnding';
+import CatalinaEnding from './CatalinaEnding';
+import PietroEnding from './PietroEnding';
 
 const entryMarker = (entry: JournalEntry, current: boolean): string => {
   if (entry.completed) return '✓';
@@ -27,14 +33,22 @@ const entryStatus = (entry: JournalEntry, current: boolean): string => {
 };
 
 export default function QuestJournal() {
-  const firstVoyage = getFirstVoyageJournal(state);
-  const m1Complete = state.storyEvents.includes(CHAPTER_COMPLETE_EVENT_ID);
-  const m2Complete = state.storyEvents.includes(
-    CONFLICT_AND_GROWTH_COMPLETE_EVENT_ID,
-  );
-  let entries = firstVoyage;
-  if (m1Complete) entries = [...getConflictAndGrowthJournal(state), ...entries];
-  if (m2Complete) entries = [...getJoaoFinaleJournal(state), ...entries];
+  let entries: JournalEntry[];
+  if (state.protagonistId === 'katarina') {
+    entries = getCatalinaJournal(state);
+  } else if (state.protagonistId === 'pietro') {
+    entries = getPietroJournal(state);
+  } else {
+    const firstVoyage = getFirstVoyageJournal(state);
+    const m1Complete = state.storyEvents.includes(CHAPTER_COMPLETE_EVENT_ID);
+    const m2Complete = state.storyEvents.includes(
+      CONFLICT_AND_GROWTH_COMPLETE_EVENT_ID,
+    );
+    entries = firstVoyage;
+    if (m1Complete)
+      entries = [...getConflictAndGrowthJournal(state), ...entries];
+    if (m2Complete) entries = [...getJoaoFinaleJournal(state), ...entries];
+  }
   const current =
     entries.find(({ current: active }) => active)?.id ??
     entries.find(
@@ -49,7 +63,17 @@ export default function QuestJournal() {
         data-test="questJournal"
       >
         <div className="text-3xl text-blue-700 mb-4">{t('Voyage Journal')}</div>
-        {state.storyEvents.includes(JOAO_ENDING_EVENT_ID) && <JoaoEnding />}
+        {state.protagonistId === 'katarina' &&
+          state.storyEvents.includes(KATARINA_ENDING_EVENT_ID) && (
+            <CatalinaEnding />
+          )}
+        {state.protagonistId === 'pietro' &&
+          state.storyEvents.includes(PIETRO_ENDING_EVENT_ID) && (
+            <PietroEnding />
+          )}
+        {(state.protagonistId === undefined ||
+          state.protagonistId === 'joao') &&
+          state.storyEvents.includes(JOAO_ENDING_EVENT_ID) && <JoaoEnding />}
         <div className="space-y-3">
           {entries.map((entry) => {
             const isCurrent = entry.id === current;

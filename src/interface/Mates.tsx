@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 
-import { getMates, getRoleDisplay } from '../state/selectors';
+import {
+  getMates,
+  getProtagonistSailorId,
+  getRoleDisplay,
+  getRoyalRank,
+} from '../state/selectors';
 import MessageBox from './common/MessageBox';
 import Menu from './common/Menu';
 import ProgressBar from './common/ProgressBar';
@@ -76,13 +81,13 @@ export default function Mates() {
           </div>
           <div className="flex mt-8">
             <div className="w-72 mr-8 pr-8 space-y-8">
-              {sailorId === '1' && (
+              {sailorId === getProtagonistSailorId() && (
                 <div className="flex justify-between">
                   <div>{t('Rank')}</div>
-                  <div>{t('None')}</div>
+                  <div>{t(getRoyalRank())}</div>
                 </div>
               )}
-              {sailorId !== '1' && (
+              {sailorId !== getProtagonistSailorId() && (
                 <div className="flex justify-between">
                   <div>{t('Wages')}</div>
                   <div>10</div>

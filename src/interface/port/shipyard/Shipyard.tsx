@@ -2,8 +2,12 @@ import React, { ReactNode, useState } from 'react';
 
 import BuildingMenu from '../../common/BuildingMenu';
 import {
+  buyNewShip,
   buyUsedShip,
   getAvailableSailorId,
+  getRemodelQuote,
+  investInShipyard,
+  remodelShip,
   SELL_SHIP_MODIFIER,
   sellShipNumber,
 } from '../../../state/actionsPort';
@@ -17,13 +21,19 @@ import BuildingWrapper from '../BuildingWrapper';
 import useBuilding from '../hooks/useBuilding';
 import { VendorMessageBoxType } from '../../quest/getMessageBoxes';
 import ShipyardShipInputName from './ShipyardShipInputName';
-import { canAfford, getUsedShips } from '../../../state/selectors';
+import {
+  canAfford,
+  getAvailableNewShips,
+  getGold,
+  getUsedShips,
+} from '../../../state/selectors';
 import { t } from '../../../localization';
 import {
   getRepairQuote,
   repairShip,
   type RepairQuote,
 } from '../../../state/actionsRepair';
+import InputNumber from '../../common/InputNumber';
 
 const shipyardOptions = [
   'New Ship',
@@ -40,18 +50,16 @@ interface RepairSelection {
   quote: RepairQuote;
 }
 
-const shipyardDisabledOptions: ShipyardOptions[] = [
-  'New Ship',
-  'Remodel',
-  'Invest',
-];
-
 export default function Shipyard() {
-  const { selectOption, back, next, state } = useBuilding<ShipyardOptions>();
+  const { selectOption, back, next, reset, state } =
+    useBuilding<ShipyardOptions>();
 
+  const [newShipId, setNewShipId] = useState<string>();
   const [usedShipId, setUsedShipId] = useState<string>();
 
   const [selectedShipNumberToSell, setSelectedShipNumberToSell] =
+    useState<number>();
+  const [selectedShipNumberToRemodel, setSelectedShipNumberToRemodel] =
     useState<number>();
   const [repairSelection, setRepairSelection] = useState<RepairSelection>();
   const [repairResult, setRepairResult] = useState<RepairQuote>();
@@ -67,7 +75,6 @@ export default function Shipyard() {
       options={shipyardOptions.map((s) => ({
         label: s,
         value: s,
-        disabled: shipyardDisabledOptions.includes(s),
       }))}
       onSelect={(s) => selectOption(s)}
       onCancel={back}
@@ -78,6 +85,105 @@ export default function Shipyard() {
   let menu2: ReactNode;
 
   let children: ReactNode;
+
+  if (option === 'New Ship') {
+    const availableNewShips = getAvailableNewShips();
+
+    if (availableNewShips.length === 0) {
+      vendorMessage = {
+        body: 'We cannot build any new ships here yet.',
+        acknowledge: back,
+      };
+    } else {
+      menu2 = (
+        <BuildingMenu
+          title="Ship Model"
+          options={availableNewShips.map((shipId) => ({
+            label: shipData[shipId].name,
+            value: shipId,
+          }))}
+          onSelect={(shipId) => {
+            setNewShipId(shipId);
+            next();
+          }}
+          onCancel={back}
+          level2
+          hidden={step !== 0}
+        />
+      );
+
+      if (step === 0) {
+        vendorMessage = {
+          body: 'Which model would you like us to build?',
+        };
+      }
+
+      if (newShipId) {
+        children = <ShipyardShipBox shipId={newShipId} />;
+
+        if (step === 1) {
+          vendorMessage = {
+            body: shipData[newShipId].description,
+            acknowledge: next,
+          };
+        }
+
+        if (step === 2) {
+          vendorMessage = {
+            body: t(
+              'We can build this ship for {price} gold pieces. What do ye say?',
+              { price: shipData[newShipId].basePrice },
+            ),
+            confirm: {
+              yes: next,
+              no: () => {
+                setNewShipId(undefined);
+                back(2);
+              },
+            },
+          };
+        }
+
+        if (step === 3) {
+          if (!canAfford(shipData[newShipId].basePrice)) {
+            vendorMessage = {
+              body: 'I’m afraid you don’t have enough gold.',
+              acknowledge: () => {
+                setNewShipId(undefined);
+                back(3);
+              },
+            };
+          } else if (!getAvailableSailorId()) {
+            vendorMessage = {
+              body: 'You don’t have a sailor available to captain this ship.',
+              acknowledge: () => {
+                setNewShipId(undefined);
+                back(3);
+              },
+            };
+          } else {
+            vendorMessage = {
+              body: 'All right, it’s yers. Time to name yer ship.',
+            };
+
+            children = (
+              <ShipyardShipInputName
+                onSubmit={(shipName) => {
+                  buyNewShip(newShipId, shipName);
+                  setNewShipId(undefined);
+                  back(3);
+                }}
+                onCancel={() => {
+                  setNewShipId(undefined);
+                  back(3);
+                }}
+              />
+            );
+          }
+        }
+      }
+    }
+  }
 
   if (option === 'Used Ship') {
     const usedShips = getUsedShips();
@@ -311,9 +417,147 @@ export default function Shipyard() {
         };
 
         children = (
-          <ShipyardShipBox shipId={ship.id} customShipName={ship.name} />
+          <ShipyardShipBox
+            shipId={ship.id}
+            customShipName={ship.name}
+            currentGuns={ship.guns}
+          />
         );
       }
+    }
+  }
+
+  if (option === 'Remodel') {
+    const remodelableShips = getPlayerFleet()
+      .map((ship, index) => ({ ship, index, quote: getRemodelQuote(index) }))
+      .filter(({ quote }) => quote.addedGuns > 0);
+
+    if (step === 2 && selectedShipNumberToRemodel !== undefined) {
+      const ship = getPlayerFleetShip(selectedShipNumberToRemodel);
+      const quote = getRemodelQuote(selectedShipNumberToRemodel);
+      vendorMessage = {
+        body: t('Refitted {name} to {guns} guns.', {
+          name: ship?.name ?? t('Ship'),
+          guns: quote.currentGuns,
+        }),
+        acknowledge: () => {
+          setSelectedShipNumberToRemodel(undefined);
+          reset();
+        },
+      };
+    } else if (remodelableShips.length === 0) {
+      vendorMessage = {
+        body: 'Your ships are already fitted with maximum cannon ports.',
+        acknowledge: back,
+      };
+    } else {
+      menu2 = (
+        <BuildingMenu
+          title="Your Ships"
+          options={remodelableShips.map(({ ship, index, quote }) => ({
+            label: `${ship.name} (${quote.currentGuns}/${quote.maxGuns})`,
+            value: index,
+          }))}
+          onSelect={(index) => {
+            setSelectedShipNumberToRemodel(index);
+            next();
+          }}
+          onCancel={back}
+          level2
+          hidden={step !== 0}
+          translateLabels={false}
+        />
+      );
+
+      if (step === 0) {
+        vendorMessage = {
+          body: 'Which ship would you like to remodel?',
+        };
+      }
+
+      if (step === 1 && selectedShipNumberToRemodel !== undefined) {
+        const ship = getPlayerFleetShip(selectedShipNumberToRemodel);
+        const quote = getRemodelQuote(selectedShipNumberToRemodel);
+
+        children = (
+          <ShipyardShipBox
+            shipId={ship.id}
+            customShipName={ship.name}
+            currentGuns={quote.currentGuns}
+          />
+        );
+
+        if (!canAfford(quote.cost)) {
+          vendorMessage = {
+            body: 'I’m afraid you don’t have enough gold.',
+            acknowledge: () => {
+              setSelectedShipNumberToRemodel(undefined);
+              back();
+            },
+          };
+        } else {
+          vendorMessage = {
+            body: t(
+              'Refit {name} from {current} to {max} guns for {cost} gold?',
+              {
+                name: ship.name,
+                current: quote.currentGuns,
+                max: quote.maxGuns,
+                cost: quote.cost,
+              },
+            ),
+            confirm: {
+              yes: () => {
+                if (remodelShip(selectedShipNumberToRemodel)) {
+                  next();
+                }
+              },
+              no: () => {
+                setSelectedShipNumberToRemodel(undefined);
+                back();
+              },
+            },
+          };
+        }
+      }
+    }
+  }
+
+  if (option === 'Invest') {
+    const gold = getGold();
+
+    if (step === 0) {
+      if (!gold) {
+        vendorMessage = {
+          body: 'I’m afraid you don’t have enough gold.',
+          acknowledge: back,
+        };
+      } else {
+        vendorMessage = {
+          body: 'Investing in our shipyard will advance our shipbuilding industry. How much will you invest?',
+        };
+
+        children = (
+          <InputNumber
+            limit={gold}
+            onComplete={(amount) => {
+              if (amount > 0 && investInShipyard(amount)) {
+                next();
+              } else {
+                reset();
+              }
+            }}
+            onCancel={reset}
+          />
+        );
+      }
+    }
+
+    if (step === 1) {
+      vendorMessage = {
+        body: 'Much obliged! With these funds, our yard can build finer vessels.',
+        acknowledge: reset,
+      };
     }
   }
 

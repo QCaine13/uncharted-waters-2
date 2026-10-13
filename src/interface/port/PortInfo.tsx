@@ -5,6 +5,11 @@ import {
   getPortData,
 } from '../../game/port/portUtils';
 import { getPortPriceIndex } from '../../state/actionsMarket';
+import {
+  getPortEconomy,
+  getPortIndustry,
+  getPortInvestment,
+} from '../../state/selectors';
 import { t } from '../../localization';
 import state from '../../state/state';
 import { getStoryPortName } from '../../story/portStoryNames';
@@ -13,16 +18,12 @@ interface Props {
   portId: string;
 }
 
-// TODO Investments
 export default function PortInfo({ portId }: Props) {
   const port = getPortData(portId);
 
-  let economy = 0;
-  let industry = 0;
-
-  if (!port.isSupplyPort) {
-    ({ economy, industry } = port);
-  }
+  const economy = port.isSupplyPort ? 0 : getPortEconomy(portId);
+  const industry = port.isSupplyPort ? 0 : getPortIndustry(portId);
+  const investment = getPortInvestment(portId);
 
   const name = getStoryPortName(portId, state.storyEvents);
   const priceIndex = getPortPriceIndex(portId);
@@ -37,13 +38,27 @@ export default function PortInfo({ portId }: Props) {
       </div>
       <div className="mb-20">{t(getRegionOrIfSupplyPort(portId))}</div>
       <div className="text-sm">{t('Economy')}</div>
-      <div className="mb-4 text-right text-xl">{economy}</div>
+      <div className="mb-4 text-right text-xl" data-test="portEconomy">
+        {economy}
+      </div>
       <div className="text-sm">{t('Investment')}</div>
-      <div className="mb-4 text-right text-xl">{economy}</div>
+      <div
+        className="mb-4 text-right text-xl"
+        data-test="portEconomyInvestment"
+      >
+        {investment.economy}
+      </div>
       <div className="text-sm">{t('Industry')}</div>
-      <div className="mb-4 text-right text-xl">{industry}</div>
+      <div className="mb-4 text-right text-xl" data-test="portIndustry">
+        {industry}
+      </div>
       <div className="text-sm">{t('Investment')}</div>
-      <div className="mb-4 text-right text-xl">{industry}</div>
+      <div
+        className="mb-4 text-right text-xl"
+        data-test="portIndustryInvestment"
+      >
+        {investment.industry}
+      </div>
       <div className="text-sm">{t('Price Index')}</div>
       <div className="mb-4 text-right text-xl">
         {priceIndex === null ? '—' : `${priceIndex}%`}

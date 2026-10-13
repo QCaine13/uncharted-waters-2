@@ -36,8 +36,24 @@ export const getCrewNeeded = () => {
   let count = 0;
 
   getPlayerFleet().forEach((ship) => {
-    count += shipData[ship.id].minimumCrew - ship.crew;
+    count += Math.max(0, shipData[ship.id].minimumCrew - ship.crew);
   });
 
   return count;
+};
+
+export const getTotalCrew = () =>
+  getPlayerFleet().reduce((total, ship) => total + ship.crew, 0);
+
+export const getExtraCrewCapacity = () =>
+  getPlayerFleet().reduce(
+    (total, ship) =>
+      total + Math.max(0, shipData[ship.id].usedCrew - ship.crew),
+    0,
+  );
+
+export const getShipGuns = (shipNumber: number): number => {
+  const ship = getPlayerFleetShip(shipNumber);
+  if (!ship) return 0;
+  return ship.guns ?? shipData[ship.id].usedGuns;
 };

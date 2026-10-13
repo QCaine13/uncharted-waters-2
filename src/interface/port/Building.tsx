@@ -13,6 +13,7 @@ import ItemShop from './ItemShop';
 import Pub from './Pub';
 import Market from './Market';
 import Guild from './Guild';
+import Palace from './Palace';
 
 interface Props {
   buildingId: string;
@@ -39,6 +40,10 @@ export default function Building({ buildingId }: Props) {
 
   if (buildingId === '5') {
     return <Lodge />;
+  }
+
+  if (buildingId === '6') {
+    return <Palace />;
   }
 
   if (buildingId === '7') {

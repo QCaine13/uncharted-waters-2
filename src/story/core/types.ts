@@ -160,6 +160,7 @@ export interface StoryArc {
 }
 
 export interface StoryContext {
+  protagonist?: CharacterId;
   stage: Stage;
   portId: string | null;
   buildingId: string | null;

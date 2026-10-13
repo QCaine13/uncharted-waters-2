@@ -58,6 +58,12 @@ function CombatantCard({
   );
 }
 
+const getProtagonistDisplayName = (): string => {
+  if (state.protagonistId === 'katarina') return 'Katarina Erantzo';
+  if (state.protagonistId === 'pietro') return 'Pietro Conti';
+  return 'João Franco';
+};
+
 function DuelSummary({ duel }: { duel: DuelState }) {
   const encounter = getEncounter(duel.encounterId);
   const enemyName = encounter?.captainNameKey ?? encounter?.nameKey ?? 'Battle';
@@ -65,7 +71,7 @@ function DuelSummary({ duel }: { duel: DuelState }) {
     <>
       <div className="grid grid-cols-2 gap-5">
         <CombatantCard
-          title="João Franco"
+          title={getProtagonistDisplayName()}
           hp={duel.player.hp}
           maximum={duel.player.maxHp}
         />
@@ -153,11 +159,23 @@ function Result({ combat }: { combat: CombatState }) {
       }),
     );
   } else if (preview.experience.joao > 0) {
-    lines.push(
-      t('João gains {amount} battle experience.', {
-        amount: preview.experience.joao,
-      }),
-    );
+    if (
+      state.protagonistId === 'katarina' ||
+      state.protagonistId === 'pietro'
+    ) {
+      lines.push(
+        t('{name} gains {amount} battle experience.', {
+          name: t(getProtagonistDisplayName()),
+          amount: preview.experience.joao,
+        }),
+      );
+    } else {
+      lines.push(
+        t('João gains {amount} battle experience.', {
+          amount: preview.experience.joao,
+        }),
+      );
+    }
     if (preview.experience.others > 0) {
       lines.push(
         t('Each companion gains {amount} battle experience.', {

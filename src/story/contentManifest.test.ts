@@ -187,10 +187,10 @@ describe('story content manifest', () => {
       .sort();
 
     expect(report.counts).toEqual({
-      characters: 20,
-      relationships: 17,
-      arcs: 5,
-      events: 104,
+      characters: 22,
+      relationships: 21,
+      arcs: 7,
+      events: 124,
     });
     expect(report.arcs).toEqual([
       {
@@ -244,6 +244,28 @@ describe('story content manifest', () => {
         ],
         crossArcDependencies: ['joao.conflict-and-growth'],
       },
+      {
+        id: 'katarina.vengeance',
+        entryEvents: ['katarina.vengeance.seville-mutiny'],
+        terminalEvents: [
+          'katarina.vengeance.amazon-reckoning-retry',
+          'katarina.vengeance.cayenne-rescue-retry',
+          'katarina.vengeance.ceuta-clash-retry',
+          'katarina.vengeance.seville-homecoming',
+          'katarina.vengeance.spanish-pursuit-retry',
+        ],
+        crossArcDependencies: [],
+      },
+      {
+        id: 'pietro.adventure',
+        entryEvents: ['pietro.adventure.genoa-departure'],
+        terminalEvents: [
+          'pietro.adventure.basra-staff-retry',
+          'pietro.adventure.cayenne-fleet-retry',
+          'pietro.adventure.lisbon-triumph',
+        ],
+        crossArcDependencies: [],
+      },
     ]);
     expect(report.unreferencedCharacters).toEqual([
       'm2-relief-captain',
@@ -272,7 +294,7 @@ describe('story content manifest', () => {
 
     const formatted = formatStoryContentReport(report);
     expect(formatted).toContain(
-      'Story content: 20 characters, 17 relationships, 5 arcs, 104 events',
+      'Story content: 22 characters, 21 relationships, 7 arcs, 124 events',
     );
     expect(formatted).toContain(
       'Legacy compatibility: 10/10 once events mapped (complete)',

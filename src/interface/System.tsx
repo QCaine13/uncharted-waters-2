@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { save, load, reset, hasSave } from '../state/saveLoad';
 import { updateGeneral } from '../state/actionsPort';
+import { PROTAGONIST_PROFILES, startNewGameAs } from '../state/protagonists';
+import state, { type ProtagonistId } from '../state/state';
 import { setLocale, t, type Locale } from '../localization';
 import useLocale from '../localization/useLocale';
 import { useCrtFilter, toggleCrtFilter } from './crtFilter';
@@ -10,6 +12,9 @@ export default function System() {
   const locale = useLocale();
   const crtFilter = useCrtFilter();
   const [audioOn, setAudioOn] = useState(() => sfcAudio.isAudioEnabled());
+  const [selectedProtagonist, setSelectedProtagonist] = useState<ProtagonistId>(
+    () => state.protagonistId ?? 'joao',
+  );
   const [message, setMessage] = useState<string | null>(null);
   const [confirmingReset, setConfirmingReset] = useState(false);
 
@@ -35,6 +40,7 @@ export default function System() {
     if (hasSave()) {
       const success = load();
       if (success) {
+        setSelectedProtagonist(state.protagonistId ?? 'joao');
         updateGeneral();
       }
       showMessage(success ? 'Game loaded.' : 'Failed to load save.');
@@ -61,6 +67,11 @@ export default function System() {
   const handleToggleAudio = () => {
     const next = sfcAudio.toggleAudioEnabled();
     showMessage(next ? 'Retro Audio: ON' : 'Retro Audio: OFF');
+  };
+
+  const handleStartProtagonist = () => {
+    startNewGameAs(selectedProtagonist);
+    showMessage('Started new voyage.');
   };
 
   return (
@@ -127,6 +138,32 @@ export default function System() {
           <option value="zh-CN">简体中文</option>
           <option value="en">English</option>
         </select>
+        <label className="mt-2 text-sm" htmlFor="protagonist-select">
+          {t('Protagonist')}
+        </label>
+        <select
+          id="protagonist-select"
+          data-test="protagonistSelect"
+          className="rounded bg-gray-800 px-3 py-1.5 text-sm text-white"
+          value={selectedProtagonist}
+          onChange={(event) =>
+            setSelectedProtagonist(event.target.value as ProtagonistId)
+          }
+        >
+          {Object.values(PROTAGONIST_PROFILES).map((profile) => (
+            <option key={profile.id} value={profile.id}>
+              {t(profile.name)}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          data-test="startProtagonistVoyage"
+          className="rounded bg-indigo-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-600"
+          onClick={handleStartProtagonist}
+        >
+          {t('Start New Voyage')}
+        </button>
       </div>
       {message && (
         <div className="mt-2 text-xs text-gray-300">{t(message)}</div>

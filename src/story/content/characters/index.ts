@@ -19,6 +19,8 @@ import taphiel from './taphiel';
 import rudolph from './rudolph';
 import ezequiel from './ezequiel';
 import martinez from './martinez';
+import emilio from './emilio';
+import camillo from './camillo';
 
 export const storyCharacters: StoryCharacter[] = [
   joao,
@@ -41,6 +43,8 @@ export const storyCharacters: StoryCharacter[] = [
   rudolph,
   ezequiel,
   martinez,
+  emilio,
+  camillo,
 ];
 
 export default storyCharacters;

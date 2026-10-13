@@ -312,6 +312,121 @@ export const ui: Record<string, string> = {
     '要偿还多少借款？（0–{limit}）',
   'The monthly interest rate is 10%. Please invest our loan wisely.':
     '月利率为 10%。请善用这笔借款。',
+  'Investing in our market will boost the local economy. How much will you invest?':
+    '向交易所投资可以提升本港经济度。您打算投资多少金币？',
+  'Thank you for your generous investment! Our market will prosper.':
+    '感谢您的慷慨投资！本港的商业定会更加繁荣。',
+  'We cannot build any new ships here yet.': '本船厂目前还无法建造新船。',
+  'Which model would you like us to build?': '想让我们建造哪一种船型？',
+  'We can build this ship for {price} gold pieces. What do ye say?':
+    '建造这艘新船需要 {price} 金币。意下如何？',
+  'Refitted {name} to {guns} guns.': '已将{name}改造为 {guns} 门火炮。',
+  'Your ships are already fitted with maximum cannon ports.':
+    '你的船只已经安装了最大数量的炮位。',
+  'Which ship would you like to remodel?': '想要改造哪一艘船？',
+  'Refit {name} from {current} to {max} guns for {cost} gold?':
+    '花费 {cost} 金币将{name}的火炮从 {current} 门改造至 {max} 门吗？',
+  'Investing in our shipyard will advance our shipbuilding industry. How much will you invest?':
+    '向船厂投资可以提升本港工业度。您打算投资多少金币？',
+  'Much obliged! With these funds, our yard can build finer vessels.':
+    '多谢资助！有了这笔资金，我们就能建造更精良的船只了。',
+  'We have no crew members to dismiss.': '我们没有可以解雇的水手。',
+  'How many crew members should we dismiss?': '要解雇多少名水手？',
+  'Dismissed {count} crew members.': '已解雇 {count} 名水手。',
+  'Buy a round of drinks for the tavern? (Up to 100g)':
+    '要请酒馆里的水手们喝一轮酒吗？（最多花费 100 金币）',
+  'The tavern cheers! {count} eager sailors volunteered to join your flagship!':
+    '酒馆里欢声雷动！{count} 名热情的水手主动加入了你的旗舰！',
+  'The tavern cheers! Sailors say: "Check the Market Rate and invest in ports to unlock bigger ships!"':
+    '酒馆里欢声雷动！水手们透露：“多留意市场行情，向港口投资还能解锁大型船只！”',
+  'Merchants say that buying abundant goods at 100% or below and selling where they are scarce yields the best profits.':
+    '商人们说，在价格指数 100% 或更低时买进充足特产，运往紧缺港口出售最为暴利。',
+  '{port} ({region}) — Economy: {economy}, Industry: {industry}, Price Index: {priceIndex}%.':
+    '{port}（{region}）—— 经济：{economy}，工业：{industry}，价格指数：{priceIndex}%。',
+  '{country}: {count} ports': '{country}：{count} 座同盟港',
+  'Allied ports by maritime power — {summary}.':
+    '各国同盟港统计 —— {summary}。',
+  'Welcome to the Royal Palace. State your business before the court.':
+    '欢迎来到王宫。请在朝堂上说明来意。',
+  'The Crown recognizes your service! Current Rank: {rank} (Total Fame: {fame}, Port Investment: {invested}).':
+    '王室嘉许你的功绩！当前爵位：{rank}（总名声：{fame}，港口投资：{invested}）。',
+  'By royal decree, the treasury grants you {gold} gold pieces for your expedition.':
+    '奉王室诏令，国库特拨付 {gold} 金币资助你的远航。',
+  'Royal expedition subsidies are granted only when your treasury is below {gold}g and your total fame reaches at least 20.':
+    '仅当所持金币低于 {gold} 且总名声达到 20 以上时，方可申领王室远航补助。',
+  Protagonist: '主角选择',
+  'Start New Voyage': '开启新航程',
+  'Started new voyage.': '已开启新航程。',
+  'Heir to Duke León Franco': '莱昂·法雷尔公爵继承人',
+  'Red-Haired Corsair of Spain': '西班牙红发女海盗',
+  'Genoese Explorer & Relic Seeker': '热那亚探险家与秘宝猎人',
+  'Katarina’s reckoning': '卡特琳娜的沉冤昭雪',
+  'Katarina avenged Michael and Hernan by crushing Marquis Martinez’s armada at the Amazon and winning a royal pardon in Seville.':
+    '卡特琳娜在亚马逊击溃马丁内斯侯爵的舰队，为米迦勒与埃尔南报仇雪恨，并在塞维尔赢得王室特赦。',
+  'Pietro’s triumph': '皮耶德的黄金凯旋',
+  'Pietro cleared the Conti family debts, aided João at Massawa, and unlocked the golden horizon of El Dorado.':
+    '皮耶德还清了康迪家族的债务，在马沙华助约翰一臂之力，并揭开了黄金乡艾尔多拉多的辉煌地平线。',
+  'Commandeer the Rebellion': '征用“叛逆号”',
+  'Meet Lieutenant Emilio at the Seville harbor and seize the caravel Rebellion to avenge Michael and Hernan.':
+    '在塞维尔码头与埃米利奥中尉会合，夺取轻快帆船“叛逆号”，为米迦勒和埃尔南复仇。',
+  'Break the Spanish Blockade': '突破西班牙封锁线',
+  'Defeat the Spanish pursuit squadron at sea, or sortie again from the Seville harbor.':
+    '在海上击败西班牙追讨分舰队，或从塞维尔码头再次出击。',
+  'Set sail from Seville and break through the Spanish Armada pursuit squadron.':
+    '从塞维尔出航，突破西班牙无敌舰队追讨分舰队的拦截。',
+  'Intercept the Franco Fleet at Ceuta': '在休达截击法雷尔舰队',
+  'Defeat the Franco expedition vanguard, or sortie again from the Ceuta harbor.':
+    '击败法雷尔远征先遣队，或从休达码头再次出击。',
+  'Track the Portuguese Franco expedition to the Ceuta pub and confront their fleet.':
+    '追踪葡萄牙法雷尔远征队至休达酒馆，并与他们的舰队交锋。',
+  'Uncover the Conspiracy in Massawa': '在马沙华揭开阴谋真相',
+  'Pursue João Franco around Africa to the Massawa pub on the Red Sea and learn who truly ambushed Michael.':
+    '绕行非洲追击约翰·法雷尔至红海的马沙华酒馆，查明伏击米迦勒的真正元凶。',
+  'Rescue Emilio in Cayenne': '在开云营救埃米利奥',
+  'Defeat the colonial commandant at the Cayenne lodge in a sword duel.':
+    '在开云旅馆的剑术决斗中击败殖民地驻军司令。',
+  'Sail west across the Atlantic to the Cayenne lodge in South America.':
+    '向西横渡大西洋，前往南美洲的开云旅馆。',
+  'Chart the Mouth of the Amazon': '测绘亚马逊河口',
+  'Locate the Mouth of the Amazon near 0.5° S, 50.0° W where Marquis Martinez gathers his armada.':
+    '在南纬 0.5°、西经 50.0° 附近发现马丁内斯侯爵集结舰队的亚马逊河口。',
+  'Crush Marquis Martinez’s Flagship': '击溃马丁内斯侯爵旗舰',
+  'Sortie from the Cayenne harbor and defeat Marquis Martinez’s flagship.':
+    '从开云码头出击，击败马丁内斯侯爵的旗舰。',
+  'Return to the Seville Royal Palace': '返回塞维尔王宫',
+  'Return to the Seville palace to clear your name and claim your royal pardon.':
+    '返回塞维尔王宫洗刷冤屈，领受王室特赦。',
+  'Embark from Genoa': '从热那亚启航',
+  'Meet Camillo at the Genoa harbor to board the Sanuto and answer Duchess Christiana’s summons.':
+    '在热那亚码头与卡米洛会合，登上“萨努托号”，响应克里斯蒂安娜公爵夫人的召请。',
+  'Secure Patronage at the Franco Residence': '在法雷尔宅邸获得资助',
+  'Visit Duchess Christiana and Butler Marco at the Franco residence in Lisbon.':
+    '前往里斯本法雷尔宅邸拜见克里斯蒂安娜公爵夫人与管家马可。',
+  'Sight the Strait of Gibraltar': '发现直布罗陀海峡',
+  'Chart the Strait of Gibraltar near 36° N, 5.6° W on your voyage between Lisbon and the Mediterranean.':
+    '在往返里斯本与地中海的航程中，测绘北纬 36°、西经 5.6° 附近的直布罗陀海峡。',
+  'Investigate the Alexandria Tavern': '调查亚力山卓酒馆',
+  'Gather clues about your father’s logbook and the Staff of the Saint at the Alexandria pub.':
+    '在亚力山卓酒馆打听父亲航海日志与“圣者之杖”的线索。',
+  'Win the Staff of the Saint in Basra': '在巴士拉夺取圣者之杖',
+  'Defeat the treasure hunter boss in a duel at the Basra market.':
+    '在巴士拉市场的决斗中击败盗宝团首领。',
+  'Sail around Africa to the Persian Gulf and visit the Basra market.':
+    '绕行非洲前往波斯湾，造访巴士拉市场。',
+  'Rendezvous with João in Massawa': '在马沙华与约翰会合',
+  'Deliver the Staff of the Saint to João Franco at the Massawa harbor and receive the Western Ocean charts.':
+    '在马沙华码头将圣者之杖交给约翰·法雷尔，并获得西洋海图。',
+  'Sight the Mouth of the Amazon': '发现亚马逊河口',
+  'Cross the Atlantic to South America and chart the Mouth of the Amazon near 0.5° S, 50.0° W.':
+    '横渡大西洋前往南美洲，测绘南纬 0.5°、西经 50.0° 附近的亚马逊河口。',
+  'Break the El Dorado Blockade': '突破黄金乡封锁舰队',
+  'Defeat the El Dorado guardian fleet from the Cayenne harbor.':
+    '从开云码头出航，击败黄金乡守卫舰队。',
+  'Visit the Cayenne harbor after sighting the Mouth of the Amazon.':
+    '发现亚马逊河口后前往开云码头。',
+  'Report Your Triumph in Lisbon': '回里斯本报告凯旋',
+  'Return to the Franco residence in Lisbon to celebrate the discovery of El Dorado and clear your family’s name.':
+    '返回里斯本法雷尔宅邸，庆贺发现黄金乡并重振家族声誉。',
 };
 
 export default ui;

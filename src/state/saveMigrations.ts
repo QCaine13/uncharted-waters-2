@@ -26,6 +26,49 @@ import { itemData } from '../data/itemData';
 
 export const SAVE_VERSION = 7;
 
+export const PROTAGONIST_IDS = ['joao', 'katarina', 'pietro'] as const;
+export type ProtagonistId = typeof PROTAGONIST_IDS[number];
+
+export interface PortInvestment {
+  economy: number;
+  industry: number;
+}
+
+export const normalizeProtagonistId = (value: unknown): ProtagonistId =>
+  typeof value === 'string' &&
+  (PROTAGONIST_IDS as readonly string[]).includes(value)
+    ? (value as ProtagonistId)
+    : 'joao';
+
+export const normalizePortInvestments = (
+  value: unknown,
+): Record<string, PortInvestment> => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+  const result: Record<string, PortInvestment> = {};
+  Object.entries(value).forEach(([portId, entry]) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
+    const rec = entry as Record<string, unknown>;
+    const economy =
+      typeof rec.economy === 'number' &&
+      Number.isFinite(rec.economy) &&
+      rec.economy >= 0
+        ? Math.floor(rec.economy)
+        : 0;
+    const industry =
+      typeof rec.industry === 'number' &&
+      Number.isFinite(rec.industry) &&
+      rec.industry >= 0
+        ? Math.floor(rec.industry)
+        : 0;
+    if (economy > 0 || industry > 0) {
+      result[portId] = { economy, industry };
+    }
+  });
+  return result;
+};
+
 export type AnySave = Record<string, unknown> & { version?: unknown };
 
 const migrations: Record<number, (save: AnySave) => AnySave> = {
@@ -216,6 +259,12 @@ const normalizeV7 = (save: AnySave): AnySave => {
       save.storyEvents,
       save.timePassed,
     ),
+    ...(Object.prototype.hasOwnProperty.call(save, 'protagonistId')
+      ? { protagonistId: normalizeProtagonistId(save.protagonistId) }
+      : {}),
+    ...(Object.prototype.hasOwnProperty.call(save, 'portInvestments')
+      ? { portInvestments: normalizePortInvestments(save.portInvestments) }
+      : {}),
   };
 };
 

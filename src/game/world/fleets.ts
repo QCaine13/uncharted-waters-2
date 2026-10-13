@@ -17,6 +17,7 @@ export interface Ship {
   crew: number;
   cargo: Cargo[];
   durability: number;
+  guns?: number;
 }
 
 interface Fleet {

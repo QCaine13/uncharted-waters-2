@@ -33,6 +33,9 @@ const slice = (key: InterfaceImages, i: number, widthPerSlice: number) => {
 
   // eslint-disable-next-line @typescript-eslint/no-use-before-define
   const image = loadedAssets[key];
+  if (!image) {
+    return '';
+  }
 
   const canvas = document.createElement('canvas');
   canvas.width = widthPerSlice;

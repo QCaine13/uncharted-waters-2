@@ -6,7 +6,7 @@ import type {
   StoryContext,
   StoryEvent,
 } from './types';
-import { storyEventId } from './types';
+import { characterId, storyEventId } from './types';
 import { getCompletedStoryEvents } from '../legacy/lisbonCompletionKeys';
 import { getCalendarParts } from '../../time/calendar';
 
@@ -147,6 +147,9 @@ export const resolveStoryEvent = (
   const candidates = [...candidatesById.values()]
     .filter(
       (candidate) =>
+        (context.protagonist === undefined ||
+          content.arcsById.get(candidate.arcId)?.protagonist ===
+            context.protagonist) &&
         conditionSatisfied(candidate.trigger, context) &&
         (candidate.repeat !== 'once' ||
           !context.completedEvents.has(candidate.id)),
@@ -191,6 +194,7 @@ export const createStoryContext = (
   );
 
   return {
+    protagonist: characterId(state.protagonistId ?? 'joao'),
     stage: stageForState(state),
     portId: state.portId,
     buildingId: state.buildingId,

@@ -10,8 +10,8 @@ describe('canonical Lisbon characters', () => {
     storyCharacters.find((character) => character.id === id);
 
   test('preserves every legacy identity, English name, color, role, and sailor link', () => {
-    expect(storyCharacters).toHaveLength(20);
-    expect(new Set(storyCharacters.map(({ id }) => id)).size).toBe(20);
+    expect(storyCharacters).toHaveLength(22);
+    expect(new Set(storyCharacters.map(({ id }) => id)).size).toBe(22);
 
     expect(byId('joao')).toEqual({
       id: characterId('joao'),
@@ -104,7 +104,9 @@ describe('canonical Lisbon characters', () => {
       id: characterId('katarina'),
       names: { en: 'Katarina Erantzo', zh: '卡特琳娜·艾兰茨' },
       role: 'antagonist',
+      portraitId: '2',
       dialogueStyle: { color: 'text-rose-700' },
+      sailorId: '2',
     });
     expect(byId('ali')).toEqual({
       id: characterId('ali'),
@@ -122,7 +124,9 @@ describe('canonical Lisbon characters', () => {
       id: characterId('pietro'),
       names: { en: 'Pietro', zh: '皮耶德' },
       role: 'npc',
+      portraitId: '5',
       dialogueStyle: { color: 'text-slate-600' },
+      sailorId: '4',
     });
     expect(byId('taphiel')).toEqual({
       id: characterId('taphiel'),
@@ -148,6 +152,22 @@ describe('canonical Lisbon characters', () => {
       role: 'antagonist',
       dialogueStyle: { color: 'text-stone-700' },
     });
+    expect(byId('emilio')).toEqual({
+      id: characterId('emilio'),
+      names: { en: 'Emilio Sanches', zh: '埃米利奥·桑切斯' },
+      role: 'companion',
+      portraitId: '36',
+      dialogueStyle: { color: 'text-amber-700' },
+      sailorId: '36',
+    });
+    expect(byId('camillo')).toEqual({
+      id: characterId('camillo'),
+      names: { en: 'Camillo Stefano', zh: '卡米洛·斯特凡诺' },
+      role: 'companion',
+      portraitId: '35',
+      dialogueStyle: { color: 'text-emerald-800' },
+      sailorId: '35',
+    });
 
     const sailorIds = storyCharacters
       .map(({ sailorId }) => sailorId)
@@ -159,6 +179,10 @@ describe('canonical Lisbon characters', () => {
       '34',
       'm2-relief-captain',
       'm3-relief-captain',
+      '2',
+      '4',
+      '36',
+      '35',
     ]);
     expect(sailorIds).toHaveLength(new Set(sailorIds).size);
 
@@ -343,6 +367,34 @@ describe('canonical Lisbon relationships', () => {
         type: 'enemy',
         reciprocal: 'enemy',
       },
+      {
+        id: 'katarina.emilio.companion',
+        from: 'emilio',
+        to: 'katarina',
+        type: 'companion',
+        reciprocal: 'companion',
+      },
+      {
+        id: 'katarina.martinez.enemy',
+        from: 'martinez',
+        to: 'katarina',
+        type: 'enemy',
+        reciprocal: 'enemy',
+      },
+      {
+        id: 'pietro.camillo.companion',
+        from: 'camillo',
+        to: 'pietro',
+        type: 'companion',
+        reciprocal: 'companion',
+      },
+      {
+        id: 'pietro.duchess-christiana.employer',
+        from: 'duchess-christiana',
+        to: 'pietro',
+        type: 'employer',
+        reciprocal: 'employee',
+      },
     ]);
 
     const compiled = compileStoryContent(
@@ -395,9 +447,17 @@ describe('canonical Lisbon relationships', () => {
         'joao:acquaintance:ezequiel',
         'martinez:enemy:joao',
         'joao:enemy:martinez',
+        'emilio:companion:katarina',
+        'katarina:companion:emilio',
+        'martinez:enemy:katarina',
+        'katarina:enemy:martinez',
+        'camillo:companion:pietro',
+        'pietro:companion:camillo',
+        'duchess-christiana:employer:pietro',
+        'pietro:employee:duchess-christiana',
       ]),
     );
-    expect(compiledEdges).toHaveLength(34);
+    expect(compiledEdges).toHaveLength(42);
     expect(compiled.diagnostics).toEqual([]);
   });
 });

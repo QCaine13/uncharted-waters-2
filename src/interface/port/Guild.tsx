@@ -5,8 +5,9 @@ import {
   reportDiscoveries,
   type DiscoveryReportResult,
 } from '../../state/actionsDiscovery';
+import { getCountrySummary } from '../../state/selectors';
 import state from '../../state/state';
-import { t } from '../../localization';
+import { getLocale, t } from '../../localization';
 import BuildingMenu from '../common/BuildingMenu';
 import type { VendorMessageBoxType } from '../quest/getMessageBoxes';
 import BuildingWrapper from './BuildingWrapper';
@@ -21,7 +22,11 @@ type GuildOption = typeof guildOptions[number];
 
 const hasOpenStoryAssignment = (): boolean => {
   const completed = new Set(state.storyEvents ?? []);
-  return completed.has('joao.lisbon-opening.harbor-final');
+  return (
+    completed.has('joao.lisbon-opening.harbor-final') ||
+    completed.has('katarina.seville-mutiny.departed-seville') ||
+    completed.has('pietro.genoa-departure.lisbon-patronage')
+  );
 };
 
 export default function Guild() {
@@ -33,18 +38,27 @@ export default function Guild() {
   } = useBuilding<GuildOption>();
   const [storyRevision, setStoryRevision] = useState(0);
   const [report, setReport] = useState<DiscoveryReportResult | null>(null);
+  const [showingCountryInfo, setShowingCountryInfo] = useState(false);
   const pendingReports = getPendingDiscoveryReports();
 
   const select = (option: GuildOption) => {
     if (option === 'Job Assignment') {
       setReport(null);
+      setShowingCountryInfo(false);
       setStoryRevision((revision) => revision + 1);
       return;
     }
     if (option === 'Report Discoveries') {
+      setShowingCountryInfo(false);
       setReport(reportDiscoveries());
       selectOption(option);
       setStoryRevision((revision) => revision + 1);
+      return;
+    }
+    if (option === 'Country Info') {
+      setReport(null);
+      setShowingCountryInfo(true);
+      selectOption(option);
     }
   };
 
@@ -68,6 +82,26 @@ export default function Guild() {
         reset();
       },
     };
+  } else if (showingCountryInfo) {
+    const separator = getLocale() === 'zh-CN' ? '，' : ', ';
+    const summaryText = getCountrySummary()
+      .map(({ country, alliedPorts }) =>
+        t('{country}: {count} ports', {
+          country: t(country),
+          count: alliedPorts,
+        }),
+      )
+      .join(separator);
+
+    vendorMessage = {
+      body: t('Allied ports by maritime power — {summary}.', {
+        summary: summaryText,
+      }),
+      acknowledge: () => {
+        setShowingCountryInfo(false);
+        reset();
+      },
+    };
   }
 
   const menu = (
@@ -76,7 +110,6 @@ export default function Guild() {
         label: option,
         value: option,
         disabled:
-          option === 'Country Info' ||
           (option === 'Job Assignment' && !hasOpenStoryAssignment()) ||
           (option === 'Report Discoveries' && pendingReports.length === 0),
       }))}

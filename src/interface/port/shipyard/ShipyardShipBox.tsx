@@ -7,9 +7,14 @@ import { t } from '../../../localization';
 interface Props {
   shipId: string;
   customShipName?: string;
+  currentGuns?: number;
 }
 
-export default function ShipyardShipBox({ shipId, customShipName }: Props) {
+export default function ShipyardShipBox({
+  shipId,
+  customShipName,
+  currentGuns,
+}: Props) {
   const {
     name,
     durability,
@@ -23,7 +28,8 @@ export default function ShipyardShipBox({ shipId, customShipName }: Props) {
     maximumCrew,
   } = shipData[shipId];
 
-  const cargo = capacity - usedGuns - usedCrew;
+  const displayedGuns = currentGuns ?? usedGuns;
+  const cargo = capacity - displayedGuns - usedCrew;
 
   return (
     <div
@@ -67,7 +73,7 @@ export default function ShipyardShipBox({ shipId, customShipName }: Props) {
             <div className="col-span-2 flex items-end justify-between">
               <span>{t('Guns (Max/Remodel)')}</span>
               <span className="text-2xl">
-                {usedGuns}/{maximumGuns}
+                {displayedGuns}/{maximumGuns}
               </span>
             </div>
             <div className="col-span-2 flex items-end justify-between">

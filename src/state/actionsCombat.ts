@@ -19,7 +19,11 @@ import type {
 import { shipData } from '../data/shipData';
 import type { Cargo, Provisions, Ship } from '../game/world/fleets';
 import Input from '../input';
-import { positionAdjacentToPort, getMateBattleLevel } from './selectors';
+import {
+  positionAdjacentToPort,
+  getMateBattleLevel,
+  getProtagonistSailorId,
+} from './selectors';
 import { getProvisionSummary } from './provisions';
 import { save } from './saveLoad';
 import state, { type State } from './state';
@@ -60,7 +64,7 @@ const setProvisionTotal = (
 
 const getPlayerDuelStats = () =>
   createPlayerDuelStats({
-    sailorId: '1',
+    sailorId: getProtagonistSailorId(),
     equipment: state.equipment,
     ownedItemIds: state.items,
     mateProgress: state.mateProgress,
@@ -75,10 +79,9 @@ const createNavalState = (
   if (!flagship || !model || !captain) return null;
 
   const levelBonus = Math.floor(getMateBattleLevel(captain.sailorId) / 10);
+  const baseGuns = flagship.guns ?? model.usedGuns;
   const guns =
-    model.usedGuns === 0
-      ? 0
-      : Math.min(model.maximumGuns, model.usedGuns + levelBonus);
+    baseGuns === 0 ? 0 : Math.min(model.maximumGuns, baseGuns + levelBonus);
 
   return createNaval({
     encounterId,
@@ -217,9 +220,12 @@ const grantExperience = (sailorId: string, amount: number): void => {
 const settleExperience = (combat: CombatState): void => {
   if (combat.outcome === null) return;
   const reward = getEncounterExperience(combat.encounterId, combat.outcome);
-  grantExperience('1', reward.joao);
+  const protagonistSailorId = getProtagonistSailorId();
+  grantExperience(protagonistSailorId, reward.joao);
   new Set(state.mates.map(({ sailorId }) => sailorId)).forEach((sailorId) => {
-    if (sailorId !== '1') grantExperience(sailorId, reward.others);
+    if (sailorId !== protagonistSailorId) {
+      grantExperience(sailorId, reward.others);
+    }
   });
 };
 

@@ -1,7 +1,9 @@
-import state, { Role } from './state';
+import state, { PortInvestment, ProtagonistId, Role } from './state';
 import generateUsedShips from '../interface/port/shipyard/generateUsedShips';
 import type { LegacyQuestCompletionKey } from '../story/legacy/lisbonCompletionKeys';
 import { getPortData } from '../game/port/portUtils';
+import { regularPorts } from '../data/portData';
+import { shipyardsToShips } from '../data/portShipyardData';
 import { itemData } from '../data/itemData';
 import { getPlayerFleet } from './selectorsFleet';
 import createMap from '../map';
@@ -47,6 +49,46 @@ export const finishedQuest = (id: LegacyQuestCompletionKey) =>
 
 export const canAfford = (cost: number) => state.gold >= cost;
 
+export const getPortInvestment = (
+  portId: string = state.portId ?? '1',
+): PortInvestment => {
+  const entry = state.portInvestments?.[portId];
+  return {
+    economy: entry?.economy ?? 0,
+    industry: entry?.industry ?? 0,
+  };
+};
+
+export const getPortEconomy = (
+  portId: string = state.portId ?? '1',
+): number => {
+  const port = getPortData(portId);
+  if (port.isSupplyPort) return 0;
+  const inv = getPortInvestment(portId);
+  return Math.min(1000, port.economy + inv.economy);
+};
+
+export const getPortIndustry = (
+  portId: string = state.portId ?? '1',
+): number => {
+  const port = getPortData(portId);
+  if (port.isSupplyPort) return 0;
+  const inv = getPortInvestment(portId);
+  return Math.min(1000, port.industry + inv.industry);
+};
+
+export const getAvailableNewShips = (
+  portId: string = state.portId ?? '1',
+): string[] => {
+  const port = getPortData(portId);
+  if (port.isSupplyPort) return [];
+  const industry = getPortIndustry(portId);
+  const shipPool = shipyardsToShips[port.industryId] ?? [];
+  return shipPool
+    .filter(({ industryRequirement }) => industry >= industryRequirement)
+    .map(({ shipId }) => shipId);
+};
+
 // TODO reset used ships for a given port after some time has passed
 export const getUsedShips = () => {
   const exitingUsedShips = state.usedShipsAtPort[state.portId!];
@@ -55,7 +97,10 @@ export const getUsedShips = () => {
     return exitingUsedShips;
   }
 
-  const usedShips = generateUsedShips(state.portId!);
+  const usedShips = generateUsedShips(
+    state.portId!,
+    getPortIndustry(state.portId!),
+  );
   state.usedShipsAtPort[state.portId!] = usedShips;
   return usedShips;
 };
@@ -185,7 +230,65 @@ export const getRoleDisplay = (role: Role) => {
   return t('Captain of {ship}', { ship: shipName });
 };
 
-// TODO needs to be implemented
-export const getFirstMateId = () => '32';
+export const getProtagonistId = (): ProtagonistId =>
+  state.protagonistId ?? 'joao';
+
+export const getProtagonistSailorId = (): string => {
+  const id = getProtagonistId();
+  if (id === 'katarina') return '2';
+  if (id === 'pietro') return '4';
+  return '1';
+};
+
+export const getFirstMateId = (): string => {
+  const id = getProtagonistId();
+  if (id === 'katarina') return '36';
+  if (id === 'pietro') return '35';
+  return '32';
+};
+
+export const getTotalFame = (): number =>
+  (state.fame?.adventure ?? 0) +
+  (state.fame?.pirate ?? 0) +
+  (state.fame?.trade ?? 0);
+
+export const getTotalInvestment = (): number =>
+  Object.values(state.portInvestments ?? {}).reduce(
+    (sum, inv) => sum + (inv?.economy ?? 0) + (inv?.industry ?? 0),
+    0,
+  );
+
+export const getRoyalRank = (): string => {
+  const score = getTotalFame() + getTotalInvestment();
+  if (score >= 5000) return 'Duke';
+  if (score >= 3000) return 'Marquis';
+  if (score >= 1800) return 'Earl';
+  if (score >= 1000) return 'Viscount';
+  if (score >= 500) return 'Baron';
+  if (score >= 250) return 'Knight';
+  if (score >= 100) return 'Squire';
+  if (score >= 30) return 'Page';
+  return 'None';
+};
+
+export const COUNTRY_NAMES = [
+  'Portugal',
+  'Spain',
+  'Ottoman Empire',
+  'Italy',
+  'England',
+  'Holland',
+] as const;
+
+export const getCountrySummary = () =>
+  COUNTRY_NAMES.map((country, idx) => {
+    const alliedPorts = regularPorts.filter(
+      (port) => (port.allegiances[idx] ?? 0) >= 50,
+    ).length;
+    return {
+      country,
+      alliedPorts,
+    };
+  });
 
 export const isLisbon = () => state.portId === '1';

@@ -1,6 +1,7 @@
 import type { DialogueStep } from '../../story/core/types';
 import type { StoryFrame } from '../../story/core/runtime';
 import { getLocale, t } from '../../localization';
+import state from '../../state/state';
 
 const messagePositions = [0, 1, 2] as const;
 
@@ -34,10 +35,32 @@ export type MessageBoxes = [
   CharacterMessageBoxType,
 ];
 
-const interpolatePlayerName = (body: string) =>
-  t(body)
-    .replace('$firstName', getLocale() === 'zh-CN' ? '约翰' : 'João')
-    .replace('$lastName', getLocale() === 'zh-CN' ? '法雷尔' : 'Franco');
+const getPlayerNames = (): { firstName: string; lastName: string } => {
+  const isZh = getLocale() === 'zh-CN';
+  if (state.protagonistId === 'katarina') {
+    return {
+      firstName: isZh ? '卡特琳娜' : 'Katarina',
+      lastName: isZh ? '艾兰茨' : 'Erantzo',
+    };
+  }
+  if (state.protagonistId === 'pietro') {
+    return {
+      firstName: isZh ? '皮耶德' : 'Pietro',
+      lastName: isZh ? '康迪' : 'Conti',
+    };
+  }
+  return {
+    firstName: isZh ? '约翰' : 'João',
+    lastName: isZh ? '法雷尔' : 'Franco',
+  };
+};
+
+const interpolatePlayerName = (body: string) => {
+  const { firstName, lastName } = getPlayerNames();
+  return t(body)
+    .replace('$firstName', firstName)
+    .replace('$lastName', lastName);
+};
 
 export const getMessageBoxesFromFrame = (
   history: readonly DialogueStep[],

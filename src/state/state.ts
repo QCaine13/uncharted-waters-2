@@ -5,7 +5,13 @@ import type { World } from '../game/world/world';
 import type { LegacyQuestCompletionKey } from '../story/legacy/lisbonCompletionKeys';
 import { ItemId } from '../data/itemData';
 import type { MarketPriceEntry } from '../data/marketPricing';
-import { migrate } from './saveMigrations';
+import {
+  migrate,
+  normalizePortInvestments,
+  normalizeProtagonistId,
+  type PortInvestment,
+  type ProtagonistId,
+} from './saveMigrations';
 import type {
   CombatOutcome,
   CombatState,
@@ -13,6 +19,7 @@ import type {
   MateProgress,
 } from '../combat/types';
 
+export type { PortInvestment, ProtagonistId };
 export type Stage = 'world' | 'port' | 'building';
 
 export type Velocity = {
@@ -51,6 +58,7 @@ export type MarketPriceState = {
 };
 
 export interface State {
+  protagonistId: ProtagonistId;
   portId: string | null;
   buildingId: string | null;
   timePassed: number;
@@ -71,6 +79,7 @@ export interface State {
   mates: Mate[];
   fame: Fame;
   marketPrices: MarketPriceState;
+  portInvestments: Record<string, PortInvestment>;
   // Discovered landmark ids (src/data/discoveryData.ts), insertion order.
   discoveries: string[];
   // Semantic story event ids, including IDs unknown to this build.
@@ -125,6 +134,8 @@ const state = {
   marketPrices: {},
   discoveries: [] as string[],
   ...savedState,
+  protagonistId: normalizeProtagonistId(savedState.protagonistId),
+  portInvestments: normalizePortInvestments(savedState.portInvestments),
   storyEvents: Array.isArray(savedState.storyEvents)
     ? savedState.storyEvents
     : [],

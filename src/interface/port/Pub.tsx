@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState } from 'react';
 import useBuilding from './hooks/useBuilding';
 import {
   CharacterMessageBoxType,
@@ -6,10 +6,25 @@ import {
 } from '../quest/getMessageBoxes';
 import BuildingMenu from '../common/BuildingMenu';
 import BuildingWrapper from './BuildingWrapper';
-import { getFirstMateId, getGold, isLisbon } from '../../state/selectors';
-import { getCrewNeeded, getPlayerFleet } from '../../state/selectorsFleet';
-import { CREW_COST, recruitCrew } from '../../state/actionsPort';
+import {
+  getFirstMateId,
+  getGold,
+  getProtagonistSailorId,
+  isLisbon,
+} from '../../state/selectors';
+import {
+  getCrewNeeded,
+  getPlayerFleet,
+  getTotalCrew,
+} from '../../state/selectorsFleet';
+import {
+  CREW_COST,
+  dismissCrew,
+  recruitCrew,
+  treatPub,
+} from '../../state/actionsPort';
 import { t } from '../../localization';
+import InputNumber from '../common/InputNumber';
 
 const pubOptions = [
   'Recruit Crew',
@@ -21,8 +36,19 @@ const pubOptions = [
 ] as const;
 type PubOptions = typeof pubOptions[number];
 
+const enabledPubOptions: PubOptions[] = [
+  'Recruit Crew',
+  'Dismiss Crew',
+  'Treat',
+];
+
 export default function Pub() {
   const { selectOption, next, back, reset, state } = useBuilding<PubOptions>();
+  const [treatResult, setTreatResult] = useState<{
+    cost: number;
+    bonusCrew: number;
+  } | null>(null);
+  const [dismissedCount, setDismissedCount] = useState(0);
 
   const { option, step } = state;
 
@@ -42,7 +68,7 @@ export default function Pub() {
       options={pubOptions.map((s) => ({
         label: s,
         value: s,
-        disabled: s !== 'Recruit Crew' || !getPlayerFleet().length,
+        disabled: !enabledPubOptions.includes(s) || !getPlayerFleet().length,
       }))}
       onSelect={(s) => selectOption(s)}
       onCancel={back}
@@ -50,7 +76,7 @@ export default function Pub() {
     />
   );
 
-  const children: ReactNode = null;
+  let children: ReactNode = null;
 
   if (option === 'Recruit Crew') {
     vendorMessage = null;
@@ -86,7 +112,7 @@ export default function Pub() {
     if (step === 1) {
       characterMessage = {
         body: 'Hey! Do any of you tough sailors want to join our crew?',
-        characterId: '1',
+        characterId: getProtagonistSailorId(),
         acknowledge: next,
       };
     }
@@ -111,6 +137,92 @@ export default function Pub() {
         characterId: getFirstMateId(),
         acknowledge: () => {
           recruitCrew(count);
+          reset();
+        },
+      };
+    }
+  }
+
+  if (option === 'Dismiss Crew') {
+    vendorMessage = null;
+    const totalCrew = getTotalCrew();
+
+    if (step === 0) {
+      if (totalCrew <= 0) {
+        characterMessage = {
+          body: 'We have no crew members to dismiss.',
+          characterId: getFirstMateId(),
+          acknowledge: back,
+        };
+      } else {
+        characterMessage = {
+          body: 'How many crew members should we dismiss?',
+          characterId: getFirstMateId(),
+        };
+        children = (
+          <InputNumber
+            limit={totalCrew}
+            onComplete={(amount) => {
+              if (amount > 0 && dismissCrew(amount)) {
+                setDismissedCount(amount);
+                next();
+              } else {
+                reset();
+              }
+            }}
+            onCancel={reset}
+          />
+        );
+      }
+    }
+
+    if (step === 1) {
+      characterMessage = {
+        body: t('Dismissed {count} crew members.', { count: dismissedCount }),
+        characterId: getFirstMateId(),
+        acknowledge: reset,
+      };
+    }
+  }
+
+  if (option === 'Treat') {
+    const gold = getGold();
+
+    if (step === 0) {
+      if (!gold) {
+        vendorMessage = null;
+        characterMessage = {
+          body: 'We don’t have enough gold.',
+          characterId: getFirstMateId(),
+          acknowledge: back,
+        };
+      } else {
+        vendorMessage = {
+          body: 'Buy a round of drinks for the tavern? (Up to 100g)',
+          confirm: {
+            yes: () => {
+              const res = treatPub();
+              setTreatResult(res);
+              next();
+            },
+            no: back,
+          },
+        };
+      }
+    }
+
+    if (step === 1) {
+      const bonus = treatResult?.bonusCrew ?? 0;
+      vendorMessage = {
+        body:
+          bonus > 0
+            ? t(
+                'The tavern cheers! {count} eager sailors volunteered to join your flagship!',
+                { count: bonus },
+              )
+            : 'The tavern cheers! Sailors say: "Check the Market Rate and invest in ports to unlock bigger ships!"',
+        acknowledge: () => {
+          setTreatResult(null);
           reset();
         },
       };

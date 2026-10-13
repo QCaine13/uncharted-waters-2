@@ -1,11 +1,17 @@
 import state, { SAVED_STATE_KEY, State } from './state';
-import { migrate, SAVE_VERSION } from './saveMigrations';
+import {
+  migrate,
+  normalizePortInvestments,
+  normalizeProtagonistId,
+  SAVE_VERSION,
+} from './saveMigrations';
 import { notifyGameLoaded } from './saveEvents';
 
 export { SAVE_VERSION };
 
 interface SaveData {
   version: number;
+  protagonistId?: State['protagonistId'];
   portId: State['portId'];
   buildingId: State['buildingId'];
   timePassed: State['timePassed'];
@@ -20,6 +26,7 @@ interface SaveData {
   mates: State['mates'];
   fame: State['fame'];
   marketPrices: State['marketPrices'];
+  portInvestments?: State['portInvestments'];
   discoveries: State['discoveries'];
   storyEvents: State['storyEvents'];
   storyEventTimes: State['storyEventTimes'];
@@ -33,6 +40,7 @@ interface SaveData {
 export const save = (): void => {
   const saveData: SaveData = {
     version: SAVE_VERSION,
+    protagonistId: state.protagonistId ?? 'joao',
     portId: state.portId,
     buildingId: state.buildingId,
     timePassed: state.timePassed,
@@ -47,6 +55,7 @@ export const save = (): void => {
     mates: JSON.parse(JSON.stringify(state.mates)),
     fame: { ...state.fame },
     marketPrices: JSON.parse(JSON.stringify(state.marketPrices)),
+    portInvestments: JSON.parse(JSON.stringify(state.portInvestments ?? {})),
     discoveries: [...state.discoveries],
     storyEvents: [...(state.storyEvents ?? [])],
     storyEventTimes: { ...(state.storyEventTimes ?? {}) },
@@ -87,6 +96,7 @@ export const load = (): boolean => {
     return false;
   }
 
+  state.protagonistId = normalizeProtagonistId(saveData.protagonistId);
   state.portId = saveData.portId;
   state.buildingId = saveData.buildingId;
   state.timePassed = saveData.timePassed;
@@ -101,6 +111,7 @@ export const load = (): boolean => {
   state.mates = saveData.mates;
   state.fame = saveData.fame;
   state.marketPrices = saveData.marketPrices;
+  state.portInvestments = normalizePortInvestments(saveData.portInvestments);
   state.discoveries = saveData.discoveries;
   state.storyEvents = Array.isArray(saveData.storyEvents)
     ? [...saveData.storyEvents]
