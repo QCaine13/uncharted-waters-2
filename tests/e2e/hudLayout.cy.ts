@@ -116,4 +116,41 @@ describe('HUD layout', () => {
     readoutsFitWithoutScrolling();
     cy.contains('System').should('be.visible');
   });
+
+  it('keeps readouts inside the column without scrolling even when both exhausted and starvation warnings appear', () => {
+    setState({
+      portId: null,
+      buildingId: null,
+      timePassed: 1421,
+      dayAtSea: 4,
+      fleets: {
+        '1': {
+          position: { x: 300, y: 300 },
+          ships: [
+            {
+              id: '6',
+              name: 'Flagship',
+              crew: 11,
+              cargo: [
+                { type: 'water', quantity: 1 },
+                { type: 'food', quantity: 1 },
+                { type: 'lumber', quantity: 4 },
+                { type: 'shot', quantity: 12 },
+              ],
+              durability: 25,
+            },
+          ],
+        },
+      },
+      mates: [{ sailorId: '1', role: 0 }],
+      gold: 5000,
+    });
+    cy.visit('');
+
+    cy.contains('Game is loading...').should('not.exist');
+    cy.get('[data-test=provisionStatus]').should('be.visible');
+    cy.get('[data-test=provisionStarvation]').should('be.visible');
+    fitsTheFrame('[data-test=left]');
+    readoutsFitWithoutScrolling();
+  });
 });

@@ -109,5 +109,4 @@ export const settleSell = (
   referencePrice: number,
   index: number,
   quantity: number,
-): TradeSettlement =>
-  settle(referencePrice, index, quantity, -1, getSellPrice);
+): TradeSettlement => settle(referencePrice, index, quantity, -1, getSellPrice);

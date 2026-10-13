@@ -158,16 +158,21 @@ const isDuelState = (value: unknown): value is DuelState => {
   if (!isRecord(value) || value.kind !== 'duel' || !hasValidBase(value)) {
     return false;
   }
+  if (
+    !isCombatant(value.player) ||
+    !isCombatant(value.enemy) ||
+    (value.outcome === null && (value.player.hp === 0 || value.enemy.hp === 0))
+  ) {
+    return false;
+  }
   return (
     (value.phase === 'attack' || value.phase === 'defend') &&
-    isCombatant(value.player) &&
-    isCombatant(value.enemy) &&
     ['parry', 'block', 'dodge'].includes(String(value.enemyDefense)) &&
     ['thrust', 'slash', 'heavy'].includes(String(value.enemyAttack))
   );
 };
 
-const isNavalForce = (value: unknown, player: boolean): boolean => {
+const isNavalForce = (value: unknown, player: boolean): value is NavalForce => {
   if (!isRecord(value)) return false;
   const base =
     isFiniteNonNegative(value.hull) &&
@@ -186,9 +191,19 @@ export const isCombatState = (value: unknown): value is CombatState => {
   if (!isRecord(value)) return false;
   if (value.kind === 'duel') return isDuelState(value);
   if (value.kind !== 'naval' || !hasValidBase(value)) return false;
+  if (!isNavalForce(value.player, true) || !isNavalForce(value.enemy, false)) {
+    return false;
+  }
+  if (
+    value.outcome === null &&
+    (value.player.hull === 0 ||
+      value.player.crew === 0 ||
+      value.enemy.hull === 0 ||
+      value.enemy.crew === 0)
+  ) {
+    return false;
+  }
   return (
-    isNavalForce(value.player, true) &&
-    isNavalForce(value.enemy, false) &&
     [0, 1, 2, 3].includes(value.range as number) &&
     isStats(value.playerDuel) &&
     (value.boardingDuel === null || isDuelState(value.boardingDuel))

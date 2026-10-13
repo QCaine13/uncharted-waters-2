@@ -12,7 +12,11 @@ import { Relic } from './storyHooks';
 const relicData: Record<string, Relic> = {
   relic_sodre_astrolabe: {
     id: 'relic_sodre_astrolabe',
-    names: { zh: '索德雷的航海星盘', en: 'The Sodre Astrolabe', ja: 'ソドレの航海アストロラーベ' },
+    names: {
+      zh: '索德雷的航海星盘',
+      en: 'The Sodre Astrolabe',
+      ja: 'ソドレの航海アストロラーベ',
+    },
     category: 'relic',
     darkLineLayer: 'L3',
     hookPriority: 'required',
@@ -40,13 +44,20 @@ const relicData: Record<string, Relic> = {
         note: 'Esmeralda号(1503)水下考古报告',
         link: 'https://www.academia.edu/34557728/THE_ESMERALDA_SHIPWRECK_OFF_AL_HALLANIYAH_ISLAND',
       },
-      { level: 'L2', note: '约1496-1501，最古老航海星盘，带曼努埃尔一世徽记 [6]' },
+      {
+        level: 'L2',
+        note: '约1496-1501，最古老航海星盘，带曼努埃尔一世徽记 [6]',
+      },
     ],
   },
 
   relic_saobento_qilin_dish: {
     id: 'relic_saobento_qilin_dish',
-    names: { zh: '圣本笃号的麒麟青花盘', en: 'Qilin Porcelain of the São Bento', ja: 'サン・ベント号の麒麟青花皿' },
+    names: {
+      zh: '圣本笃号的麒麟青花盘',
+      en: 'Qilin Porcelain of the São Bento',
+      ja: 'サン・ベント号の麒麟青花皿',
+    },
     category: 'relic',
     darkLineLayer: 'L3',
     hookPriority: 'required',
@@ -55,7 +66,7 @@ const relicData: Record<string, Relic> = {
       rumor:
         '南非那片见鬼的海岸吞噬了无数葡萄牙巨舰。听说最近有人在沙滩上捡到了蓝白相间的瓷片，上面画着长鳞片的东方喷火怪兽。水手们都说，是那种怪兽引来了好望角的风暴！',
       record:
-        '一件出水自 1554 年圣本笃号（São Bento）沉船残骸的大明青花瓷盘。盘心绘有被火焰环绕的瑞兽“麒麟”（Ch\'i-lin）。这证明了早在 16 世纪中叶，中国高级瓷器就已成为葡萄牙帝国在印度洋航线上的核心运输财富。',
+        "一件出水自 1554 年圣本笃号（São Bento）沉船残骸的大明青花瓷盘。盘心绘有被火焰环绕的瑞兽“麒麟”（Ch'i-lin）。这证明了早在 16 世纪中叶，中国高级瓷器就已成为葡萄牙帝国在印度洋航线上的核心运输财富。",
       archive:
         '【信标会内参：温和派誊本】水手把圣本笃号的覆灭推给盘上的麒麟，是把好望角那段海岸的脾气错记在了一尾瑞兽身上——那一带本就乱流、暗礁、季风骤转，吞过的葡萄牙巨舰何止一艘，与谁的船舱里装着什么并无干系。本会真正在意的，是这尾被火焰环绕的麒麟本身：它是江南民窑应外销之需画给番邦的祥瑞，可那环身的火焰、四向放射的纹路，与我们在东非、印度沿海记录的景教遗物星象母题隐隐相通。极端派据此疑心大明窑工早受过失落王国的余泽，主张把这批瓷器尽数收没封存；我们温和派以为不必如此——东方的窑工、地中海的僧侣，各自膜拜不同的神，却不约而同把光与星辰刻进至贵之物，未必是谁传给了谁，更可能是那些景教传教者走得比帝国史书所愿承认的更早、更远。这只盘子不是死亡坐标，是一段被海水冲散的家书残页。',
     },
@@ -80,7 +91,11 @@ const relicData: Record<string, Relic> = {
 
   relic_saobento_crane_dish: {
     id: 'relic_saobento_crane_dish',
-    names: { zh: '圣本笃号的八卦仙鹤瓷', en: 'Trigram and Crane Porcelain of São Bento', ja: 'サン・ベント号の八卦仙鶴磁' },
+    names: {
+      zh: '圣本笃号的八卦仙鹤瓷',
+      en: 'Trigram and Crane Porcelain of São Bento',
+      ja: 'サン・ベント号の八卦仙鶴磁',
+    },
     category: 'relic',
     darkLineLayer: 'L3',
     hookPriority: 'required',
@@ -114,7 +129,11 @@ const relicData: Record<string, Relic> = {
 
   relic_saobento_faux_xuande: {
     id: 'relic_saobento_faux_xuande',
-    names: { zh: '圣本笃号的“宣德伪款”青花碗', en: 'Faux-Xuande Bowl of the São Bento', ja: 'サン・ベント号の「宣徳偽款」碗' },
+    names: {
+      zh: '圣本笃号的“宣德伪款”青花碗',
+      en: 'Faux-Xuande Bowl of the São Bento',
+      ja: 'サン・ベント号の「宣徳偽款」碗',
+    },
     category: 'relic',
     darkLineLayer: 'L2',
     hookPriority: 'required',
@@ -148,7 +167,11 @@ const relicData: Record<string, Relic> = {
 
   relic_san_diego_ordnance: {
     id: 'relic_san_diego_ordnance',
-    names: { zh: '圣迭戈号的超载火炮', en: 'Overloaded Ordnance of the San Diego', ja: 'サン・ディエゴ号の過載火砲' },
+    names: {
+      zh: '圣迭戈号的超载火炮',
+      en: 'Overloaded Ordnance of the San Diego',
+      ja: 'サン・ディエゴ号の過載火砲',
+    },
     category: 'relic',
     darkLineLayer: 'L3',
     hookPriority: 'required',
@@ -183,7 +206,11 @@ const relicData: Record<string, Relic> = {
 
   relic_golden_clove: {
     id: 'relic_golden_clove',
-    names: { zh: '德尔纳特黄金丁香', en: 'Golden Clove of Ternate', ja: 'テルナテの黄金丁子' },
+    names: {
+      zh: '德尔纳特黄金丁香',
+      en: 'Golden Clove of Ternate',
+      ja: 'テルナテの黄金丁子',
+    },
     category: 'relic',
     darkLineLayer: 'L4',
     hookPriority: 'required',
@@ -198,7 +225,12 @@ const relicData: Record<string, Relic> = {
     },
     storyHooks: {
       protagonists: ['ali', 'ernst'],
-      factions: ['beacon_order', 'ternate_sultanate', 'spanish_crown', 'portuguese_crown'],
+      factions: [
+        'beacon_order',
+        'ternate_sultanate',
+        'spanish_crown',
+        'portuguese_crown',
+      ],
       darkLineLayer: 'L4',
       fameTriggers: ['trade', 'adventure'],
       crossLinks: ['port.ternate', 'port.banda'],
@@ -206,15 +238,25 @@ const relicData: Record<string, Relic> = {
       rewards: [],
     },
     sources: [
-      { level: 'L1', note: '16 世纪初摩鹿加德尔纳特苏丹国与伊比利亚人接触记录 [8]' },
+      {
+        level: 'L1',
+        note: '16 世纪初摩鹿加德尔纳特苏丹国与伊比利亚人接触记录 [8]',
+      },
       { level: 'L2', note: '葡西丁香暗战、重金礼品换排他采购权 [8]' },
-      { level: 'L5', note: 'L5 终局推演（基于 world-archive 综合，标注为推测）' },
+      {
+        level: 'L5',
+        note: 'L5 终局推演（基于 world-archive 综合，标注为推测）',
+      },
     ],
   },
 
   relic_golden_mask_tenochtitlan: {
     id: 'relic_golden_mask_tenochtitlan',
-    names: { zh: '特诺奇蒂特兰金面具', en: 'Golden Mask of Tenochtitlan', ja: 'アステカの黄金の仮面' },
+    names: {
+      zh: '特诺奇蒂特兰金面具',
+      en: 'Golden Mask of Tenochtitlan',
+      ja: 'アステカの黄金の仮面',
+    },
     category: 'relic',
     darkLineLayer: 'L5',
     hookPriority: 'required',
@@ -232,20 +274,34 @@ const relicData: Record<string, Relic> = {
       factions: ['beacon_order', 'aztec_priesthood', 'spanish_crown'],
       darkLineLayer: 'L5',
       fameTriggers: ['adventure'],
-      crossLinks: ['region.caribbean', 'region.mesoamerica', 'relic.beacon_universal_map'],
+      crossLinks: [
+        'region.caribbean',
+        'region.mesoamerica',
+        'relic.beacon_universal_map',
+      ],
       triggers: [],
       rewards: [],
     },
     sources: [
       { level: 'L1', note: '1521 特诺奇蒂特兰陷落后纳瓦特尔语残存抄本 [5]' },
-      { level: 'L2', note: '科尔特斯熔毁原住民金器，少数最高圣物被祭司藏匿 [5]' },
-      { level: 'L5', note: 'L5 终局推演（基于 world-archive 综合，标注为推测）' },
+      {
+        level: 'L2',
+        note: '科尔特斯熔毁原住民金器，少数最高圣物被祭司藏匿 [5]',
+      },
+      {
+        level: 'L5',
+        note: 'L5 终局推演（基于 world-archive 综合，标注为推测）',
+      },
     ],
   },
 
   relic_belitung_tang_cargo: {
     id: 'relic_belitung_tang_cargo',
-    names: { zh: '勿里洞古沉船海图', en: 'Chart of the Belitung Wreck', ja: 'ブリトゥン島の古沈船海図' },
+    names: {
+      zh: '勿里洞古沉船海图',
+      en: 'Chart of the Belitung Wreck',
+      ja: 'ブリトゥン島の古沈船海図',
+    },
     category: 'relic',
     darkLineLayer: 'L5',
     hookPriority: 'required',
@@ -279,7 +335,11 @@ const relicData: Record<string, Relic> = {
 
   relic_swahili_divination_bone: {
     id: 'relic_swahili_divination_bone',
-    names: { zh: '斯瓦希里海岸占卜骨', en: 'Swahili Divination Bones', ja: 'スワヒリ海岸の占い骨' },
+    names: {
+      zh: '斯瓦希里海岸占卜骨',
+      en: 'Swahili Divination Bones',
+      ja: 'スワヒリ海岸の占い骨',
+    },
     category: 'relic',
     darkLineLayer: 'L4',
     hookPriority: 'required',
@@ -304,13 +364,20 @@ const relicData: Record<string, Relic> = {
     sources: [
       { level: 'L1', note: '东非斯瓦希里海岸口头传统与前殖民考古遗存' },
       { level: 'L2', note: '巫医（Waganga）刻符兽骨占卜定出海吉日' },
-      { level: 'L5', note: 'L5 终局推演（基于 world-archive 综合，标注为推测）' },
+      {
+        level: 'L5',
+        note: 'L5 终局推演（基于 world-archive 综合，标注为推测）',
+      },
     ],
   },
 
   relic_temasek_14thc_wreck: {
     id: 'relic_temasek_14thc_wreck',
-    names: { zh: '淡马锡古沉船', en: 'The Temasek Wreck', ja: 'テマセク古沈船' },
+    names: {
+      zh: '淡马锡古沉船',
+      en: 'The Temasek Wreck',
+      ja: 'テマセク古沈船',
+    },
     category: 'relic',
     darkLineLayer: 'L4',
     hookPriority: 'required',
@@ -344,7 +411,11 @@ const relicData: Record<string, Relic> = {
 
   relic_beacon_universal_map: {
     id: 'relic_beacon_universal_map',
-    names: { zh: '信标会普世星图', en: 'The Universal Blueprint', ja: 'ビコン騎士団の普遍的星図' },
+    names: {
+      zh: '信标会普世星图',
+      en: 'The Universal Blueprint',
+      ja: 'ビコン騎士団の普遍的星図',
+    },
     category: 'relic',
     darkLineLayer: 'L5',
     hookPriority: 'required',
@@ -373,7 +444,10 @@ const relicData: Record<string, Relic> = {
       rewards: [],
     },
     sources: [
-      { level: 'L5', note: 'L5 终局推演（基于 world-archive 综合，标注为推测）' },
+      {
+        level: 'L5',
+        note: 'L5 终局推演（基于 world-archive 综合，标注为推测）',
+      },
     ],
   },
 
@@ -381,7 +455,11 @@ const relicData: Record<string, Relic> = {
 
   item_mazu_paper_ship: {
     id: 'item_mazu_paper_ship',
-    names: { zh: '妈祖的彩纸海船', en: 'Colorful Paper Ship of Mazu', ja: '媽祖の彩紙海船' },
+    names: {
+      zh: '妈祖的彩纸海船',
+      en: 'Colorful Paper Ship of Mazu',
+      ja: '媽祖の彩紙海船',
+    },
     category: 'document',
     darkLineLayer: 'L4',
     hookPriority: 'required',
@@ -415,7 +493,11 @@ const relicData: Record<string, Relic> = {
 
   item_pawang_sea_mantra: {
     id: 'item_pawang_sea_mantra',
-    names: { zh: '帕旺的镇海真言', en: "Pawang's Sea Mantra", ja: 'パワンの鎮海真言' },
+    names: {
+      zh: '帕旺的镇海真言',
+      en: "Pawang's Sea Mantra",
+      ja: 'パワンの鎮海真言',
+    },
     category: 'document',
     darkLineLayer: 'L4',
     hookPriority: 'required',
@@ -449,7 +531,11 @@ const relicData: Record<string, Relic> = {
 
   item_aczk_manuscript: {
     id: 'item_aczk_manuscript',
-    names: { zh: '《安船酌献科》与司香航海日志', en: 'ACZK Maritime Manuscript', ja: '安船酌献科の写本' },
+    names: {
+      zh: '《安船酌献科》与司香航海日志',
+      en: 'ACZK Maritime Manuscript',
+      ja: '安船酌献科の写本',
+    },
     category: 'document',
     darkLineLayer: 'L4',
     hookPriority: 'required',
@@ -483,7 +569,11 @@ const relicData: Record<string, Relic> = {
 
   item_mast_styx_coin: {
     id: 'item_mast_styx_coin',
-    names: { zh: '主桅下的冥河银币', en: 'Styx Coin under the Mast', ja: '主檣下のステュクス銀貨' },
+    names: {
+      zh: '主桅下的冥河银币',
+      en: 'Styx Coin under the Mast',
+      ja: '主檣下のステュクス銀貨',
+    },
     category: 'document',
     darkLineLayer: 'L4',
     hookPriority: 'required',
@@ -518,7 +608,11 @@ const relicData: Record<string, Relic> = {
 
   equip_jianzhen_compass: {
     id: 'equip_jianzhen_compass',
-    names: { zh: '监针童子罗经盘', en: 'Compass of the Needle-Supervising Boy', ja: '監針童子の羅経盤' },
+    names: {
+      zh: '监针童子罗经盘',
+      en: 'Compass of the Needle-Supervising Boy',
+      ja: '監針童子の羅経盤',
+    },
     category: 'document',
     darkLineLayer: 'L3',
     hookPriority: 'required',
@@ -552,7 +646,11 @@ const relicData: Record<string, Relic> = {
 
   item_mazu_sentinels: {
     id: 'item_mazu_sentinels',
-    names: { zh: '千里眼与顺风耳木雕', en: 'Idols of the Demonic Sentinels', ja: '千里眼と順風耳の木彫' },
+    names: {
+      zh: '千里眼与顺风耳木雕',
+      en: 'Idols of the Demonic Sentinels',
+      ja: '千里眼と順風耳の木彫',
+    },
     category: 'document',
     darkLineLayer: 'L4',
     hookPriority: 'required',
@@ -575,7 +673,10 @@ const relicData: Record<string, Relic> = {
       rewards: [],
     },
     sources: [
-      { level: 'L1', note: '1409《太上老君说天妃救苦灵验经》；闽台妈祖庙造像 [10,11]' },
+      {
+        level: 'L1',
+        note: '1409《太上老君说天妃救苦灵验经》；闽台妈祖庙造像 [10,11]',
+      },
       {
         level: 'L2',
         note: '大英图书馆藏OR12693/18《安船酌献科》解读(千里眼/顺风耳护法)',
@@ -586,7 +687,11 @@ const relicData: Record<string, Relic> = {
 
   equip_chuanzai_ma_shrine: {
     id: 'equip_chuanzai_ma_shrine',
-    names: { zh: '船仔妈神龛', en: 'The Chuanzai Ma Bow Shrine', ja: '船仔媽の神棚' },
+    names: {
+      zh: '船仔妈神龛',
+      en: 'The Chuanzai Ma Bow Shrine',
+      ja: '船仔媽の神棚',
+    },
     category: 'document',
     darkLineLayer: 'L4',
     hookPriority: 'required',
@@ -620,7 +725,11 @@ const relicData: Record<string, Relic> = {
 
   equip_luban_shrine: {
     id: 'equip_luban_shrine',
-    names: { zh: '建橹班师父的神龛', en: 'Shrine of Master Ban the Oar-builder', ja: '建櫓班師父の神棚' },
+    names: {
+      zh: '建橹班师父的神龛',
+      en: 'Shrine of Master Ban the Oar-builder',
+      ja: '建櫓班師父の神棚',
+    },
     category: 'document',
     darkLineLayer: 'L3',
     hookPriority: 'required',
@@ -654,7 +763,11 @@ const relicData: Record<string, Relic> = {
 
   item_baltic_amber_casket: {
     id: 'item_baltic_amber_casket',
-    names: { zh: '北海琥珀之匣', en: 'Amber Casket of the Baltic', ja: 'バルト海の琥珀匣' },
+    names: {
+      zh: '北海琥珀之匣',
+      en: 'Amber Casket of the Baltic',
+      ja: 'バルト海の琥珀匣',
+    },
     category: 'document',
     darkLineLayer: 'L3',
     hookPriority: 'required',
@@ -679,13 +792,20 @@ const relicData: Record<string, Relic> = {
     sources: [
       { level: 'L1', note: '汉萨同盟商业契约保存习惯 [3]' },
       { level: 'L2', note: '但泽/柯尼斯堡琥珀垄断，16 世纪汉萨衰退 [3]' },
-      { level: 'L5', note: 'L5 终局推演（基于 world-archive 综合，标注为推测）' },
+      {
+        level: 'L5',
+        note: 'L5 终局推演（基于 world-archive 综合，标注为推测）',
+      },
     ],
   },
 
   item_yuegang_smuggling_permit: {
     id: 'item_yuegang_smuggling_permit',
-    names: { zh: '月港私商特许状', en: 'Yuegang Smuggling Permit', ja: '月港私商特許状' },
+    names: {
+      zh: '月港私商特许状',
+      en: 'Yuegang Smuggling Permit',
+      ja: '月港私商特許状',
+    },
     category: 'document',
     darkLineLayer: 'L2',
     hookPriority: 'required',
@@ -719,7 +839,11 @@ const relicData: Record<string, Relic> = {
 
   item_shunji_temple_tablet: {
     id: 'item_shunji_temple_tablet',
-    names: { zh: '顺济庙赐匾与红衣幻影', en: 'The Smooth Crossing Tablet', ja: '順済廟の勅額と紅衣の幻影' },
+    names: {
+      zh: '顺济庙赐匾与红衣幻影',
+      en: 'The Smooth Crossing Tablet',
+      ja: '順済廟の勅額と紅衣の幻影',
+    },
     category: 'document',
     darkLineLayer: 'L4',
     hookPriority: 'required',
@@ -754,7 +878,11 @@ const relicData: Record<string, Relic> = {
 
   item_pateri_houseboat: {
     id: 'item_pateri_houseboat',
-    names: { zh: '马来治愈彩船', en: 'Main Pateri Healing Houseboat', ja: 'マレー治癒の屋形船' },
+    names: {
+      zh: '马来治愈彩船',
+      en: 'Main Pateri Healing Houseboat',
+      ja: 'マレー治癒の屋形船',
+    },
     category: 'document',
     darkLineLayer: 'L4',
     hookPriority: 'required',
@@ -777,7 +905,10 @@ const relicData: Record<string, Relic> = {
       rewards: [],
     },
     sources: [
-      { level: 'L1', note: '马来半岛及刁曼岛原住民口头传统与萨满仪式记录 [4-6]' },
+      {
+        level: 'L1',
+        note: '马来半岛及刁曼岛原住民口头传统与萨满仪式记录 [4-6]',
+      },
       {
         level: 'L2',
         note: 'Main Pateri治愈仪式（加美兰音乐 + 屋船转移疾病）',
@@ -788,7 +919,11 @@ const relicData: Record<string, Relic> = {
 
   item_feline_shipmate: {
     id: 'item_feline_shipmate',
-    names: { zh: '厄运免疫者：船猫', en: 'The Feline Shipmate', ja: '船乗り猫' },
+    names: {
+      zh: '厄运免疫者：船猫',
+      en: 'The Feline Shipmate',
+      ja: '船乗り猫',
+    },
     category: 'creature',
     darkLineLayer: 'L3',
     hookPriority: 'required',
@@ -797,7 +932,7 @@ const relicData: Record<string, Relic> = {
       rumor:
         '船上没有猫？那你就是在找死！老鼠吃光你的饼干还是小事，只有猫的眼睛能在漆黑的暴风雨里看到桅杆上是不是趴着死人的灵魂！',
       record:
-        '无论在欧洲还是阿拉伯的商船上，“船猫”（Ship\'s Cat）都享有极高的地位。这是航海迷信中罕见的代表纯粹好运的象征。水手们深信，猫能预知天气的突变，并为船只带来顺风。',
+        "无论在欧洲还是阿拉伯的商船上，“船猫”（Ship's Cat）都享有极高的地位。这是航海迷信中罕见的代表纯粹好运的象征。水手们深信，猫能预知天气的突变，并为船只带来顺风。",
       archive:
         '【信标会内参：温和派生物档案】水手赋予了猫魔法的属性，但这种依赖完全是基于生物学。猫消灭了携带瘟疫的鼠类，保护了脆弱的远洋补给。更关键的是，猫的内耳结构对气压的急剧下降极其敏感，这使它们能在风暴来临前表现出躁动。它们不是魔法师，它们是长着毛的活体气压计。',
     },

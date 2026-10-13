@@ -53,6 +53,8 @@ export default function QuestJournal() {
         <div className="space-y-3">
           {entries.map((entry) => {
             const isCurrent = entry.id === current;
+            const titleText = t(entry.title);
+            const statusText = entryStatus(entry, isCurrent);
             return (
               <div
                 className={entry.completed ? 'text-gray-500' : 'text-black'}
@@ -61,10 +63,12 @@ export default function QuestJournal() {
               >
                 <div className="flex items-baseline gap-3 text-xl font-bold">
                   <span>{entryMarker(entry, isCurrent)}</span>
-                  <span>{t(entry.title)}</span>
-                  <span className="text-sm font-normal text-amber-700">
-                    {entryStatus(entry, isCurrent)}
-                  </span>
+                  <span>{titleText}</span>
+                  {statusText !== titleText && (
+                    <span className="text-sm font-normal text-amber-700">
+                      {statusText}
+                    </span>
+                  )}
                 </div>
                 <div className="text-lg ml-8 break-words">
                   {t(entry.body, entry.values)}

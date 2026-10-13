@@ -60,10 +60,13 @@ describe('buy/sell price from an index', () => {
     [40, 44, 36],
     [100, 110, 90],
     [200, 220, 180],
-  ])('reference 100 at index %i buys at %i and sells at %i', (index, buy, sell) => {
-    expect(getBuyPrice(100, index)).toBe(buy);
-    expect(getSellPrice(100, index)).toBe(sell);
-  });
+  ])(
+    'reference 100 at index %i buys at %i and sells at %i',
+    (index, buy, sell) => {
+      expect(getBuyPrice(100, index)).toBe(buy);
+      expect(getSellPrice(100, index)).toBe(sell);
+    },
+  );
 
   // Different floors on purpose: a shared floor of 1 would make buy and sell
   // equal at a degenerate reference price, breaking the buy > sell invariant.

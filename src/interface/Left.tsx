@@ -69,7 +69,7 @@ export default function Left({
         >
           {getDate(timePassed)}
         </div>
-        <div className="mb-8" data-test="dayAtSea">
+        <div className="mb-5" data-test="dayAtSea">
           {inPort
             ? getHoursMinutes(timePassed)
             : t('Day {day}', { day: dayAtSea })}

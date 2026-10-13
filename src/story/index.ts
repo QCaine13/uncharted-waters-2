@@ -22,6 +22,10 @@ export const compiledStoryContent =
         storyValidationCatalogs,
         reportProductionStoryDiagnostic,
       )
-    : compileStoryContent(storyContentSource, 'strict', storyValidationCatalogs);
+    : compileStoryContent(
+        storyContentSource,
+        'strict',
+        storyValidationCatalogs,
+      );
 
 export default compiledStoryContent;

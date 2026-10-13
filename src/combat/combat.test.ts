@@ -7,11 +7,12 @@ import {
 import { advanceDuel, createDuel } from './duel';
 import { createPlayerDuelStats } from './stats';
 import { advanceNaval, createNaval } from './naval';
-import type {
-  DuelAction,
-  DuelAttack,
-  DuelCombatantStats,
-  DuelDefense,
+import {
+  isCombatState,
+  type DuelAction,
+  type DuelAttack,
+  type DuelCombatantStats,
+  type DuelDefense,
 } from './types';
 
 const player: DuelCombatantStats = {
@@ -657,5 +658,33 @@ describe('naval rules', () => {
     });
     expect(completed.outcome).toBe('victory');
     expect(completed.revision).toBe(nearlyWon.revision + 1);
+  });
+
+  test('rejects crafted unresolved zero-hull, zero-crew, or zero-hp snapshots and blocks repair revival', () => {
+    const baseNaval = naval();
+    const zeroHullUnresolved = {
+      ...baseNaval,
+      outcome: null,
+      player: { ...baseNaval.player, hull: 0, lumber: 2 },
+    };
+    const zeroCrewUnresolved = {
+      ...baseNaval,
+      outcome: null,
+      player: { ...baseNaval.player, crew: 0 },
+    };
+    expect(isCombatState(zeroHullUnresolved)).toBe(false);
+    expect(isCombatState(zeroCrewUnresolved)).toBe(false);
+    expect(advanceNaval(zeroHullUnresolved, { type: 'repair' })).toBe(
+      zeroHullUnresolved,
+    );
+
+    const baseDuel = createDuel({ encounterId: 'test.duel', player, enemy });
+    expect(
+      isCombatState({
+        ...baseDuel,
+        outcome: null,
+        player: { ...baseDuel.player, hp: 0 },
+      }),
+    ).toBe(false);
   });
 });

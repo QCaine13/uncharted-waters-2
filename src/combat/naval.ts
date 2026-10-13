@@ -106,7 +106,7 @@ export const advanceNaval = (
   state: NavalState,
   action: NavalAction,
 ): NavalState => {
-  if (state.outcome !== null) return state;
+  if (state.outcome !== null || resolvedOutcome(state) !== null) return state;
 
   if (state.boardingDuel) {
     if (action.type === 'resolveChallenge') return finishChallenge(state);

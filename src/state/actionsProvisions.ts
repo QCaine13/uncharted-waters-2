@@ -10,7 +10,11 @@ import {
   nearestPortId,
   planDailyProvisionSettlement,
 } from './provisions';
-import type { CrewLoss, ProvisionDeduction, ProvisionSummary } from './provisions';
+import type {
+  CrewLoss,
+  ProvisionDeduction,
+  ProvisionSummary,
+} from './provisions';
 
 const getShips = () => state.fleets['1'].ships;
 

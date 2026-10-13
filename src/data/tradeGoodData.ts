@@ -16,7 +16,8 @@ const tradeGoodData: Record<string, Relic> = {
     category: 'trade_good',
     darkLineLayer: 'L2',
     hookPriority: 'required',
-    description: '15-16 世纪马来半岛特有的锡质硬通货，文莱沉船出水的区域信用货币。',
+    description:
+      '15-16 世纪马来半岛特有的锡质硬通货，文莱沉船出水的区域信用货币。',
     textLayers: {
       rumor:
         '如果你想在文莱或者亚齐买到最上等的胡椒，光有西班牙的银币可不行。你得先去找本地商人换那种沉甸甸的、刻着奇怪花纹的锡块。',
@@ -27,7 +28,11 @@ const tradeGoodData: Record<string, Relic> = {
     },
     storyHooks: {
       protagonists: ['ali', 'pietro'],
-      factions: ['beacon_order', 'southeast_asian_sultanates', 'european_monopoly_guilds'],
+      factions: [
+        'beacon_order',
+        'southeast_asian_sultanates',
+        'european_monopoly_guilds',
+      ],
       darkLineLayer: 'L2',
       fameTriggers: ['trade'],
       crossLinks: ['port.brunei', 'port.malacca', 'faction.beacon_order'],
@@ -46,11 +51,16 @@ const tradeGoodData: Record<string, Relic> = {
 
   trade_manila_kraak_porcelain: {
     id: 'trade_manila_kraak_porcelain',
-    names: { zh: '马尼拉的克拉克定制瓷', en: 'Manila Kraak Porcelain', ja: 'マニラのクラーク注文磁' },
+    names: {
+      zh: '马尼拉的克拉克定制瓷',
+      en: 'Manila Kraak Porcelain',
+      ja: 'マニラのクラーク注文磁',
+    },
     category: 'trade_good',
     darkLineLayer: 'L2',
     hookPriority: 'required',
-    description: '景德镇为伊比利亚买家定制的欧洲器型青花瓷，太平洋大帆船贸易巅峰物。',
+    description:
+      '景德镇为伊比利亚买家定制的欧洲器型青花瓷，太平洋大帆船贸易巅峰物。',
     textLayers: {
       rumor:
         '新西班牙的贵族们全疯了。他们用成吨的波托西白银，在马尼拉换取一种画着蓝花的盘子。听说大明的工匠专门照着欧洲酒壶的形状烧制它们，轻得像纸一样！',
@@ -76,7 +86,11 @@ const tradeGoodData: Record<string, Relic> = {
 
   trade_swatow_porcelain: {
     id: 'trade_swatow_porcelain',
-    names: { zh: '漳州窑“汕头器”飞禽纹盘', en: 'Swatow Ware with Duck Motif', ja: '漳州窯「汕頭器」' },
+    names: {
+      zh: '漳州窑“汕头器”飞禽纹盘',
+      en: 'Swatow Ware with Duck Motif',
+      ja: '漳州窯「汕頭器」',
+    },
     category: 'trade_good',
     darkLineLayer: 'L2',
     hookPriority: 'required',
@@ -110,7 +124,11 @@ const tradeGoodData: Record<string, Relic> = {
 
   trade_santacruz_defective_porcelain: {
     id: 'trade_santacruz_defective_porcelain',
-    names: { zh: '圣克鲁斯异色青花瓷', en: 'Santa Cruz Atypical Blue-and-White', ja: 'サンタクルス異色青花' },
+    names: {
+      zh: '圣克鲁斯异色青花瓷',
+      en: 'Santa Cruz Atypical Blue-and-White',
+      ja: 'サンタクルス異色青花',
+    },
     category: 'trade_good',
     darkLineLayer: 'L2',
     hookPriority: 'required',
@@ -133,7 +151,10 @@ const tradeGoodData: Record<string, Relic> = {
       rewards: [],
     },
     sources: [
-      { level: 'L1', note: 'Santa Cruz 沉船（15 世纪中叶，海禁期）水下考古报告 [1]' },
+      {
+        level: 'L1',
+        note: 'Santa Cruz 沉船（15 世纪中叶，海禁期）水下考古报告 [1]',
+      },
       {
         level: 'L2',
         note: '圣克鲁斯瑕疵青花瓷分析（釉面缺陷与色彩变异，反映 Ming Gap 供需失衡）',
@@ -144,7 +165,11 @@ const tradeGoodData: Record<string, Relic> = {
 
   trade_champa_celadon: {
     id: 'trade_champa_celadon',
-    names: { zh: '占婆亡国青瓷', en: 'Champa Celadon of Pandanan', ja: 'チャンパ亡国青磁' },
+    names: {
+      zh: '占婆亡国青瓷',
+      en: 'Champa Celadon of Pandanan',
+      ja: 'チャンパ亡国青磁',
+    },
     category: 'trade_good',
     darkLineLayer: 'L2',
     hookPriority: 'required',
@@ -174,7 +199,11 @@ const tradeGoodData: Record<string, Relic> = {
 
   trade_borneo_ancestral_jar: {
     id: 'trade_borneo_ancestral_jar',
-    names: { zh: '婆罗洲祖灵陶罐', en: 'Borneo Ancestral Magic Jar', ja: 'ボルネオ祖霊の壺' },
+    names: {
+      zh: '婆罗洲祖灵陶罐',
+      en: 'Borneo Ancestral Magic Jar',
+      ja: 'ボルネオ祖霊の壺',
+    },
     category: 'trade_good',
     darkLineLayer: 'L4',
     hookPriority: 'required',
@@ -208,7 +237,11 @@ const tradeGoodData: Record<string, Relic> = {
 
   trade_islamic_kendi: {
     id: 'trade_islamic_kendi',
-    names: { zh: '景德镇伊斯兰纹军持', en: 'Islamic Motif Blue-and-White Kendi', ja: 'イスラム紋様の軍持' },
+    names: {
+      zh: '景德镇伊斯兰纹军持',
+      en: 'Islamic Motif Blue-and-White Kendi',
+      ja: 'イスラム紋様の軍持',
+    },
     category: 'trade_good',
     darkLineLayer: 'L2',
     hookPriority: 'required',
@@ -242,7 +275,11 @@ const tradeGoodData: Record<string, Relic> = {
 
   trade_annamese_monster_jar: {
     id: 'trade_annamese_monster_jar',
-    names: { zh: '安南兽首青花罐', en: 'Annamese Blue-and-White Monster-Head Jar', ja: '安南獣首青花壺' },
+    names: {
+      zh: '安南兽首青花罐',
+      en: 'Annamese Blue-and-White Monster-Head Jar',
+      ja: '安南獣首青花壺',
+    },
     category: 'trade_good',
     darkLineLayer: 'L2',
     hookPriority: 'required',
@@ -276,7 +313,11 @@ const tradeGoodData: Record<string, Relic> = {
 
   trade_twante_celadon_dish: {
     id: 'trade_twante_celadon_dish',
-    names: { zh: '团特窑缅甸绿釉盘', en: 'Twante Green-Glazed Dish', ja: 'トワンテ窯ビルマ緑釉皿' },
+    names: {
+      zh: '团特窑缅甸绿釉盘',
+      en: 'Twante Green-Glazed Dish',
+      ja: 'トワンテ窯ビルマ緑釉皿',
+    },
     category: 'trade_good',
     darkLineLayer: 'L2',
     hookPriority: 'required',
@@ -310,7 +351,11 @@ const tradeGoodData: Record<string, Relic> = {
 
   trade_javanese_bronze_gong: {
     id: 'trade_javanese_bronze_gong',
-    names: { zh: '爪哇青铜锣', en: 'Javanese Bronze Gongs', ja: 'ジャワの青銅ゴング' },
+    names: {
+      zh: '爪哇青铜锣',
+      en: 'Javanese Bronze Gongs',
+      ja: 'ジャワの青銅ゴング',
+    },
     category: 'trade_good',
     darkLineLayer: 'L2',
     hookPriority: 'required',
@@ -344,7 +389,11 @@ const tradeGoodData: Record<string, Relic> = {
 
   trade_lena_elephant_tusks: {
     id: 'trade_lena_elephant_tusks',
-    names: { zh: '莱纳滩走私象牙', en: 'Lena Shoal Elephant Tusks', ja: 'レナ礁の密輸象牙' },
+    names: {
+      zh: '莱纳滩走私象牙',
+      en: 'Lena Shoal Elephant Tusks',
+      ja: 'レナ礁の密輸象牙',
+    },
     category: 'trade_good',
     darkLineLayer: 'L2',
     hookPriority: 'required',
@@ -378,7 +427,11 @@ const tradeGoodData: Record<string, Relic> = {
 
   trade_potosi_quinto_silver: {
     id: 'trade_potosi_quinto_silver',
-    names: { zh: '波托西“五一税”银锭', en: 'Potosi "Quinto Real" Silver Ingot', ja: 'ポトシ「五分一税」銀塊' },
+    names: {
+      zh: '波托西“五一税”银锭',
+      en: 'Potosi "Quinto Real" Silver Ingot',
+      ja: 'ポトシ「五分一税」銀塊',
+    },
     category: 'trade_good',
     darkLineLayer: 'L2',
     hookPriority: 'required',
@@ -401,7 +454,10 @@ const tradeGoodData: Record<string, Relic> = {
       rewards: [],
     },
     sources: [
-      { level: 'L1', note: '西班牙帝国税收法案 Quinto Real 与大帆船贸易记录 [6,15]' },
+      {
+        level: 'L1',
+        note: '西班牙帝国税收法案 Quinto Real 与大帆船贸易记录 [6,15]',
+      },
       {
         level: 'L2',
         note: '马尼拉系统与波托西白银（波托西白银三分之一横跨太平洋流入亚洲）',
@@ -412,7 +468,11 @@ const tradeGoodData: Record<string, Relic> = {
 
   trade_frobisher_fool_gold: {
     id: 'trade_frobisher_fool_gold',
-    names: { zh: '巴芬岛的“愚人金”矿石', en: "Baffin Island 'Fool's Gold' Ore", ja: 'バフィン島の「愚者の黄金」' },
+    names: {
+      zh: '巴芬岛的“愚人金”矿石',
+      en: "Baffin Island 'Fool's Gold' Ore",
+      ja: 'バフィン島の「愚者の黄金」',
+    },
     category: 'trade_good',
     darkLineLayer: 'L3',
     hookPriority: 'required',

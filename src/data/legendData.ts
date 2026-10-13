@@ -11,7 +11,11 @@ import { Relic } from './storyHooks';
 const legendData: Record<string, Relic> = {
   legend_adamastor_storm: {
     id: 'legend_adamastor_storm',
-    names: { zh: '阿达马斯托的狂怒', en: 'Wrath of Adamastor', ja: 'アダマストルの怒り' },
+    names: {
+      zh: '阿达马斯托的狂怒',
+      en: 'Wrath of Adamastor',
+      ja: 'アダマストルの怒り',
+    },
     category: 'event',
     darkLineLayer: 'L4',
     hookPriority: 'required',
@@ -34,7 +38,10 @@ const legendData: Record<string, Relic> = {
       rewards: [],
     },
     sources: [
-      { level: 'L1', note: '卡蒙斯《卢济塔尼亚人之歌》；1554 São Bento 沉没记录 [4,5,6,7]' },
+      {
+        level: 'L1',
+        note: '卡蒙斯《卢济塔尼亚人之歌》；1554 São Bento 沉没记录 [4,5,6,7]',
+      },
       {
         level: 'L2',
         note: 'Adamastor巨人史诗渊源',
@@ -45,7 +52,11 @@ const legendData: Record<string, Relic> = {
 
   legend_zaratan_island: {
     id: 'legend_zaratan_island',
-    names: { zh: '萨拉坦的沉没', en: 'The Sinking Zaratan', ja: 'ザラタンの沈没' },
+    names: {
+      zh: '萨拉坦的沉没',
+      en: 'The Sinking Zaratan',
+      ja: 'ザラタンの沈没',
+    },
     category: 'event',
     darkLineLayer: 'L4',
     hookPriority: 'required',
@@ -68,7 +79,10 @@ const legendData: Record<string, Relic> = {
       rewards: [],
     },
     sources: [
-      { level: 'L1', note: '阿拉伯航海神话与欧洲中世纪动物传兽集巨龟传说 [4,5]' },
+      {
+        level: 'L1',
+        note: '阿拉伯航海神话与欧洲中世纪动物传兽集巨龟传说 [4,5]',
+      },
       { level: 'L2', note: '水手误认岛屿生火致怪物潜海的传说母题 [6,7]' },
       {
         level: 'L3',
@@ -80,7 +94,11 @@ const legendData: Record<string, Relic> = {
 
   legend_mazu_taboo: {
     id: 'legend_mazu_taboo',
-    names: { zh: '绝境中的“妈祖”呼唤', en: "Taboo of Mazu's Formal Titles", ja: '媽祖の忌み名の禁忌' },
+    names: {
+      zh: '绝境中的“妈祖”呼唤',
+      en: "Taboo of Mazu's Formal Titles",
+      ja: '媽祖の忌み名の禁忌',
+    },
     category: 'event',
     darkLineLayer: 'L4',
     hookPriority: 'required',
@@ -114,7 +132,11 @@ const legendData: Record<string, Relic> = {
 
   legend_nao_de_china_route: {
     id: 'legend_nao_de_china_route',
-    names: { zh: '“中国船”的太平洋暗流', en: 'The "Nao de China" Pacific Route', ja: '「ナオ・デ・チナ」太平洋航路' },
+    names: {
+      zh: '“中国船”的太平洋暗流',
+      en: 'The "Nao de China" Pacific Route',
+      ja: '「ナオ・デ・チナ」太平洋航路',
+    },
     category: 'event',
     darkLineLayer: 'L2',
     hookPriority: 'required',
@@ -148,7 +170,11 @@ const legendData: Record<string, Relic> = {
 
   legend_banana_curse: {
     id: 'legend_banana_curse',
-    names: { zh: '航海禁忌：厄运芭蕉', en: 'The Banana Curse', ja: 'バナナの呪い' },
+    names: {
+      zh: '航海禁忌：厄运芭蕉',
+      en: 'The Banana Curse',
+      ja: 'バナナの呪い',
+    },
     category: 'event',
     darkLineLayer: 'L4',
     hookPriority: 'required',
@@ -166,13 +192,20 @@ const legendData: Record<string, Relic> = {
       factions: ['beacon_order'],
       darkLineLayer: 'L4',
       fameTriggers: ['adventure'],
-      crossLinks: ['region.caribbean', 'region.west_africa', 'system.crew_morale'],
+      crossLinks: [
+        'region.caribbean',
+        'region.west_africa',
+        'system.crew_morale',
+      ],
       triggers: [{ item: 'tropical_fruit_cargo' }],
       rewards: [],
     },
     sources: [
       { level: 'L1', note: '欧美帆船时代“十大航海迷信”之一 [6,7,10]' },
-      { level: 'L2', note: '香蕉招厄运/暴毙的迷信（乙烯/毒蜘蛛细节需独立核实）' },
+      {
+        level: 'L2',
+        note: '香蕉招厄运/暴毙的迷信（乙烯/毒蜘蛛细节需独立核实）',
+      },
       {
         level: 'L3',
         note: '厄运芭蕉禁忌考据',
@@ -183,7 +216,11 @@ const legendData: Record<string, Relic> = {
 
   legend_scratching_backstay: {
     id: 'legend_scratching_backstay',
-    names: { zh: '刮后支索唤风', en: 'Scratching a Backstay', ja: '後部支索を掻く' },
+    names: {
+      zh: '刮后支索唤风',
+      en: 'Scratching a Backstay',
+      ja: '後部支索を掻く',
+    },
     category: 'event',
     darkLineLayer: 'L4',
     hookPriority: 'optional',
@@ -218,7 +255,11 @@ const legendData: Record<string, Relic> = {
 
   legend_malay_penanggal: {
     id: 'legend_malay_penanggal',
-    names: { zh: '马来飞头蛮诅咒', en: 'Curse of the Penanggal', ja: 'ペナンガルの呪い' },
+    names: {
+      zh: '马来飞头蛮诅咒',
+      en: 'Curse of the Penanggal',
+      ja: 'ペナンガルの呪い',
+    },
     category: 'event',
     darkLineLayer: 'L4',
     hookPriority: 'required',
@@ -236,7 +277,11 @@ const legendData: Record<string, Relic> = {
       factions: ['beacon_order'],
       darkLineLayer: 'L4',
       fameTriggers: ['adventure'],
-      crossLinks: ['region.malacca_strait', 'system.disease', 'bestiary.penanggal'],
+      crossLinks: [
+        'region.malacca_strait',
+        'system.disease',
+        'bestiary.penanggal',
+      ],
       triggers: [],
       rewards: [],
     },
@@ -253,7 +298,11 @@ const legendData: Record<string, Relic> = {
 
   event_whistling_storm: {
     id: 'event_whistling_storm',
-    names: { zh: '唤风的口哨', en: 'The Whistling Wind Taboo', ja: '口笛の禁忌' },
+    names: {
+      zh: '唤风的口哨',
+      en: 'The Whistling Wind Taboo',
+      ja: '口笛の禁忌',
+    },
     category: 'event',
     darkLineLayer: 'L4',
     hookPriority: 'optional',
@@ -276,7 +325,10 @@ const legendData: Record<string, Relic> = {
       rewards: [],
     },
     sources: [
-      { level: 'L1', note: '欧美帆船时代航海禁忌（Nautical superstitions）[8,9]' },
+      {
+        level: 'L1',
+        note: '欧美帆船时代航海禁忌（Nautical superstitions）[8,9]',
+      },
       { level: 'L2', note: '严禁吹口哨“whistling up a storm”的迷信 [8,9]' },
       {
         level: 'L3',
@@ -288,7 +340,11 @@ const legendData: Record<string, Relic> = {
 
   event_pawang_crocodile_lure: {
     id: 'event_pawang_crocodile_lure',
-    names: { zh: '帕旺的巨鳄寻物', en: "Pawang's Crocodile Retrieval", ja: 'パワンの巨鰐回収' },
+    names: {
+      zh: '帕旺的巨鳄寻物',
+      en: "Pawang's Crocodile Retrieval",
+      ja: 'パワンの巨鰐回収',
+    },
     category: 'event',
     darkLineLayer: 'L4',
     hookPriority: 'required',
@@ -322,7 +378,11 @@ const legendData: Record<string, Relic> = {
 
   event_dugong_patrol: {
     id: 'event_dugong_patrol',
-    names: { zh: '齐州洋的都公神影', en: 'Lord Du of the Qizhou Sea', ja: '七洲洋の都公神影' },
+    names: {
+      zh: '齐州洋的都公神影',
+      en: 'Lord Du of the Qizhou Sea',
+      ja: '七洲洋の都公神影',
+    },
     category: 'event',
     darkLineLayer: 'L4',
     hookPriority: 'required',
@@ -356,7 +416,11 @@ const legendData: Record<string, Relic> = {
 
   event_hua_shuixian: {
     id: 'event_hua_shuixian',
-    names: { zh: '划水仙仪式', en: 'Ritual of Rowing the Water Immortals', ja: '划水仙の儀' },
+    names: {
+      zh: '划水仙仪式',
+      en: 'Ritual of Rowing the Water Immortals',
+      ja: '划水仙の儀',
+    },
     category: 'event',
     darkLineLayer: 'L4',
     hookPriority: 'required',
@@ -374,7 +438,11 @@ const legendData: Record<string, Relic> = {
       factions: ['beacon_order'],
       darkLineLayer: 'L4',
       fameTriggers: ['adventure'],
-      crossLinks: ['region.south_china_sea', 'system.crew_morale', 'system.weather'],
+      crossLinks: [
+        'region.south_china_sea',
+        'system.crew_morale',
+        'system.weather',
+      ],
       triggers: [],
       rewards: [],
     },
@@ -390,7 +458,11 @@ const legendData: Record<string, Relic> = {
 
   event_hallaniyah_warning: {
     id: 'event_hallaniyah_warning',
-    names: { zh: '哈拉尼亚渔民的警告', en: 'The Al Hallaniyah Warning', ja: 'ハッラーニヤ漁師の警告' },
+    names: {
+      zh: '哈拉尼亚渔民的警告',
+      en: 'The Al Hallaniyah Warning',
+      ja: 'ハッラーニヤ漁師の警告',
+    },
     category: 'event',
     darkLineLayer: 'L3',
     hookPriority: 'required',
@@ -424,7 +496,11 @@ const legendData: Record<string, Relic> = {
 
   item_iban_gawai_batu: {
     id: 'item_iban_gawai_batu',
-    names: { zh: '伊班族播种石祭', en: 'Iban Gawai Batu Ritual', ja: 'イバン族の播種石祭' },
+    names: {
+      zh: '伊班族播种石祭',
+      en: 'Iban Gawai Batu Ritual',
+      ja: 'イバン族の播種石祭',
+    },
     category: 'event',
     darkLineLayer: 'L4',
     hookPriority: 'required',

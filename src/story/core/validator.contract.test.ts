@@ -103,45 +103,240 @@ type Case = {
 };
 
 const cases: Case[] = [
-  { code: 'empty-arcs', path: 'arcs', mutate: (source) => { source.arcs = []; } },
-  { code: 'empty-events', path: 'events', mutate: (source) => { source.events = []; } },
-  { code: 'empty-arc-events', path: 'arcs[0].eventIds', mutate: (source) => { source.arcs[0].eventIds = []; } },
-  { code: 'empty-event-steps', path: 'events[0].steps', mutate: (source) => { source.events[0].steps = []; } },
+  {
+    code: 'empty-arcs',
+    path: 'arcs',
+    mutate: (source) => {
+      source.arcs = [];
+    },
+  },
+  {
+    code: 'empty-events',
+    path: 'events',
+    mutate: (source) => {
+      source.events = [];
+    },
+  },
+  {
+    code: 'empty-arc-events',
+    path: 'arcs[0].eventIds',
+    mutate: (source) => {
+      source.arcs[0].eventIds = [];
+    },
+  },
+  {
+    code: 'empty-event-steps',
+    path: 'events[0].steps',
+    mutate: (source) => {
+      source.events[0].steps = [];
+    },
+  },
   {
     code: 'empty-option-steps',
     path: 'events[0].steps[0].options[0].steps',
     mutate: (source) => {
-      source.events[0].steps = [{ type: 'choice', prompt: 'Go?', position: 0, options: [{ id: 'yes', label: 'Yes', steps: [] }] }];
+      source.events[0].steps = [
+        {
+          type: 'choice',
+          prompt: 'Go?',
+          position: 0,
+          options: [{ id: 'yes', label: 'Yes', steps: [] }],
+        },
+      ];
     },
   },
   {
     code: 'missing-position-speaker',
     path: 'events[0].steps[0].speaker',
-    mutate: (source) => { source.events[0].steps = [{ type: 'dialogue', body: 'Who?', position: 1 }]; },
+    mutate: (source) => {
+      source.events[0].steps = [
+        { type: 'dialogue', body: 'Who?', position: 1 },
+      ];
+    },
   },
   {
     code: 'missing-position-speaker',
     path: 'events[0].steps[0].speaker',
-    mutate: (source) => { source.events[0].steps = [{ type: 'choice', prompt: 'Who?', position: 2, options: [{ id: 'x', label: 'X', steps: [{ type: 'dialogue', body: 'X', position: 0 }] }] }]; },
+    mutate: (source) => {
+      source.events[0].steps = [
+        {
+          type: 'choice',
+          prompt: 'Who?',
+          position: 2,
+          options: [
+            {
+              id: 'x',
+              label: 'X',
+              steps: [{ type: 'dialogue', body: 'X', position: 0 }],
+            },
+          ],
+        },
+      ];
+    },
   },
-  { code: 'unknown-port', path: 'events[0].trigger.portId', mutate: (source) => { source.events[0].trigger = { type: 'atPort', portId: 'missing' }; } },
-  { code: 'unknown-building', path: 'events[0].trigger.conditions[1].buildingId', mutate: (source) => { const trigger = source.events[0].trigger; if (trigger.type === 'all') trigger.conditions[1] = { type: 'atBuilding', buildingId: 'missing' }; } },
-  { code: 'unknown-item', path: 'events[0].trigger.conditions[2].itemId', mutate: (source) => { const trigger = source.events[0].trigger; if (trigger.type === 'all') trigger.conditions[2] = { type: 'hasItem', itemId: 'missing' as '4' }; } },
-  { code: 'unknown-item', path: 'events[0].steps[1].effects[1].itemId', mutate: (source) => { const step = source.events[0].steps[1]; if (step.type === 'effect') step.effects[1] = { type: 'receiveItem', itemId: 'missing' as '4' }; } },
-  { code: 'unknown-item', path: 'events[0].steps[1].effects[1].itemId', mutate: (source) => { const step = source.events[0].steps[1]; if (step.type === 'effect') step.effects[1] = { type: 'consumeItem', itemId: 'missing' } as unknown as StoryEffect; } },
-  { code: 'unknown-ship', path: 'events[0].steps[1].effects[2].shipId', mutate: (source) => { const step = source.events[0].steps[1]; if (step.type === 'effect') step.effects[2] = { type: 'receiveShip', shipId: 'missing', name: 'Ship' }; } },
-  { code: 'unknown-port', path: 'events[0].steps[1].effects[4].portId', mutate: (source) => { const step = source.events[0].steps[1]; if (step.type === 'effect') step.effects[4] = { type: 'setPort', portId: 'missing' }; } },
-  { code: 'invalid-gold', path: 'events[0].steps[1].effects[0].amount', mutate: (source) => { const step = source.events[0].steps[1]; if (step.type === 'effect') step.effects[0] = { type: 'receiveGold', amount: -1 }; } },
-  { code: 'invalid-gold', path: 'events[0].steps[1].effects[0].amount', mutate: (source) => { const step = source.events[0].steps[1]; if (step.type === 'effect') step.effects[0] = { type: 'receiveGold', amount: Number.POSITIVE_INFINITY }; } },
-  { code: 'invalid-priority', path: 'events[0].priority', mutate: (source) => { source.events[0].priority = Number.NaN; } },
-  { code: 'invalid-priority', path: 'events[0].priority', mutate: (source) => { source.events[0].priority = -1; } },
-  { code: 'invalid-ship-name', path: 'events[0].steps[1].effects[2].name', mutate: (source) => { const step = source.events[0].steps[1]; if (step.type === 'effect') step.effects[2] = { type: 'receiveShip', shipId: '6', name: ' ' }; } },
-  { code: 'invalid-mate-role', path: 'events[0].steps[1].effects[3].role', mutate: (source) => { const step = source.events[0].steps[1]; if (step.type === 'effect') step.effects[3] = { type: 'assignMate', characterId: rocco, role: 'captain' as never }; } },
-  { code: 'duplicate-sailor-link', path: 'characters[1].sailorId', mutate: (source) => { source.characters[1].sailorId = '1'; } },
-  { code: 'duplicate-legacy-character-link', path: 'characters[1].legacyCharacterId', mutate: (source) => { source.characters[1].legacyCharacterId = 'legacy-joao'; } },
-  { code: 'unknown-sailor', path: 'characters[1].sailorId', mutate: (source) => { source.characters[1].sailorId = 'missing'; } },
-  { code: 'parity-event-missing', path: 'parityManifest.legacyKeyToEvent[houseBeforeQuest]', mutate: (_source, local) => { local.parityManifest.legacyKeyToEvent.set('houseBeforeQuest', 'missing-event'); } },
-  { code: 'parity-manifest-omission', path: 'events[0].legacyCompletionKey', mutate: (_source, local) => { local.parityManifest.legacyKeyToEvent.delete('houseBeforeQuest'); } },
+  {
+    code: 'unknown-port',
+    path: 'events[0].trigger.portId',
+    mutate: (source) => {
+      source.events[0].trigger = { type: 'atPort', portId: 'missing' };
+    },
+  },
+  {
+    code: 'unknown-building',
+    path: 'events[0].trigger.conditions[1].buildingId',
+    mutate: (source) => {
+      const trigger = source.events[0].trigger;
+      if (trigger.type === 'all')
+        trigger.conditions[1] = { type: 'atBuilding', buildingId: 'missing' };
+    },
+  },
+  {
+    code: 'unknown-item',
+    path: 'events[0].trigger.conditions[2].itemId',
+    mutate: (source) => {
+      const trigger = source.events[0].trigger;
+      if (trigger.type === 'all')
+        trigger.conditions[2] = { type: 'hasItem', itemId: 'missing' as '4' };
+    },
+  },
+  {
+    code: 'unknown-item',
+    path: 'events[0].steps[1].effects[1].itemId',
+    mutate: (source) => {
+      const step = source.events[0].steps[1];
+      if (step.type === 'effect')
+        step.effects[1] = { type: 'receiveItem', itemId: 'missing' as '4' };
+    },
+  },
+  {
+    code: 'unknown-item',
+    path: 'events[0].steps[1].effects[1].itemId',
+    mutate: (source) => {
+      const step = source.events[0].steps[1];
+      if (step.type === 'effect')
+        step.effects[1] = {
+          type: 'consumeItem',
+          itemId: 'missing',
+        } as unknown as StoryEffect;
+    },
+  },
+  {
+    code: 'unknown-ship',
+    path: 'events[0].steps[1].effects[2].shipId',
+    mutate: (source) => {
+      const step = source.events[0].steps[1];
+      if (step.type === 'effect')
+        step.effects[2] = {
+          type: 'receiveShip',
+          shipId: 'missing',
+          name: 'Ship',
+        };
+    },
+  },
+  {
+    code: 'unknown-port',
+    path: 'events[0].steps[1].effects[4].portId',
+    mutate: (source) => {
+      const step = source.events[0].steps[1];
+      if (step.type === 'effect')
+        step.effects[4] = { type: 'setPort', portId: 'missing' };
+    },
+  },
+  {
+    code: 'invalid-gold',
+    path: 'events[0].steps[1].effects[0].amount',
+    mutate: (source) => {
+      const step = source.events[0].steps[1];
+      if (step.type === 'effect')
+        step.effects[0] = { type: 'receiveGold', amount: -1 };
+    },
+  },
+  {
+    code: 'invalid-gold',
+    path: 'events[0].steps[1].effects[0].amount',
+    mutate: (source) => {
+      const step = source.events[0].steps[1];
+      if (step.type === 'effect')
+        step.effects[0] = {
+          type: 'receiveGold',
+          amount: Number.POSITIVE_INFINITY,
+        };
+    },
+  },
+  {
+    code: 'invalid-priority',
+    path: 'events[0].priority',
+    mutate: (source) => {
+      source.events[0].priority = Number.NaN;
+    },
+  },
+  {
+    code: 'invalid-priority',
+    path: 'events[0].priority',
+    mutate: (source) => {
+      source.events[0].priority = -1;
+    },
+  },
+  {
+    code: 'invalid-ship-name',
+    path: 'events[0].steps[1].effects[2].name',
+    mutate: (source) => {
+      const step = source.events[0].steps[1];
+      if (step.type === 'effect')
+        step.effects[2] = { type: 'receiveShip', shipId: '6', name: ' ' };
+    },
+  },
+  {
+    code: 'invalid-mate-role',
+    path: 'events[0].steps[1].effects[3].role',
+    mutate: (source) => {
+      const step = source.events[0].steps[1];
+      if (step.type === 'effect')
+        step.effects[3] = {
+          type: 'assignMate',
+          characterId: rocco,
+          role: 'captain' as never,
+        };
+    },
+  },
+  {
+    code: 'duplicate-sailor-link',
+    path: 'characters[1].sailorId',
+    mutate: (source) => {
+      source.characters[1].sailorId = '1';
+    },
+  },
+  {
+    code: 'duplicate-legacy-character-link',
+    path: 'characters[1].legacyCharacterId',
+    mutate: (source) => {
+      source.characters[1].legacyCharacterId = 'legacy-joao';
+    },
+  },
+  {
+    code: 'unknown-sailor',
+    path: 'characters[1].sailorId',
+    mutate: (source) => {
+      source.characters[1].sailorId = 'missing';
+    },
+  },
+  {
+    code: 'parity-event-missing',
+    path: 'parityManifest.legacyKeyToEvent[houseBeforeQuest]',
+    mutate: (_source, local) => {
+      local.parityManifest.legacyKeyToEvent.set(
+        'houseBeforeQuest',
+        'missing-event',
+      );
+    },
+  },
+  {
+    code: 'parity-manifest-omission',
+    path: 'events[0].legacyCompletionKey',
+    mutate: (_source, local) => {
+      local.parityManifest.legacyKeyToEvent.delete('houseBeforeQuest');
+    },
+  },
 ];
 
 describe('complete story content validation contract', () => {
@@ -180,7 +375,10 @@ describe('complete story content validation contract', () => {
         type: 'all',
         conditions: [
           { type: 'eventCompleted', eventId: introduction },
-          { type: 'not', condition: { type: 'eventCompleted', eventId: introduction } },
+          {
+            type: 'not',
+            condition: { type: 'eventCompleted', eventId: introduction },
+          },
         ],
       },
     });
@@ -196,10 +394,18 @@ describe('complete story content validation contract', () => {
       },
     };
 
-    expect(validate(source, localCatalogs)).toEqual(expect.arrayContaining([
-      expect.objectContaining({ code: 'dependency-cycle', path: 'events[1].trigger' }),
-      expect.objectContaining({ code: 'contradictory-condition', path: 'events[1].trigger' }),
-    ]));
+    expect(validate(source, localCatalogs)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'dependency-cycle',
+          path: 'events[1].trigger',
+        }),
+        expect.objectContaining({
+          code: 'contradictory-condition',
+          path: 'events[1].trigger',
+        }),
+      ]),
+    );
   });
 
   test('returns every diagnostic in one pass and accepts a valid source', () => {
@@ -207,9 +413,13 @@ describe('complete story content validation contract', () => {
     const source = sourceFixture();
     source.arcs = [];
     source.events[0].priority = -1;
-    expect(validate(source, catalogs).map(({ code }) => code)).toEqual(expect.arrayContaining([
-      'empty-arcs', 'event-arc-mismatch', 'invalid-priority',
-    ]));
+    expect(validate(source, catalogs).map(({ code }) => code)).toEqual(
+      expect.arrayContaining([
+        'empty-arcs',
+        'event-arc-mismatch',
+        'invalid-priority',
+      ]),
+    );
   });
 
   test('validates combat encounter references and terminal start placement', () => {
@@ -281,45 +491,48 @@ describe('complete story content validation contract', () => {
         'parity-manifest-omission',
       ].includes(code),
     ),
-  )('production excludes event-owned $code while retaining valid content', ({ mutate }) => {
-    const source = sourceFixture();
-    const validId = storyEventId('joao.opening.valid-sentinel');
-    source.events.push({
-      ...source.events[0],
-      id: validId,
-      priority: 99,
-      repeat: 'repeatable',
-      legacyCompletionKey: undefined,
-      trigger: { type: 'timeWindow', min: 60, max: 120 },
-      steps: [{ type: 'dialogue', body: 'Still valid.', position: 0 }],
-    });
-    source.arcs[0].eventIds.push(validId);
-    const localCatalogs = {
-      ...catalogs,
-      itemIds: new Set(catalogs.itemIds),
-      portIds: new Set(catalogs.portIds),
-      buildingIds: new Set(catalogs.buildingIds),
-      shipIds: new Set(catalogs.shipIds),
-      sailorIds: new Set(catalogs.sailorIds),
-      encounterIds: new Set(catalogs.encounterIds),
-      mateRoles: new Set(catalogs.mateRoles),
-      parityManifest: {
-        legacyKeyToEvent: new Map(catalogs.parityManifest.legacyKeyToEvent),
-        migratedEventIds: new Set(catalogs.parityManifest.migratedEventIds),
-      },
-    };
-    localCatalogs.parityManifest.migratedEventIds.add(String(validId));
-    mutate(source, localCatalogs);
+  )(
+    'production excludes event-owned $code while retaining valid content',
+    ({ mutate }) => {
+      const source = sourceFixture();
+      const validId = storyEventId('joao.opening.valid-sentinel');
+      source.events.push({
+        ...source.events[0],
+        id: validId,
+        priority: 99,
+        repeat: 'repeatable',
+        legacyCompletionKey: undefined,
+        trigger: { type: 'timeWindow', min: 60, max: 120 },
+        steps: [{ type: 'dialogue', body: 'Still valid.', position: 0 }],
+      });
+      source.arcs[0].eventIds.push(validId);
+      const localCatalogs = {
+        ...catalogs,
+        itemIds: new Set(catalogs.itemIds),
+        portIds: new Set(catalogs.portIds),
+        buildingIds: new Set(catalogs.buildingIds),
+        shipIds: new Set(catalogs.shipIds),
+        sailorIds: new Set(catalogs.sailorIds),
+        encounterIds: new Set(catalogs.encounterIds),
+        mateRoles: new Set(catalogs.mateRoles),
+        parityManifest: {
+          legacyKeyToEvent: new Map(catalogs.parityManifest.legacyKeyToEvent),
+          migratedEventIds: new Set(catalogs.parityManifest.migratedEventIds),
+        },
+      };
+      localCatalogs.parityManifest.migratedEventIds.add(String(validId));
+      mutate(source, localCatalogs);
 
-    const compiled = compileProductionStoryContent(
-      source,
-      localCatalogs,
-      jest.fn(),
-    );
+      const compiled = compileProductionStoryContent(
+        source,
+        localCatalogs,
+        jest.fn(),
+      );
 
-    expect(compiled.eventsById.has(introduction)).toBe(false);
-    expect(compiled.eventsById.has(validId)).toBe(true);
-  });
+      expect(compiled.eventsById.has(introduction)).toBe(false);
+      expect(compiled.eventsById.has(validId)).toBe(true);
+    },
+  );
 
   test('production excludes cycle and contradiction owners without cascading to valid events', () => {
     const source = sourceFixture();

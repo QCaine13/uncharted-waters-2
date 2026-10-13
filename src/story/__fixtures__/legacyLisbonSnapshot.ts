@@ -2,7 +2,9 @@ import type { LegacyLisbonKey } from '../legacy/lisbonCompletionKeys';
 
 const defineLegacyLisbonSnapshot = <
   T extends { transcripts: Record<LegacyLisbonKey, readonly unknown[]> },
->(snapshot: T): T => snapshot;
+>(
+  snapshot: T,
+): T => snapshot;
 
 export const legacyLisbonSnapshot = defineLegacyLisbonSnapshot({
   transcripts: {

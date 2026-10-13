@@ -12,7 +12,9 @@ export default function HarborSummary() {
         <div className="px-4 py-2">
           <div className="flex items-center">
             <div className="w-64 text-green-600">{t('Ship')}</div>
-            <div className="w-36 text-purple-600 text-right pr-12">{t('Crew')}</div>
+            <div className="w-36 text-purple-600 text-right pr-12">
+              {t('Crew')}
+            </div>
             <div className="w-24 text-[#d34100]">{t('Cargo Load')}</div>
             <div className="w-24 text-blue-600 text-right">{t('Water')}</div>
             <div className="w-24 text-blue-600 text-right">{t('Food')}</div>

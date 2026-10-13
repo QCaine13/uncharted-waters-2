@@ -37,7 +37,12 @@ export const getProvisionStatusText = ({
     return t('Less than 1 day remaining');
   }
   if (status === 'low') {
-    return t(daysRemaining === 1 ? 'Only {days} day remaining' : 'Only {days} days remaining', { days: daysRemaining });
+    return t(
+      daysRemaining === 1
+        ? 'Only {days} day remaining'
+        : 'Only {days} days remaining',
+      { days: daysRemaining },
+    );
   }
   return t('{days} days remaining', { days: daysRemaining });
 };
@@ -55,7 +60,12 @@ export const getStarvationReportText = ({
     return null;
   }
 
-  const lost = t(deaths === 1 ? 'Lost {deaths} crew member to starvation' : 'Lost {deaths} crew members to starvation', { deaths });
+  const lost = t(
+    deaths === 1
+      ? 'Lost {deaths} crew member to starvation'
+      : 'Lost {deaths} crew members to starvation',
+    { deaths },
+  );
 
   return adrift ? t('{lost} — the fleet drifted into port', { lost }) : lost;
 };
@@ -82,13 +92,13 @@ export default function Provisions({ hidden }: Props) {
 
   return (
     <div
-      className={classNames('mt-8', hidden ? 'hidden' : '')}
+      className={classNames('mt-4', hidden ? 'hidden' : '')}
       data-test="provisions"
     >
-      <div className="text-sm mb-4">{t('Provisions')}</div>
+      <div className="text-sm mb-2">{t('Provisions')}</div>
       {!!statusText && (
         <div
-          className={classNames('text-sm mb-2', warningClass)}
+          className={classNames('text-sm mb-1', warningClass)}
           data-test="provisionStatus"
         >
           {statusText}
@@ -96,7 +106,7 @@ export default function Provisions({ hidden }: Props) {
       )}
       {!!starvationText && (
         <div
-          className="text-sm mb-2 text-red-600"
+          className="text-xs leading-tight mb-1 text-red-600"
           data-test="provisionStarvation"
         >
           {starvationText}

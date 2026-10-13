@@ -69,6 +69,7 @@ test('puts the current M2 step and preparation before completed M1 history', () 
   );
   expect(currentEntry?.textContent).toContain('Current objective');
   expect(preparation?.textContent).toContain('Preparation');
+  expect(preparation?.querySelector('.text-amber-700')).toBeNull();
   expect(history?.textContent).toContain('Complete');
   const orderedIds = Array.from(
     container.querySelectorAll('[data-test^=journal-entry]'),

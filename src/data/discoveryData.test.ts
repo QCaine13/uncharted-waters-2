@@ -30,23 +30,26 @@ const distanceBetween = (a: Position, b: Position): number =>
 // 24 the projection was fit against (design spec section 3.1). This is
 // what makes the test below meaningful: it catches the projection itself
 // drifting, which an internally-consistent-only check never could.
-const groundTruthPorts: { name: string; latitude: number; longitude: number }[] =
-  [
-    { name: 'Lisbon', latitude: 38.72, longitude: -9.14 },
-    { name: 'London', latitude: 51.51, longitude: -0.13 },
-    { name: 'Bergen', latitude: 60.39, longitude: 5.32 },
-    { name: 'Istanbul', latitude: 41.01, longitude: 28.98 },
-    { name: 'Alexandria', latitude: 31.2, longitude: 29.92 },
-    { name: 'Cape Town', latitude: -33.92, longitude: 18.42 },
-    { name: 'Aden', latitude: 12.78, longitude: 45.03 },
-    { name: 'Havana', latitude: 23.13, longitude: -82.38 },
-    { name: 'Callao', latitude: -12.05, longitude: -77.15 },
-    { name: 'Montevideo', latitude: -34.9, longitude: -56.19 },
-    { name: 'Valparaiso', latitude: -33.05, longitude: -71.62 },
-    { name: 'Rio de Janeiro', latitude: -22.91, longitude: -43.17 },
-    { name: 'Luanda', latitude: -8.84, longitude: 13.23 },
-    { name: 'Mombasa', latitude: -4.05, longitude: 39.67 },
-  ];
+const groundTruthPorts: {
+  name: string;
+  latitude: number;
+  longitude: number;
+}[] = [
+  { name: 'Lisbon', latitude: 38.72, longitude: -9.14 },
+  { name: 'London', latitude: 51.51, longitude: -0.13 },
+  { name: 'Bergen', latitude: 60.39, longitude: 5.32 },
+  { name: 'Istanbul', latitude: 41.01, longitude: 28.98 },
+  { name: 'Alexandria', latitude: 31.2, longitude: 29.92 },
+  { name: 'Cape Town', latitude: -33.92, longitude: 18.42 },
+  { name: 'Aden', latitude: 12.78, longitude: 45.03 },
+  { name: 'Havana', latitude: 23.13, longitude: -82.38 },
+  { name: 'Callao', latitude: -12.05, longitude: -77.15 },
+  { name: 'Montevideo', latitude: -34.9, longitude: -56.19 },
+  { name: 'Valparaiso', latitude: -33.05, longitude: -71.62 },
+  { name: 'Rio de Janeiro', latitude: -22.91, longitude: -43.17 },
+  { name: 'Luanda', latitude: -8.84, longitude: 13.23 },
+  { name: 'Mombasa', latitude: -4.05, longitude: 39.67 },
+];
 
 // The world map is hand-drawn, so no linear projection fits it exactly; the
 // worst residual over 29 ports spanning every ocean is ~48 (Rio de Janeiro).
