@@ -54,7 +54,7 @@ const genoaDeparture: StoryEvent = {
   id: PIETRO_GENOA_DEPARTURE_EVENT_ID,
   arcId: PIETRO_ADVENTURE_ARC_ID,
   priority: 0.601,
-  trigger: exactScene('4', '4'),
+  trigger: exactScene('9', '4'),
   repeat: 'once',
   steps: [
     {
@@ -133,7 +133,7 @@ const alexandriaRelic: StoryEvent = {
   id: PIETRO_ALEXANDRIA_RELIC_EVENT_ID,
   arcId: PIETRO_ADVENTURE_ARC_ID,
   priority: 0.603,
-  trigger: exactScene('20', '2', completed(PIETRO_LISBON_PATRONAGE_EVENT_ID), {
+  trigger: exactScene('19', '2', completed(PIETRO_LISBON_PATRONAGE_EVENT_ID), {
     type: 'hasDiscovery',
     discoveryId: 'strait-of-gibraltar',
   }),
@@ -166,7 +166,7 @@ const basraStaff: StoryEvent = {
   id: PIETRO_BASRA_STAFF_EVENT_ID,
   arcId: PIETRO_ADVENTURE_ARC_ID,
   priority: 0.604,
-  trigger: exactScene('78', '1', completed(PIETRO_ALEXANDRIA_RELIC_EVENT_ID)),
+  trigger: exactScene('77', '1', completed(PIETRO_ALEXANDRIA_RELIC_EVENT_ID)),
   repeat: 'once',
   steps: [
     {
@@ -196,7 +196,7 @@ const basraStaffRetry: StoryEvent = {
   arcId: PIETRO_ADVENTURE_ARC_ID,
   priority: 0.605,
   trigger: exactScene(
-    '78',
+    '77',
     '1',
     completed(PIETRO_BASRA_STAFF_EVENT_ID),
     notCompleted(PIETRO_MASSAWA_HANDOFF_EVENT_ID),

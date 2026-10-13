@@ -427,6 +427,91 @@ export const ui: Record<string, string> = {
   'Report Your Triumph in Lisbon': '回里斯本报告凯旋',
   'Return to the Franco residence in Lisbon to celebrate the discovery of El Dorado and clear your family’s name.':
     '返回里斯本法雷尔宅邸，庆贺发现黄金乡并重振家族声誉。',
+  'Privateer of the English Crown': '英格兰皇家私掠舰长',
+  'Dutch Cartographer & Scholar': '荷兰制图学家与学者',
+  'Rising Merchant of Istanbul': '伊斯坦堡新锐商人',
+  'Otto’s triumph': '奥托的皇家凯旋',
+  'Otto shattered the Spanish Invincible Armada in the Bay of Biscay and returned to London as Lord High Admiral of the Royal Navy.':
+    '奥托在比斯开湾粉碎了西班牙无敌舰队，凯旋伦敦并获封皇家海军最高统帅。',
+  'Ernst’s world atlas': '恩斯特的世界地图集',
+  'Ernst, Laura, and Hans united the bearings of every ocean into Master Mercator’s complete world atlas in Amsterdam.':
+    '恩斯特、劳拉与汉斯将各大洋的航向汇入阿姆斯特丹墨卡托大师的完整世界地图集。',
+  'Ali’s fortune': '阿兰的商业传奇',
+  'Ali built a legendary trading fleet from a single dhow, reunited with his sister Sasha in Basra, and rose to Grand Commercial Advisor in Istanbul.':
+    '阿兰从一艘单桅三角帆船起家打造出传奇商船队，在巴士拉与妹妹萨莎重逢，并在伊斯坦堡荣升帝国商业总顾问。',
+  'Receive the Royal Commission in London': '在伦敦领受王室委任',
+  'Visit the London Royal Palace with Matthew Roy to receive King Henry VIII’s Letter of Marque and the flagship HMS Eagle.':
+    '与马修·罗伊一同前往伦敦王宫，领受亨利八世颁发的私掠许可证与旗舰“老鹰号”。',
+  'Seize the Galleon in Seville': '在塞维尔夺取大帆船',
+  'Slip into the Seville shipyard and capture a brand-new Spanish Galleon right off the slipway.':
+    '潜入塞维尔造船厂，从船台上直接夺取一艘崭新的西班牙大帆船。',
+  'Break the Gibraltar Squadron at Ceuta': '在休达击破直布罗陀分舰队',
+  'Defeat Commander Ezequiel’s Spanish Gibraltar vanguard, or sortie again from the Ceuta harbor.':
+    '击败埃泽奎尔司令率领的西班牙直布罗陀先遣队，或从休达码头再次出击。',
+  'Sail to the Ceuta harbor and test your captured galleon against the Spanish Gibraltar squadron.':
+    '驶往休达码头，用夺来的大帆船迎战西班牙直布罗陀分舰队。',
+  'Intercept the Treasure Convoy at Santo Domingo': '在圣多明尼各截击运宝船队',
+  'Defeat the Spanish Caribbean treasure convoy, or sortie again from the Santo Domingo harbor.':
+    '击败西班牙加勒比运宝船队，或从圣多明尼各码头再次出击。',
+  'Cross the Atlantic to the Santo Domingo harbor in the Caribbean and raid Spain’s silver convoy.':
+    '横渡大西洋前往加勒比海的圣多明尼各码头，突袭西班牙白银运宝船队。',
+  'Shatter the Invincible Armada at Nantes': '在南特粉碎无敌舰队',
+  'Defeat Commander Ezequiel’s Invincible Armada in the Bay of Biscay, or sortie again from the Nantes harbor.':
+    '在比斯开湾击败埃泽奎尔司令的无敌舰队，或从南特码头再次出击。',
+  'Return to Europe and confront the full might of the Spanish Invincible Armada at the Nantes harbor.':
+    '返回欧洲，在南特码头迎战倾巢而出的西班牙无敌舰队主力。',
+  'Return in Triumph to London Palace': '凯旋返回伦敦王宫',
+  'Report the defeat of the Invincible Armada at the London Royal Palace.':
+    '返回伦敦王宫，奏报击败无敌舰队的辉煌战果。',
+  'Accept Mercator’s Cartography Commission': '接受墨卡托的制图委托',
+  'Visit Master Mercator at the Amsterdam residence to receive your survey funds, astrolabe, and the Golden Hind.':
+    '前往阿姆斯特丹宅邸拜访墨卡托大师，领取测绘经费、星盘与“金鹿号”。',
+  'Recruit an Interpreter in Lisbon': '在里斯本招募翻译',
+  'Stop at the Lisbon harbor to welcome the polyglot interpreter Laura aboard the Golden Hind.':
+    '停靠里斯本码头，邀请通晓多国语言的翻译劳拉登上“金鹿号”。',
+  'Chart the Cape of Good Hope': '测绘好望角',
+  'Sail south around Africa and sight the Cape of Good Hope near 34.4° S, 18.5° E.':
+    '南下绕行非洲，在南纬 34.4°、东经 18.5° 附近发现并测绘好望角。',
+  'Compile Southern Sheets at Massawa Guild': '在马沙华公会整理南洋图页',
+  'Deliver your southern ocean bearings to the cartographers at the Massawa guild on the Red Sea.':
+    '将南洋方位观测成果送交红海马沙华同业公会的制图师。',
+  'Sight the Strait of Malacca': '发现马六甲海峡',
+  'Cross the Indian Ocean and chart the Strait of Malacca near 2.5° N, 101.5° E.':
+    '横渡印度洋，在北纬 2.5°、东经 101.5° 附近发现并测绘马六甲海峡。',
+  'Clear the Corsair Blockade at Malacca': '突破麻六甲海盗封锁',
+  'Defeat the Eastern Sea corsairs outside Malacca, or sortie again from the Malacca harbor.':
+    '在麻六甲外海击败东海海盗，或从麻六甲码头再次出击。',
+  'Put into the Malacca harbor and break through the Eastern Sea corsair blockade.':
+    '驶入麻六甲码头，突破东海海盗的海峡封锁。',
+  'Uncover Laura’s Homeland in Nagasaki': '在长崎寻获劳拉的故乡',
+  'Sail northeast to Japan and visit the Nagasaki residence with Laura and Hans.':
+    '向东北航行至日本，与劳拉和汉斯一同造访长崎宅邸。',
+  'Survey the Mouth of the Amazon': '勘测亚马逊河口',
+  'Chart the Mouth of the Amazon near 0.5° S, 50.0° W in the New World to complete your global sightings.':
+    '前往新大陆测绘南纬 0.5°、西经 50.0° 附近的亚马逊河口，完成全球观测。',
+  'Present the World Atlas in Amsterdam': '回阿姆斯特丹呈交世界地图集',
+  'Return to Master Mercator at the Amsterdam residence to complete the world atlas.':
+    '返回阿姆斯特丹宅邸向墨卡托大师复命，完成世界地图集。',
+  'Accept Salim’s Seed Capital in Istanbul': '在伊斯坦堡接受萨利姆资助',
+  'Meet Salim at the Istanbul harbor to receive the dhow Hugli and two thousand gold in trading capital.':
+    '在伊斯坦堡码头与萨利姆会合，接收三角帆船“胡格利号”与两千金币经商本金。',
+  'Close the Spice Bargain in Alexandria': '在亚力山卓做成香料生意',
+  'Sail south to the Alexandria market to trade eastern spices and ask after your sister Sasha.':
+    '南下亚力山卓市场交易东方香料，并打听妹妹萨莎的下落。',
+  'Follow Sasha’s Trail to Lisbon Pub': '追寻萨莎的足迹至里斯本酒馆',
+  'Visit the Lisbon pub to hear Lucia and João Franco’s account of Sasha’s eastern voyage.':
+    '前往里斯本酒馆，向路琪亚与约翰·法雷尔打听萨莎东行船队的消息。',
+  'Defend the Spice Convoy at Aden': '在亚丁护卫香料船队',
+  'Defeat the Red Sea raiders outside Aden, or sortie again from the Aden harbor.':
+    '在亚丁外海击败红海劫掠者，或从亚丁码头再次出击。',
+  'Sail around Africa to the Aden harbor and protect the eastern merchant convoy from Red Sea raiders.':
+    '绕行非洲前往亚丁码头，保护东方商船队免遭红海劫掠者洗劫。',
+  'Reunite with Sasha in Basra': '在巴士拉与萨莎重逢',
+  'Enter the Persian Gulf and visit the Basra pub to reunite with your sister Sasha.':
+    '驶入波斯湾造访巴士拉酒馆，与失散的妹妹萨莎团聚。',
+  'Answer the Sultan’s Summons in Istanbul': '回伊斯坦堡奉诏觐见苏丹',
+  'Return to the Istanbul Royal Palace to be honored as the greatest merchant prince of the realm.':
+    '返回伊斯坦堡王宫觐见苏丹，受封为帝国最伟大的商业王子。',
 };
 
 export default ui;

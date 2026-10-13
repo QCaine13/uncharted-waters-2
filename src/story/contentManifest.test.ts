@@ -187,12 +187,30 @@ describe('story content manifest', () => {
       .sort();
 
     expect(report.counts).toEqual({
-      characters: 22,
-      relationships: 21,
-      arcs: 7,
-      events: 124,
+      characters: 29,
+      relationships: 27,
+      arcs: 10,
+      events: 147,
     });
     expect(report.arcs).toEqual([
+      {
+        id: 'ali.merchant',
+        entryEvents: ['ali.merchant.istanbul-windfall'],
+        terminalEvents: [
+          'ali.merchant.aden-corsairs-retry',
+          'ali.merchant.istanbul-grand-vizier',
+        ],
+        crossArcDependencies: [],
+      },
+      {
+        id: 'ernst.worldmap',
+        entryEvents: ['ernst.worldmap.amsterdam-commission'],
+        terminalEvents: [
+          'ernst.worldmap.amsterdam-atlas',
+          'ernst.worldmap.malacca-straits-retry',
+        ],
+        crossArcDependencies: [],
+      },
       {
         id: 'joao.conflict-and-growth',
         entryEvents: ['joao.conflict-and-growth.domingo-missing'],
@@ -257,6 +275,17 @@ describe('story content manifest', () => {
         crossArcDependencies: [],
       },
       {
+        id: 'otto.armada',
+        entryEvents: ['otto.armada.london-commission'],
+        terminalEvents: [
+          'otto.armada.ceuta-skirmish-retry',
+          'otto.armada.london-triumph',
+          'otto.armada.nantes-showdown-retry',
+          'otto.armada.santo-domingo-raid-retry',
+        ],
+        crossArcDependencies: [],
+      },
+      {
         id: 'pietro.adventure',
         entryEvents: ['pietro.adventure.genoa-departure'],
         terminalEvents: [
@@ -294,7 +323,7 @@ describe('story content manifest', () => {
 
     const formatted = formatStoryContentReport(report);
     expect(formatted).toContain(
-      'Story content: 22 characters, 21 relationships, 7 arcs, 124 events',
+      'Story content: 29 characters, 27 relationships, 10 arcs, 147 events',
     );
     expect(formatted).toContain(
       'Legacy compatibility: 10/10 once events mapped (complete)',

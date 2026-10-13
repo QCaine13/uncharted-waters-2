@@ -236,14 +236,20 @@ export const getProtagonistId = (): ProtagonistId =>
 export const getProtagonistSailorId = (): string => {
   const id = getProtagonistId();
   if (id === 'katarina') return '2';
+  if (id === 'otto') return '3';
   if (id === 'pietro') return '4';
+  if (id === 'ernst') return '5';
+  if (id === 'ali') return '6';
   return '1';
 };
 
 export const getFirstMateId = (): string => {
   const id = getProtagonistId();
   if (id === 'katarina') return '36';
+  if (id === 'otto') return '37';
   if (id === 'pietro') return '35';
+  if (id === 'ernst') return '38';
+  if (id === 'ali') return '40';
   return '32';
 };
 

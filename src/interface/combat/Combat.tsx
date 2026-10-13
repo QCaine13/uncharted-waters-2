@@ -60,7 +60,10 @@ function CombatantCard({
 
 const getProtagonistDisplayName = (): string => {
   if (state.protagonistId === 'katarina') return 'Katarina Erantzo';
+  if (state.protagonistId === 'otto') return 'Otto Baynes';
+  if (state.protagonistId === 'ernst') return 'Ernst von Bohr';
   if (state.protagonistId === 'pietro') return 'Pietro Conti';
+  if (state.protagonistId === 'ali') return 'Ali Vezas';
   return 'João Franco';
 };
 
@@ -159,10 +162,7 @@ function Result({ combat }: { combat: CombatState }) {
       }),
     );
   } else if (preview.experience.joao > 0) {
-    if (
-      state.protagonistId === 'katarina' ||
-      state.protagonistId === 'pietro'
-    ) {
+    if (state.protagonistId && state.protagonistId !== 'joao') {
       lines.push(
         t('{name} gains {amount} battle experience.', {
           name: t(getProtagonistDisplayName()),

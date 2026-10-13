@@ -43,10 +43,28 @@ const getPlayerNames = (): { firstName: string; lastName: string } => {
       lastName: isZh ? '艾兰茨' : 'Erantzo',
     };
   }
+  if (state.protagonistId === 'otto') {
+    return {
+      firstName: isZh ? '奥托' : 'Otto',
+      lastName: isZh ? '斯宾诺拉' : 'Baynes',
+    };
+  }
+  if (state.protagonistId === 'ernst') {
+    return {
+      firstName: isZh ? '恩斯特' : 'Ernst',
+      lastName: isZh ? '洛佩斯' : 'von Bohr',
+    };
+  }
   if (state.protagonistId === 'pietro') {
     return {
       firstName: isZh ? '皮耶德' : 'Pietro',
       lastName: isZh ? '康迪' : 'Conti',
+    };
+  }
+  if (state.protagonistId === 'ali') {
+    return {
+      firstName: isZh ? '阿兰' : 'Ali',
+      lastName: isZh ? '维斯特' : 'Vezas',
     };
   }
   return {

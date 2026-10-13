@@ -21,6 +21,13 @@ import ezequiel from './ezequiel';
 import martinez from './martinez';
 import emilio from './emilio';
 import camillo from './camillo';
+import otto from './otto';
+import matthew from './matthew';
+import ernst from './ernst';
+import hans from './hans';
+import laura from './laura';
+import mercator from './mercator';
+import salim from './salim';
 
 export const storyCharacters: StoryCharacter[] = [
   joao,
@@ -45,6 +52,13 @@ export const storyCharacters: StoryCharacter[] = [
   martinez,
   emilio,
   camillo,
+  otto,
+  matthew,
+  ernst,
+  hans,
+  laura,
+  mercator,
+  salim,
 ];
 
 export default storyCharacters;

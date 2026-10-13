@@ -5,6 +5,7 @@ import joaoConflictAndGrowthRelationships from './joao-conflict-and-growth';
 import joaoMassawaRelationships from './joao-massawa';
 import joaoFinaleRelationships from './joao-finale';
 import katarinaPietroRelationships from './katarina-pietro';
+import ottoErnstAliRelationships from './otto-ernst-ali';
 
 export const storyRelationships: CharacterRelationship[] = [
   ...joaoLisbonRelationships,
@@ -13,6 +14,7 @@ export const storyRelationships: CharacterRelationship[] = [
   ...joaoMassawaRelationships,
   ...joaoFinaleRelationships,
   ...katarinaPietroRelationships,
+  ...ottoErnstAliRelationships,
 ];
 
 export default storyRelationships;

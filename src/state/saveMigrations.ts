@@ -26,7 +26,14 @@ import { itemData } from '../data/itemData';
 
 export const SAVE_VERSION = 7;
 
-export const PROTAGONIST_IDS = ['joao', 'katarina', 'pietro'] as const;
+export const PROTAGONIST_IDS = [
+  'joao',
+  'katarina',
+  'otto',
+  'ernst',
+  'pietro',
+  'ali',
+] as const;
 export type ProtagonistId = typeof PROTAGONIST_IDS[number];
 
 export interface PortInvestment {

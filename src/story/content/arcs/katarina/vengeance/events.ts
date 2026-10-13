@@ -205,7 +205,7 @@ const ceutaClash: StoryEvent = {
   id: KATARINA_CEUTA_CLASH_EVENT_ID,
   arcId: KATARINA_VENGEANCE_ARC_ID,
   priority: 0.504,
-  trigger: exactScene('29', '2', completed(KATARINA_SPANISH_PURSUIT_EVENT_ID), {
+  trigger: exactScene('27', '2', completed(KATARINA_SPANISH_PURSUIT_EVENT_ID), {
     type: 'combatResolved',
     encounterId: 'katarina.seville-patrol',
     outcomes: ['victory'],
@@ -239,7 +239,7 @@ const ceutaClashRetry: StoryEvent = {
   arcId: KATARINA_VENGEANCE_ARC_ID,
   priority: 0.505,
   trigger: exactScene(
-    '29',
+    '27',
     '4',
     completed(KATARINA_CEUTA_CLASH_EVENT_ID),
     notCompleted(KATARINA_MASSAWA_TRUTH_EVENT_ID),

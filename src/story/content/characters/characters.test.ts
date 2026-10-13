@@ -10,8 +10,8 @@ describe('canonical Lisbon characters', () => {
     storyCharacters.find((character) => character.id === id);
 
   test('preserves every legacy identity, English name, color, role, and sailor link', () => {
-    expect(storyCharacters).toHaveLength(22);
-    expect(new Set(storyCharacters.map(({ id }) => id)).size).toBe(22);
+    expect(storyCharacters).toHaveLength(29);
+    expect(new Set(storyCharacters.map(({ id }) => id)).size).toBe(29);
 
     expect(byId('joao')).toEqual({
       id: characterId('joao'),
@@ -112,7 +112,9 @@ describe('canonical Lisbon characters', () => {
       id: characterId('ali'),
       names: { en: 'Ali Vezas', zh: '阿兰·维斯特' },
       role: 'npc',
+      portraitId: '6',
       dialogueStyle: { color: 'text-teal-700' },
+      sailorId: '6',
     });
     expect(byId('sasha')).toEqual({
       id: characterId('sasha'),
@@ -180,9 +182,16 @@ describe('canonical Lisbon characters', () => {
       'm2-relief-captain',
       'm3-relief-captain',
       '2',
+      '6',
       '4',
       '36',
       '35',
+      '3',
+      '37',
+      '5',
+      '38',
+      '39',
+      '40',
     ]);
     expect(sailorIds).toHaveLength(new Set(sailorIds).size);
 
@@ -395,6 +404,48 @@ describe('canonical Lisbon relationships', () => {
         type: 'employer',
         reciprocal: 'employee',
       },
+      {
+        id: 'otto.matthew.companion',
+        from: 'matthew',
+        to: 'otto',
+        type: 'companion',
+        reciprocal: 'companion',
+      },
+      {
+        id: 'otto.ezequiel.rival',
+        from: 'ezequiel',
+        to: 'otto',
+        type: 'rival',
+        reciprocal: 'rival',
+      },
+      {
+        id: 'ernst.hans.companion',
+        from: 'hans',
+        to: 'ernst',
+        type: 'companion',
+        reciprocal: 'companion',
+      },
+      {
+        id: 'ernst.laura.companion',
+        from: 'laura',
+        to: 'ernst',
+        type: 'companion',
+        reciprocal: 'companion',
+      },
+      {
+        id: 'ernst.mercator.mentor',
+        from: 'mercator',
+        to: 'ernst',
+        type: 'mentor',
+        reciprocal: 'student',
+      },
+      {
+        id: 'ali.salim.companion',
+        from: 'salim',
+        to: 'ali',
+        type: 'companion',
+        reciprocal: 'companion',
+      },
     ]);
 
     const compiled = compileStoryContent(
@@ -455,9 +506,21 @@ describe('canonical Lisbon relationships', () => {
         'pietro:companion:camillo',
         'duchess-christiana:employer:pietro',
         'pietro:employee:duchess-christiana',
+        'matthew:companion:otto',
+        'otto:companion:matthew',
+        'ezequiel:rival:otto',
+        'otto:rival:ezequiel',
+        'hans:companion:ernst',
+        'ernst:companion:hans',
+        'laura:companion:ernst',
+        'ernst:companion:laura',
+        'mercator:mentor:ernst',
+        'ernst:student:mercator',
+        'salim:companion:ali',
+        'ali:companion:salim',
       ]),
     );
-    expect(compiledEdges).toHaveLength(42);
+    expect(compiledEdges).toHaveLength(54);
     expect(compiled.diagnostics).toEqual([]);
   });
 });
