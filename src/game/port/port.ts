@@ -7,6 +7,7 @@ import { getPortData } from './portUtils';
 import { getTimeOfDay, isDay } from '../../state/selectors';
 import { getCameraPosition } from '../world/sharedUtils';
 import createPortRenderer from '../../render/portRenderer';
+import { weatherFor } from '../../render/weather';
 import state from '../../state/state';
 import Input from '../../input';
 import { TILE_SIZE } from '../../constants';
@@ -89,6 +90,7 @@ const createPort = (portId: string) => {
         timeOfDay: getTimeOfDay(),
         percentNextMove: PercentNextMove.get(),
         marker: path.goal(),
+        weather: weatherFor(portId, Math.floor(state.timePassed / 1440)),
       });
     },
     characters: () => characters,

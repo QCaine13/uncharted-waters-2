@@ -16,6 +16,7 @@ import {
 import { TILE_SIZE } from '../constants';
 import { getProtagonistId } from '../state/selectors';
 import { ambientAt } from './lighting';
+import type { Weather } from './weather';
 import type { Map as GameMap } from '../map';
 import type { PortNpc } from '../game/port/portNpc';
 import type { PortPlayer } from '../game/port/portPlayer';
@@ -43,6 +44,7 @@ interface Frame {
   timeOfDay: number;
   percentNextMove: number;
   marker: Position | null;
+  weather: Weather;
 }
 
 interface Handlers {
@@ -64,6 +66,9 @@ interface Session {
   shadows: Graphics;
   tint: Graphics;
   lights: Container;
+  weather: Container;
+  weatherShadows: Graphics;
+  weatherFx: Graphics;
   emissiveSprites: Sprite[];
   marker: Graphics;
   tileSprites: Sprite[];
@@ -290,6 +295,9 @@ const createSession = (): Session => ({
   shadows: new Graphics(),
   tint: new Graphics(),
   lights: new Container(),
+  weather: new Container(),
+  weatherShadows: new Graphics(),
+  weatherFx: new Graphics(),
   emissiveSprites: [],
   marker: new Graphics(),
   tileSprites: [],
@@ -300,6 +308,65 @@ const createSession = (): Session => ({
   camera: { x: 0, y: 0 },
   handlers: { onTileClick: null, onSecondaryClick: null },
 });
+
+const weatherRand = (i: number, salt: number) => {
+  const x = Math.sin(i * 127.1 + salt * 311.7) * 43758.5453;
+  return x - Math.floor(x);
+};
+
+const drawWeather = (
+  session: Session,
+  weather: Weather,
+  timeOfDay: number,
+  now: number,
+) => {
+  session.weatherShadows.clear();
+  session.weatherFx.clear();
+
+  if (weather === 'cloudy') {
+    for (let i = 0; i < 4; i += 1) {
+      const x = ((weatherRand(i, 1) * 1600 + now * 18) % 1600) - 160;
+      const y = weatherRand(i, 2) * 700;
+      session.weatherShadows
+        .ellipse(
+          x,
+          y,
+          320 + weatherRand(i, 3) * 160,
+          140 + weatherRand(i, 4) * 60,
+        )
+        .fill({ color: 0x777788, alpha: 0.16 });
+    }
+  } else if (weather === 'rain') {
+    session.weatherShadows
+      .rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
+      .fill({ color: 0x8888a0, alpha: 0.12 });
+    for (let i = 0; i < 90; i += 1) {
+      const x = weatherRand(i, 5) * CANVAS_WIDTH;
+      const speed = 550 + weatherRand(i, 6) * 350;
+      const y =
+        (weatherRand(i, 7) * CANVAS_HEIGHT + now * speed) % CANVAS_HEIGHT;
+      session.weatherFx.rect(x, y, 2, 14).fill({ color: 0xaaccee, alpha: 0.4 });
+    }
+    for (let i = 0; i < 24; i += 1) {
+      const x = weatherRand(i, 8) * CANVAS_WIDTH;
+      const y = weatherRand(i, 9) * CANVAS_HEIGHT;
+      const phase = (now * 1.6 + weatherRand(i, 10)) % 1;
+      session.weatherFx
+        .circle(x, y, 1 + phase * 4)
+        .stroke({ width: 1, color: 0xbbddff, alpha: (1 - phase) * 0.4 });
+    }
+  } else if (weather === 'fog') {
+    const dawnFactor = Math.max(0, 1 - Math.abs(timeOfDay - 390) / 240);
+    const alpha = 0.1 + dawnFactor * 0.18;
+    for (let i = 0; i < 5; i += 1) {
+      const x = ((weatherRand(i, 11) * 1700 + now * (8 + i * 3)) % 1700) - 200;
+      const y = weatherRand(i, 12) * 800;
+      session.weatherFx
+        .ellipse(x, y, 420, 150 + weatherRand(i, 13) * 80)
+        .fill({ color: 0xcfd4dd, alpha });
+    }
+  }
+};
 
 const drawMarker = (marker: Graphics, goal: Position | null) => {
   marker.clear();
@@ -350,6 +417,7 @@ const createPortRenderer = (
   initApp(canvas).then((app) => {
     if (activeSession) {
       activeSession.world.destroy({ children: true });
+      activeSession.weather.destroy({ children: true });
     }
 
     if (hdPort) {
@@ -393,6 +461,9 @@ const createPortRenderer = (
       session.tint.blendMode = 'multiply';
     }
 
+    session.weatherShadows.blendMode = 'multiply';
+    session.weather.addChild(session.weatherShadows, session.weatherFx);
+
     session.world.addChild(
       session.tileLayer,
       session.buildingLayer,
@@ -402,7 +473,7 @@ const createPortRenderer = (
       session.tint,
       session.marker,
     );
-    app.stage.addChild(session.world);
+    app.stage.addChild(session.world, session.weather);
     activeSession = session;
     ready = true;
   });
@@ -500,6 +571,7 @@ const createPortRenderer = (
       timeOfDay,
       percentNextMove,
       marker,
+      weather,
     }: Frame) => {
       if (!ready) {
         return;
@@ -577,6 +649,8 @@ const createPortRenderer = (
         const sprite = emissive;
         sprite.alpha = lightAlpha;
       });
+
+      drawWeather(session, weather, timeOfDay, performance.now() / 1000);
 
       const markerChanged =
         (marker === null) !== (lastMarker === null) ||
