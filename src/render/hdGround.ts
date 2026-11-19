@@ -27,14 +27,16 @@ export interface HdPropPlacement {
 }
 
 // Rendered prop footprint in tile units (width x height above the anchor).
-export const PROP_SPEC: { [id: string]: { w: number; h: number } } = {
+export const PROP_SPEC: {
+  [id: string]: { w: number; h: number; stretch?: boolean };
+} = {
   'tree-1': { w: 2, h: 2.5 },
   'tree-2': { w: 2, h: 2.5 },
   cypress: { w: 1, h: 2.5 },
   'bush-1': { w: 1, h: 1 },
   'bush-2': { w: 1, h: 1 },
   flowerpot: { w: 0.8, h: 0.9 },
-  'lantern-post': { w: 0.7, h: 2 },
+  'lantern-post': { w: 0.6, h: 1.8, stretch: true },
   crate: { w: 0.9, h: 0.9 },
   barrel: { w: 0.8, h: 0.9 },
   'ship-anchored': { w: 6, h: 7 },
@@ -57,7 +59,6 @@ export interface HdGroundBake {
   props: HdPropPlacement[];
   blobShadows: HdBlob[];
   lanternSpots: Position[];
-  buildingShadows: { x: number; y: number; width: number; height: number }[];
 }
 
 const hash2 = (x: number, y: number, seed: number): number => {
@@ -89,10 +90,21 @@ const valueNoise = (x: number, y: number, scale: number, seed: number) => {
 // beside a building must not bleed onto its surroundings
 const LAND_GROUND = new Set<GroundClass>(['grass', 'sand', 'cobble']);
 
+interface ShipCluster {
+  x: number;
+  y: number;
+  columns: number;
+  rows: number;
+}
+
 const resolveClasses = (
   tileAt: (position: Position) => number,
   covered: boolean[][],
-): { classes: GroundClass[][]; raw: PortTerrainClass[][] } => {
+): {
+  classes: GroundClass[][];
+  raw: PortTerrainClass[][];
+  shipClusters: ShipCluster[];
+} => {
   const raw: PortTerrainClass[][] = [];
   const classes: GroundClass[][] = [];
 
@@ -104,24 +116,96 @@ const resolveClasses = (
     }
   }
 
-  // Multi-source BFS: nearest true-ground class for every tile, so building,
-  // tree and shadow tiles get the surrounding ground baked underneath
-  // overlays and props (no legacy tiles peeking out around silhouettes).
+  // Connected clusters of legacy ship tiles; HD ship props (when present)
+  // replace the hull, otherwise the legacy tiles are drawn over the water.
+  const shipClusters: ShipCluster[] = [];
+  const seaShip: boolean[][] = [];
+  {
+    const seen: boolean[][] = [];
+    for (let y = 0; y < MAP_TILES; y += 1) {
+      seen[y] = new Array(MAP_TILES).fill(false);
+      seaShip[y] = new Array(MAP_TILES).fill(false);
+    }
+    for (let y = 0; y < MAP_TILES; y += 1) {
+      for (let x = 0; x < MAP_TILES; x += 1) {
+        if (raw[y][x] !== 'ship' || seen[y][x]) continue;
+        let minX = x;
+        let maxX = x;
+        let minY = y;
+        let maxY = y;
+        const cells: Position[] = [];
+        const stack = [{ x, y }];
+        seen[y][x] = true;
+        while (stack.length) {
+          const p = stack.pop()!;
+          cells.push(p);
+          minX = Math.min(minX, p.x);
+          maxX = Math.max(maxX, p.x);
+          minY = Math.min(minY, p.y);
+          maxY = Math.max(maxY, p.y);
+          for (let d = 0; d < 4; d += 1) {
+            const nx = p.x + [1, -1, 0, 0][d];
+            const ny = p.y + [0, 0, 1, -1][d];
+            if (nx < 0 || ny < 0 || nx >= MAP_TILES || ny >= MAP_TILES)
+              continue;
+            if (seen[ny][nx] || raw[ny][nx] !== 'ship') continue;
+            seen[ny][nx] = true;
+            stack.push({ x: nx, y: ny });
+          }
+        }
+        shipClusters.push({
+          x: minX,
+          y: minY,
+          columns: maxX - minX + 1,
+          rows: maxY - minY + 1,
+        });
+        // a cluster counts as a sea ship only when the ring around its
+        // bounding box is mostly water — beached/stray hull tiles on land
+        // bake as the surrounding ground instead of a water square
+        let water = 0;
+        let ring = 0;
+        for (let ry = minY - 1; ry <= maxY + 1; ry += 1) {
+          for (let rx = minX - 1; rx <= maxX + 1; rx += 1) {
+            if (rx >= minX && rx <= maxX && ry >= minY && ry <= maxY) continue;
+            if (rx < 0 || ry < 0 || rx >= MAP_TILES || ry >= MAP_TILES)
+              continue;
+            ring += 1;
+            const rc = raw[ry][rx];
+            if (rc === 'water' || rc === 'ship') water += 1;
+          }
+        }
+        // hulls mostly hidden under an overlay rect (the beached-boats art)
+        // are never sea ships even if the shore sits a few tiles away
+        const uncoveredCells = cells.filter((p) => !covered[p.y][p.x]);
+        if (
+          uncoveredCells.length * 2 > cells.length &&
+          (ring === 0 || water / ring > 0.3)
+        ) {
+          cells.forEach((p) => {
+            seaShip[p.y][p.x] = true;
+          });
+        }
+      }
+    }
+  }
+
+  // Multi-source BFS: nearest LAND ground class for every tile, so
+  // building, tree and shadow tiles get the surrounding ground baked
+  // underneath overlays and props. In the HD path no legacy tile is drawn
+  // on land — only uncovered sea ships keep their legacy hulls (those bake
+  // as water so no shore halo appears around them).
   const nearest: (GroundClass | null)[][] = [];
   const queue: Position[] = [];
   for (let y = 0; y < MAP_TILES; y += 1) {
     nearest[y] = [];
     for (let x = 0; x < MAP_TILES; x += 1) {
       const cls = raw[y][x];
-      // ships resolve to water: no shore halo, sea animation shows through
-      if (cls === 'ship' || cls === 'water') {
-        nearest[y][x] = 'water';
-      } else if (LAND_GROUND.has(cls as GroundClass)) {
+      if (LAND_GROUND.has(cls as GroundClass)) {
         nearest[y][x] = cls as GroundClass;
+        queue.push({ x, y });
       } else {
         nearest[y][x] = null;
       }
-      if (nearest[y][x]) queue.push({ x, y });
     }
   }
   for (let head = 0; head < queue.length; head += 1) {
@@ -137,20 +221,43 @@ const resolveClasses = (
     }
   }
 
+  // tree tiles sit under hedge rows lining streets/paths: bake the grass or
+  // sand the planting sits in (majority of non-tree neighbours), never the
+  // cobble square of the adjacent road
+  const treeGround = (x: number, y: number): GroundClass => {
+    const count: { [k in GroundClass]?: number } = {};
+    for (let dy = -1; dy <= 1; dy += 1) {
+      for (let dx = -1; dx <= 1; dx += 1) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= MAP_TILES || ny >= MAP_TILES) continue;
+        const cls = raw[ny][nx];
+        if (cls === 'grass' || cls === 'sand') {
+          count[cls] = (count[cls] ?? 0) + 1;
+        }
+      }
+    }
+    const best = (['grass', 'sand'] as const).reduce((a, b) =>
+      (count[b] ?? 0) > (count[a] ?? 0) ? b : a,
+    );
+    return (count[best] ?? 0) > 0 ? best : (nearest[y][x] ?? 'grass');
+  };
+
   for (let y = 0; y < MAP_TILES; y += 1) {
     classes[y] = [];
     for (let x = 0; x < MAP_TILES; x += 1) {
       const cls = raw[y][x];
-      // Structures with no overlay art keep their legacy tiles; everything
-      // else resolves to the nearest walkable/shore ground class.
-      classes[y][x] =
-        cls === 'building' && !covered[y][x]
-          ? 'building'
-          : (nearest[y][x] ?? 'grass');
+      if (cls === 'water' || (cls === 'ship' && seaShip[y][x])) {
+        classes[y][x] = 'water';
+      } else if (cls === 'tree') {
+        classes[y][x] = treeGround(x, y);
+      } else {
+        classes[y][x] = nearest[y][x] ?? 'grass';
+      }
     }
   }
 
-  return { classes, raw };
+  return { classes, raw, shipClusters };
 };
 
 const imageData = (img: HTMLImageElement | HTMLCanvasElement): ImageData => {
@@ -177,6 +284,9 @@ interface BakeOptions {
   groundImages: { [kind: string]: HTMLImageElement };
   propIds: string[];
   buildingRects: { x: number; y: number; columns: number; rows: number }[];
+  // per-tile flags for tiles covered by opaque overlay art; falls back to
+  // the full rect coverage when absent
+  opaqueTiles?: boolean[][];
   entrances?: Position[];
   isWalkable?: (position: Position) => boolean;
 }
@@ -187,6 +297,7 @@ export const bakeHdGround = ({
   groundImages,
   propIds,
   buildingRects,
+  opaqueTiles,
   entrances = [],
   isWalkable = () => false,
 }: BakeOptions): HdGroundBake => {
@@ -213,58 +324,11 @@ export const bakeHdGround = ({
     }
   });
 
-  const { classes, raw } = resolveClasses(tileAt, covered);
+  const { classes, raw, shipClusters } = resolveClasses(tileAt, covered);
 
-  // Connected clusters of legacy ship tiles; HD ship props (when present)
-  // replace the hull, otherwise the legacy tiles are drawn over the water.
-  const shipClusters: {
-    x: number;
-    y: number;
-    columns: number;
-    rows: number;
-  }[] = [];
   const shipCovered: boolean[][] = [];
   for (let y = 0; y < MAP_TILES; y += 1) {
     shipCovered[y] = new Array(MAP_TILES).fill(false);
-  }
-  {
-    const seen: boolean[][] = [];
-    for (let y = 0; y < MAP_TILES; y += 1) {
-      seen[y] = new Array(MAP_TILES).fill(false);
-    }
-    for (let y = 0; y < MAP_TILES; y += 1) {
-      for (let x = 0; x < MAP_TILES; x += 1) {
-        if (raw[y][x] !== 'ship' || seen[y][x]) continue;
-        let minX = x;
-        let maxX = x;
-        let minY = y;
-        let maxY = y;
-        const stack = [{ x, y }];
-        seen[y][x] = true;
-        while (stack.length) {
-          const p = stack.pop()!;
-          minX = Math.min(minX, p.x);
-          maxX = Math.max(maxX, p.x);
-          minY = Math.min(minY, p.y);
-          maxY = Math.max(maxY, p.y);
-          for (let d = 0; d < 4; d += 1) {
-            const nx = p.x + [1, -1, 0, 0][d];
-            const ny = p.y + [0, 0, 1, -1][d];
-            if (nx < 0 || ny < 0 || nx >= MAP_TILES || ny >= MAP_TILES)
-              continue;
-            if (seen[ny][nx] || raw[ny][nx] !== 'ship') continue;
-            seen[ny][nx] = true;
-            stack.push({ x: nx, y: ny });
-          }
-        }
-        shipClusters.push({
-          x: minX,
-          y: minY,
-          columns: maxX - minX + 1,
-          rows: maxY - minY + 1,
-        });
-      }
-    }
   }
 
   const groundData: { [kind: string]: ImageData } = {};
@@ -464,48 +528,49 @@ export const bakeHdGround = ({
           frame.data[i + 3] = 255;
         } else {
           if (cls === 'water') continue;
-          if (cls === 'building') {
-            // uncovered structures stay on the legacy tile; the tileset is
-            // upscaled 2x so each tile occupies TILE_SIZE px
+          texturePixel(cls, wx, wy, px, 0);
+          // darker stone seam where cobble meets another surface
+          if (cls === 'cobble') {
+            const ex = wx % TILE_SIZE;
+            const ey = wy % TILE_SIZE;
             const tx = Math.floor(wx / TILE_SIZE);
             const ty = Math.floor(wy / TILE_SIZE);
-            const index = tileAt({ x: tx, y: ty });
-            const lx = index * TILE_SIZE + (wx % TILE_SIZE);
-            const ly = TILE_SIZE + (wy % TILE_SIZE); // row 1 = daylight
-            const li = (ly * legacy.width + lx) * 4;
-            frame.data[i] = legacy.data[li];
-            frame.data[i + 1] = legacy.data[li + 1];
-            frame.data[i + 2] = legacy.data[li + 2];
-            frame.data[i + 3] = 255;
-          } else {
-            texturePixel(cls, wx, wy, px, 0);
-            // darker stone seam where cobble meets another surface
-            if (cls === 'cobble') {
-              const ex = wx % TILE_SIZE;
-              const ey = wy % TILE_SIZE;
-              const tx = Math.floor(wx / TILE_SIZE);
-              const ty = Math.floor(wy / TILE_SIZE);
-              let seam = false;
-              if (ex < 3 && classAtTile(tx - 1, ty) !== 'cobble') seam = true;
-              if (ex > 28 && classAtTile(tx + 1, ty) !== 'cobble') seam = true;
-              if (ey < 3 && classAtTile(tx, ty - 1) !== 'cobble') seam = true;
-              if (ey > 28 && classAtTile(tx, ty + 1) !== 'cobble') seam = true;
-              if (seam) {
-                px[0] *= 0.8;
-                px[1] *= 0.8;
-                px[2] *= 0.8;
-              }
+            let seam = false;
+            if (ex < 3 && classAtTile(tx - 1, ty) !== 'cobble') seam = true;
+            if (ex > 28 && classAtTile(tx + 1, ty) !== 'cobble') seam = true;
+            if (ey < 3 && classAtTile(tx, ty - 1) !== 'cobble') seam = true;
+            if (ey > 28 && classAtTile(tx, ty + 1) !== 'cobble') seam = true;
+            if (seam) {
+              px[0] *= 0.8;
+              px[1] *= 0.8;
+              px[2] *= 0.8;
             }
-            frame.data[i] = px[0];
-            frame.data[i + 1] = px[1];
-            frame.data[i + 2] = px[2];
-            frame.data[i + 3] = 255;
           }
+          frame.data[i] = px[0];
+          frame.data[i + 1] = px[1];
+          frame.data[i + 2] = px[2];
+          frame.data[i + 3] = 255;
         }
       }
     }
 
     context.putImageData(frame, 0, 0);
+    if (!waterOnly) {
+      // soft drop shadow baked under each building overlay so facades sit on
+      // the ground (offset down-right ~0.3 tile, blurred)
+      context.save();
+      context.filter = 'blur(8px)';
+      context.fillStyle = 'rgba(0,0,0,0.25)';
+      buildingRects.forEach((r) => {
+        context.fillRect(
+          (r.x + 0.3) * TILE_SIZE - cx * size,
+          (r.y + 0.3) * TILE_SIZE - cy * size,
+          r.columns * TILE_SIZE,
+          r.rows * TILE_SIZE,
+        );
+      });
+      context.restore();
+    }
     return { canvas, x: cx * size, y: cy * size };
   };
 
@@ -547,24 +612,15 @@ export const bakeHdGround = ({
     });
   }
 
-  const overlapsBuilding = (id: string, x: number, y: number): boolean => {
-    const spec = PROP_SPEC[id] ?? { w: 1, h: 1 };
-    const half = (spec.w * TILE_SIZE) / 2;
-    const top = y - spec.h * TILE_SIZE;
-    return buildingRects.some((r) => {
-      const rx = r.x * TILE_SIZE;
-      const ry = r.y * TILE_SIZE;
-      const rw = r.columns * TILE_SIZE;
-      const rh = r.rows * TILE_SIZE;
-      // allow a few px of silhouette overlap before rejecting the prop
-      const ix = Math.min(x + half, rx + rw) - Math.max(x - half, rx);
-      const iy = Math.min(y, ry + rh) - Math.max(top, ry);
-      return ix > 6 && iy > 6;
-    });
-  };
-
+  // a prop is skipped only when its base tile sits inside a building
+  // overlay's opaque area; wider canopies may still brush adjacent walls,
+  // which the authored alpha resolves visually
   const putProp = (id: string, x: number, y: number) => {
-    if (!overlapsBuilding(id, x, y)) {
+    const tx = Math.floor(x / TILE_SIZE);
+    const ty = Math.floor((y - 1) / TILE_SIZE);
+    if (tx < 0 || ty < 0 || tx >= MAP_TILES || ty >= MAP_TILES) return;
+    const blocked = opaqueTiles ? opaqueTiles[ty][tx] : covered[ty][tx];
+    if (!blocked) {
       props.push({ id, x, y });
     }
   };
@@ -604,7 +660,33 @@ export const bakeHdGround = ({
           const pool = tall.length ? tall : TREES;
           id = pool[Math.floor(hash2(x, y, 31) * pool.length)];
         }
-        putProp(id, (x + 0.5) * TILE_SIZE, (y + 1) * TILE_SIZE);
+        // a tall prop rooted against a facade would grow over the wall art:
+        // fall back to a low bush so the hedge still lines the street
+        const spec = PROP_SPEC[id];
+        let canopyOpaque = false;
+        for (let cy = Math.max(0, y - Math.ceil(spec.h)); cy <= y; cy += 1) {
+          for (
+            let cx = Math.max(0, x - Math.floor(spec.w / 2));
+            cx <= Math.min(MAP_TILES - 1, x + Math.floor(spec.w / 2));
+            cx += 1
+          ) {
+            const rowOpaque = opaqueTiles
+              ? opaqueTiles[cy][cx]
+              : covered[cy][cx];
+            if (rowOpaque) canopyOpaque = true;
+          }
+        }
+        if (spec.h > 1.5 && canopyOpaque) {
+          const low = TREES.filter((t) => t.startsWith('bush'));
+          if (low.length) {
+            id = low[Math.floor(hash2(x, y, 35) * low.length)];
+          } else {
+            id = '';
+          }
+        }
+        if (id) {
+          putProp(id, (x + 0.5) * TILE_SIZE, (y + 1) * TILE_SIZE);
+        }
       } else {
         run = 0;
         if (cls === 'shadow' && !covered[y][x]) {
@@ -689,13 +771,6 @@ export const bakeHdGround = ({
     }
   }
 
-  const buildingShadows = buildingRects.map((r) => ({
-    x: r.x * TILE_SIZE - TILE_SIZE * 0.6,
-    y: r.y * TILE_SIZE + r.rows * TILE_SIZE * 0.4,
-    width: r.columns * TILE_SIZE + TILE_SIZE * 0.6,
-    height: TILE_SIZE * 0.9,
-  }));
-
   return {
     landChunks,
     waterChunks,
@@ -703,7 +778,6 @@ export const bakeHdGround = ({
     props,
     blobShadows,
     lanternSpots,
-    buildingShadows,
   };
 };
 

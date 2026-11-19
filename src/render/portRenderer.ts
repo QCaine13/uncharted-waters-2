@@ -33,6 +33,7 @@ const VIEW_TILES_X = CANVAS_WIDTH / TILE_SIZE;
 const VIEW_TILES_Y = CANVAS_HEIGHT / TILE_SIZE;
 
 const MAP_PIXELS = 96 * TILE_SIZE;
+const MAP_TILES = MAP_PIXELS / TILE_SIZE;
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 2;
@@ -497,7 +498,9 @@ const createPortRenderer = (
             }
             emissive.blendMode = 'add';
             emissive.alpha = 0;
-            session.buildingLayer.addChild(emissive);
+            // drawn in the lights layer above the ambient multiply so window
+            // glow stays warm instead of being multiplied to lavender
+            session.lights.addChild(emissive);
             session.emissiveSprites.push(emissive);
           }
         });
@@ -509,6 +512,62 @@ const createPortRenderer = (
         loadImages(hdGround),
         loadImages(hdProps),
       ]);
+      // tiles actually painted by overlay art (>25% opaque samples) — used
+      // for prop rejection so garden-edge hedge tiles are not suppressed
+      const opaqueTiles: boolean[][] = [];
+      for (let y = 0; y < MAP_TILES; y += 1) {
+        opaqueTiles[y] = new Array(MAP_TILES).fill(false);
+      }
+      hdBuildings.forEach((building) => {
+        const texture = PixiAssets.get<Texture>(building.url);
+        const resource = texture?.source?.resource as
+          CanvasImageSource | undefined;
+        if (!resource) return;
+        const iw = texture.width;
+        const ih = texture.height;
+        const alphaCanvas = document.createElement('canvas');
+        alphaCanvas.width = iw;
+        alphaCanvas.height = ih;
+        const context = alphaCanvas.getContext('2d')!;
+        context.drawImage(resource, 0, 0);
+        const { data } = context.getImageData(0, 0, iw, ih);
+        building.placements.forEach((p) => {
+          const px = p.x + (building.adjust?.x ?? 0);
+          const py = p.y + (building.adjust?.y ?? 0);
+          const srcColumns = building.tile ? 8 : p.columns;
+          const ptw = iw / srcColumns;
+          const pth = ih / p.rows;
+          for (let ty = 0; ty < p.rows; ty += 1) {
+            for (let tx = 0; tx < p.columns; tx += 1) {
+              const gx = Math.floor(px + tx);
+              const gy = Math.floor(py + ty);
+              const inMap =
+                gx >= 0 && gy >= 0 && gx < MAP_TILES && gy < MAP_TILES;
+              if (inMap) {
+                const sx0 = Math.max(
+                  0,
+                  Math.floor(((tx % srcColumns) + (px % 1)) * ptw),
+                );
+                const sy0 = Math.max(0, Math.floor(ty * pth));
+                const sx1 = Math.min(iw, sx0 + Math.ceil(ptw));
+                const sy1 = Math.min(ih, sy0 + Math.ceil(pth));
+                let opaque = 0;
+                let total = 0;
+                for (let sy = sy0; sy < sy1; sy += 4) {
+                  for (let sx = sx0; sx < sx1; sx += 4) {
+                    total += 1;
+                    if (data[(sy * iw + sx) * 4 + 3] > 64) opaque += 1;
+                  }
+                }
+                if (total > 0 && opaque / total > 0.25) {
+                  opaqueTiles[gy][gx] = true;
+                }
+              }
+            }
+          }
+        });
+      });
+
       const bake = bakeHdGround({
         tileAt: map.tileAt,
         legacyTileset: Assets.images('portTilesets'),
@@ -522,6 +581,7 @@ const createPortRenderer = (
             rows: p.rows,
           })),
         ),
+        opaqueTiles,
         entrances: lightSpots,
         isWalkable: (p) => !map.collisionAt(p),
       });
@@ -563,21 +623,6 @@ const createPortRenderer = (
           .ellipse(x, y, rx, ry)
           .fill({ color: 0x000000, alpha: 0.18 });
       });
-      bake.buildingShadows.forEach(({ x, y, width, height }) => {
-        session.blobShadows
-          .poly([
-            x,
-            y,
-            x + width,
-            y,
-            x + width - 24,
-            y + height,
-            x - 24,
-            y + height,
-          ])
-          .fill({ color: 0x000000, alpha: 0.15 });
-      });
-
       bake.props.forEach(({ id, x, y, width }) => {
         const sprite = new Sprite(PixiAssets.get<Texture>(hdProps[id]));
         sprite.anchor.set(0.5, 1);
@@ -586,13 +631,18 @@ const createPortRenderer = (
           sprite.width = width;
         } else {
           const spec = PROP_SPEC[id] ?? { w: 1, h: 1 };
-          sprite.height = spec.h * TILE_SIZE;
-          sprite.width =
-            sprite.height * (sprite.texture.width / sprite.texture.height);
-          if (sprite.width > spec.w * TILE_SIZE * 1.3) {
+          if (spec.stretch) {
             sprite.width = spec.w * TILE_SIZE;
-            sprite.height =
-              sprite.width * (sprite.texture.height / sprite.texture.width);
+            sprite.height = spec.h * TILE_SIZE;
+          } else {
+            sprite.height = spec.h * TILE_SIZE;
+            sprite.width =
+              sprite.height * (sprite.texture.width / sprite.texture.height);
+            if (sprite.width > spec.w * TILE_SIZE * 1.3) {
+              sprite.width = spec.w * TILE_SIZE;
+              sprite.height =
+                sprite.width * (sprite.texture.height / sprite.texture.width);
+            }
           }
         }
         sprite.zIndex = y;
@@ -640,8 +690,8 @@ const createPortRenderer = (
       session.blobShadows,
       session.shadows,
       session.actorLayer,
-      session.lights,
       session.tint,
+      session.lights,
       session.marker,
     );
     app.stage.addChild(session.world, session.weather);
@@ -823,11 +873,11 @@ const createPortRenderer = (
         : 0;
       session.lightSprites.forEach((light, i) => {
         const sprite = light;
-        sprite.alpha = lightAlpha * (0.82 + 0.18 * Math.sin(now * 7 + i * 1.7));
+        sprite.alpha = lightAlpha * (0.6 + 0.12 * Math.sin(now * 7 + i * 1.7));
       });
       session.emissiveSprites.forEach((emissive) => {
         const sprite = emissive;
-        sprite.alpha = lightAlpha;
+        sprite.alpha = lightAlpha * 0.85;
       });
 
       session.waterTiles.forEach((waterSprite, i) => {
