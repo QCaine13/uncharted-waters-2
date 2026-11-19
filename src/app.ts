@@ -24,10 +24,26 @@ const start = async () => {
 
   setDockedFleetPositions();
 
+  let portCanvasVisible: boolean | null = null;
+
   const loop = () => {
-    if (!document.getElementById('camera')) {
+    const cameraCanvas = document.getElementById(
+      'camera',
+    ) as HTMLCanvasElement | null;
+    const portCanvas = document.getElementById(
+      'camera-port',
+    ) as HTMLCanvasElement | null;
+
+    if (!cameraCanvas || !portCanvas) {
       requestAnimationFrame(loop);
       return;
+    }
+
+    const inPort = state.portId !== null;
+    if (portCanvasVisible !== inPort) {
+      portCanvasVisible = inPort;
+      cameraCanvas.hidden = inPort;
+      portCanvas.hidden = !inPort;
     }
 
     if (state.portId !== null) {

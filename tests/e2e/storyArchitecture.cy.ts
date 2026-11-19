@@ -85,8 +85,19 @@ const screenPosition = ({ x, y }: MapPosition) => {
   };
 };
 
+// The port scene renders to the WebGL #camera-port canvas, so pixels are
+// read back through a 2D snapshot.
+const snapshot2d = (canvas: HTMLCanvasElement) => {
+  const snapshot = canvas.ownerDocument.createElement('canvas');
+  snapshot.width = canvas.width;
+  snapshot.height = canvas.height;
+  const context = snapshot.getContext('2d')!;
+  context.drawImage(canvas, 0, 0);
+  return context;
+};
+
 const playerFrame = (canvas: HTMLCanvasElement, position: MapPosition) => {
-  const context = canvas.getContext('2d')!;
+  const context = snapshot2d(canvas);
   const screen = screenPosition(position);
   return pixelChecksum([context.getImageData(screen.x, screen.y, 64, 64).data]);
 };
@@ -96,7 +107,7 @@ const movementFrame = (
   from: MapPosition,
   to: MapPosition,
 ) => {
-  const context = canvas.getContext('2d')!;
+  const context = snapshot2d(canvas);
   const fromScreen = screenPosition(from);
   const toScreen = screenPosition(to);
   const x = Math.min(fromScreen.x, toScreen.x);
@@ -119,7 +130,7 @@ const moveOneTile = (key: DirectionKey, context: string) =>
     (window) =>
       new Cypress.Promise<void>((resolve, reject) => {
         const canvas = window.document.getElementById(
-          'camera',
+          'camera-port',
         ) as HTMLCanvasElement;
         const from = { ...modeledPosition };
         const to = nextPosition(from, key);

@@ -1,0 +1,75 @@
+// Jest stub for pixi.js — its CJS bundle pulls in ESM-only dependencies
+// (earcut) that Jest cannot load under jsdom. Tests never exercise the
+// renderer, so a structural stub is sufficient.
+export class Application {
+  stage = {};
+
+  init() {
+    return Promise.resolve(this);
+  }
+}
+
+export class Container {
+  children: unknown[] = [];
+
+  addChild(...children: unknown[]) {
+    this.children.push(...children);
+  }
+
+  position = { set: () => {} };
+
+  scale = { set: () => {} };
+
+  destroy() {}
+}
+
+export class Graphics {
+  clear() {
+    return this;
+  }
+
+  circle() {
+    return this;
+  }
+
+  stroke() {
+    return this;
+  }
+
+  position = { set: () => {} };
+}
+
+export class Rectangle {
+  constructor(
+    public x = 0,
+    public y = 0,
+    public width = 0,
+    public height = 0,
+  ) {}
+}
+
+export class Sprite {
+  texture: unknown;
+
+  position = { set: () => {} };
+
+  visible = false;
+
+  constructor(texture?: unknown) {
+    this.texture = texture;
+  }
+
+  destroy() {}
+}
+
+export class Texture {
+  static EMPTY = new Texture();
+
+  static from() {
+    return new Texture();
+  }
+
+  source = { scaleMode: '' };
+
+  constructor(public options?: unknown) {}
+}

@@ -7,7 +7,18 @@ import React from 'react';
  */
 
 function Camera() {
-  return <canvas id="camera" width="1280" height="800" />;
+  return (
+    <>
+      <canvas id="camera" width="1280" height="800" />
+      <canvas
+        id="camera-port"
+        width="1280"
+        height="800"
+        className="absolute top-0 left-0"
+        hidden
+      />
+    </>
+  );
 }
 
 export default React.memo(Camera, () => true);

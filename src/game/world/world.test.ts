@@ -54,7 +54,7 @@ describe('world creation weather boundary', () => {
     };
     jest
       .spyOn(global.HTMLCanvasElement.prototype, 'getContext')
-      .mockReturnValue(context as unknown as CanvasRenderingContext2D);
+      .mockReturnValue(context as never);
     jest
       .spyOn(Assets, 'images')
       .mockReturnValue(document.createElement('canvas'));

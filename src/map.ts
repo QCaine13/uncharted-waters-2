@@ -306,6 +306,8 @@ const createMap = (visibleArea: [number, number], portData?: PortData) => {
         return tile >= 50;
       });
     },
+    tileAt: (position: Position): number => tiles(position),
+    tilesetRow: getTilesetOffset,
     tilemapColumns,
     tilemapRows,
   };

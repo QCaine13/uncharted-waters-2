@@ -5,6 +5,7 @@ import { Map } from '../../map';
 import { Building } from '../../building';
 import createPlayer, { PortPlayer } from './portPlayer';
 import createNpc, { PortNpc } from './portNpc';
+import type { PortPath } from './portPath';
 import { applyPositionDelta } from '../../utils';
 import {
   getStartFrame,
@@ -16,6 +17,7 @@ const createPortCharacters = (
   map: Map,
   building: Building,
   isSupplyPort: boolean,
+  path?: PortPath,
 ) => {
   const { type, spawn } = portPlayerData;
 
@@ -48,6 +50,11 @@ const createPortCharacters = (
 
   return {
     update: () => {
+      if (Input.isSuspended()) {
+        path?.cancel();
+        return;
+      }
+
       player.update();
 
       npcs.forEach((npc) => {
@@ -63,15 +70,29 @@ const createPortCharacters = (
         both when entering and exiting.
        */
       if (player.enteredBuilding()) {
+        path?.cancel();
         return;
       }
 
       const direction = Input.getDirection({ includeOrdinal: false });
 
       if (direction) {
+        path?.cancel();
+
         player.move(direction, (position: Position) =>
           collisionAt(position, player),
         );
+      } else if (path) {
+        const step = path.nextDirection(
+          player.position(),
+          (position: Position) => collisionAt(position, player),
+        );
+
+        if (step) {
+          player.move(step, (position: Position) =>
+            collisionAt(position, player),
+          );
+        }
       }
 
       if (player.willEnterBuilding(building.at)) {

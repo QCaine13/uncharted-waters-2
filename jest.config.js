@@ -6,6 +6,7 @@ module.exports = {
   },
   moduleNameMapper: {
     '\\.(png|bin|ogg|mp3|wasm)$': 'identity-obj-proxy',
+    '^pixi.js$': '<rootDir>/tests/pixi.stub.ts',
   },
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/src/testSetup.ts'],

@@ -18,7 +18,7 @@ test.each([4, 9])(
   (count) => {
     jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
       drawImage: jest.fn(),
-    } as unknown as CanvasRenderingContext2D);
+    } as never);
     jest
       .spyOn(HTMLCanvasElement.prototype, 'toDataURL')
       .mockReturnValue('data:image/png;base64,');
