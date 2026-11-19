@@ -6,13 +6,17 @@ import {
   Rectangle,
   Sprite,
   Texture,
+  TilingSprite,
 } from 'pixi.js';
 import Assets from '../assets';
 import {
   hdBuildings,
   hdCharacters,
+  hdGround,
   hdGroundComplete,
+  hdProps,
 } from '../game/images/hd/hdManifest';
+import { bakeHdGround, loadImages } from './hdGround';
 import { TILE_SIZE } from '../constants';
 import { getProtagonistId } from '../state/selectors';
 import { ambientAt } from './lighting';
@@ -27,6 +31,8 @@ const CANVAS_HEIGHT = 800;
 
 const VIEW_TILES_X = CANVAS_WIDTH / TILE_SIZE;
 const VIEW_TILES_Y = CANVAS_HEIGHT / TILE_SIZE;
+
+const MAP_PIXELS = 96 * TILE_SIZE;
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 2;
@@ -61,7 +67,11 @@ interface Handlers {
 interface Session {
   world: Container;
   tileLayer: Container;
+  groundLayer: Container;
   buildingLayer: Container;
+  propsLayer: Container;
+  blobShadows: Graphics;
+  waterTiles: TilingSprite[];
   characterLayer: Container;
   shadows: Graphics;
   tint: Graphics;
@@ -215,6 +225,8 @@ const initApp = (canvas: HTMLCanvasElement): Promise<Application> => {
               .filter((url): url is string => url !== null)
               .map((url) => PixiAssets.load(url)),
           ),
+          ...Object.values(hdProps).map((url) => PixiAssets.load(url)),
+          ...Object.values(hdGround).map((url) => PixiAssets.load(url)),
           ...Object.entries(hdCharacters).map(([id, { url, frames }]) =>
             PixiAssets.load(url).then((texture: Texture) => {
               const { source } = texture;
@@ -290,7 +302,11 @@ const initApp = (canvas: HTMLCanvasElement): Promise<Application> => {
 const createSession = (): Session => ({
   world: new Container(),
   tileLayer: new Container(),
+  groundLayer: new Container(),
   buildingLayer: new Container(),
+  propsLayer: new Container(),
+  blobShadows: new Graphics(),
+  waterTiles: [],
   characterLayer: new Container(),
   shadows: new Graphics(),
   tint: new Graphics(),
@@ -414,7 +430,7 @@ const createPortRenderer = (
   const session = createSession();
   let ready = false;
 
-  initApp(canvas).then((app) => {
+  initApp(canvas).then(async (app) => {
     if (activeSession) {
       activeSession.world.destroy({ children: true });
       activeSession.weather.destroy({ children: true });
@@ -445,6 +461,96 @@ const createPortRenderer = (
       });
     }
 
+    if (hdPort && hdGroundComplete) {
+      const [groundImages, propImages] = await Promise.all([
+        loadImages(hdGround),
+        loadImages(hdProps),
+      ]);
+      const bake = bakeHdGround({
+        tileAt: map.tileAt,
+        legacyTileset: Assets.images('portTilesets'),
+        groundImages,
+        propIds: Object.keys(propImages),
+        buildingRects: hdBuildings.flatMap((building) => building.placements),
+      });
+
+      // animated water under everything else, masked to water tiles
+      const water = new Container();
+      const mask = new Graphics();
+      bake.waterTiles.forEach(({ x, y }) => {
+        mask.rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+      });
+      mask.fill({ color: 0xffffff });
+      [1, 0.35].forEach((alpha) => {
+        const waterSprite = new TilingSprite({
+          texture: PixiAssets.get<Texture>(hdGround.water),
+          width: MAP_PIXELS,
+          height: MAP_PIXELS,
+        });
+        waterSprite.alpha = alpha;
+        water.addChild(waterSprite);
+        session.waterTiles.push(waterSprite);
+      });
+      water.mask = mask;
+      session.groundLayer.addChild(water, mask);
+
+      bake.waterChunks.forEach(({ canvas: waterCanvas, x, y }) => {
+        const sprite = new Sprite(Texture.from(waterCanvas));
+        sprite.position.set(x, y);
+        session.groundLayer.addChild(sprite);
+      });
+      bake.landChunks.forEach(({ canvas: landCanvas, x, y }) => {
+        const sprite = new Sprite(Texture.from(landCanvas));
+        sprite.position.set(x, y);
+        session.groundLayer.addChild(sprite);
+      });
+
+      // soft blob shadows on 'shadow' tiles and along building edges
+      bake.blobShadows.forEach(({ x, y, rx, ry }) => {
+        session.blobShadows
+          .ellipse(x, y, rx, ry)
+          .fill({ color: 0x000000, alpha: 0.18 });
+      });
+      bake.buildingShadows.forEach(({ x, y, width, height }) => {
+        session.blobShadows
+          .poly([
+            x,
+            y,
+            x + width,
+            y,
+            x + width - 24,
+            y + height,
+            x - 24,
+            y + height,
+          ])
+          .fill({ color: 0x000000, alpha: 0.15 });
+      });
+
+      bake.props.forEach(({ id, x, y }) => {
+        const sprite = new Sprite(PixiAssets.get<Texture>(hdProps[id]));
+        sprite.anchor.set(0.5, 1);
+        sprite.position.set(x, y);
+        let propHeight = TILE_SIZE * 1.25;
+        if (id.startsWith('bush')) {
+          propHeight = TILE_SIZE * 1.5;
+        } else if (id === 'cypress' || id.startsWith('tree')) {
+          propHeight = TILE_SIZE * 3;
+        }
+        sprite.height = propHeight;
+        session.propsLayer.addChild(sprite);
+      });
+
+      bake.lanternSpots.forEach((spot) => {
+        const light = new Sprite(warmLightTexture());
+        light.anchor.set(0.5);
+        light.position.set((spot.x + 0.5) * TILE_SIZE, spot.y * TILE_SIZE);
+        light.width = 80;
+        light.height = 80;
+        light.blendMode = 'add';
+        session.lights.addChild(light);
+      });
+    }
+
     if (hdPort) {
       lightSpots.forEach((spot) => {
         const light = new Sprite(warmLightTexture());
@@ -466,7 +572,10 @@ const createPortRenderer = (
 
     session.world.addChild(
       session.tileLayer,
+      session.groundLayer,
       session.buildingLayer,
+      session.blobShadows,
+      session.propsLayer,
       session.shadows,
       session.characterLayer,
       session.lights,
@@ -585,7 +694,10 @@ const createPortRenderer = (
         -camera.y * TILE_SIZE * zoomFactor,
       );
 
-      syncTiles(timeOfDay);
+      session.tileLayer.visible = !(hdPort && hdGroundComplete);
+      if (session.tileLayer.visible) {
+        syncTiles(timeOfDay);
+      }
       syncCharacters([player, ...npcs]);
 
       const protagonistId = getProtagonistId();
@@ -650,7 +762,14 @@ const createPortRenderer = (
         sprite.alpha = lightAlpha;
       });
 
-      drawWeather(session, weather, timeOfDay, performance.now() / 1000);
+      const now = performance.now() / 1000;
+      session.waterTiles.forEach((waterSprite, i) => {
+        const sprite = waterSprite;
+        sprite.tilePosition.x = -now * (i === 0 ? 6 : 11);
+        sprite.tilePosition.y = i === 0 ? 0 : -now * 4;
+      });
+
+      drawWeather(session, weather, timeOfDay, now);
 
       const markerChanged =
         (marker === null) !== (lastMarker === null) ||

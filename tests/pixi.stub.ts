@@ -14,6 +14,8 @@ export class Container {
 
   alpha = 1;
 
+  mask: unknown = null;
+
   addChild(...children: unknown[]) {
     this.children.push(...children);
   }
@@ -41,6 +43,10 @@ export class Graphics {
   }
 
   ellipse() {
+    return this;
+  }
+
+  poly() {
     return this;
   }
 
@@ -86,6 +92,10 @@ export class Sprite {
   }
 
   destroy() {}
+}
+
+export class TilingSprite extends Sprite {
+  tilePosition = { x: 0, y: 0 };
 }
 
 export const Assets = {
