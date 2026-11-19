@@ -1,0 +1,226 @@
+{
+  "pixelsPerTile": 48,
+  "buildings": [
+    {
+      "id": "market-bank",
+      "tileRect": {
+        "x": 26,
+        "y": 51,
+        "columns": 22,
+        "rows": 12
+      },
+      "sourceSize": [
+        1056,
+        576
+      ]
+    },
+    {
+      "id": "church",
+      "tileRect": {
+        "x": 7,
+        "y": 52,
+        "columns": 13,
+        "rows": 14
+      },
+      "sourceSize": [
+        624,
+        672
+      ]
+    },
+    {
+      "id": "harbor",
+      "tileRect": {
+        "x": 52,
+        "y": 62,
+        "columns": 6,
+        "rows": 8
+      },
+      "sourceSize": [
+        288,
+        384
+      ]
+    },
+    {
+      "id": "guild",
+      "tileRect": {
+        "x": 29,
+        "y": 28,
+        "columns": 15,
+        "rows": 10
+      },
+      "sourceSize": [
+        720,
+        480
+      ]
+    },
+    {
+      "id": "lodge",
+      "tileRect": {
+        "x": 29,
+        "y": 39,
+        "columns": 16,
+        "rows": 10
+      },
+      "sourceSize": [
+        768,
+        480
+      ]
+    },
+    {
+      "id": "itemshop",
+      "tileRect": {
+        "x": 5,
+        "y": 40,
+        "columns": 15,
+        "rows": 9
+      },
+      "sourceSize": [
+        720,
+        432
+      ]
+    },
+    {
+      "id": "pub",
+      "tileRect": {
+        "x": 51,
+        "y": 27,
+        "columns": 8,
+        "rows": 10
+      },
+      "sourceSize": [
+        384,
+        480
+      ]
+    },
+    {
+      "id": "mansion",
+      "tileRect": {
+        "x": 59,
+        "y": 30,
+        "columns": 23,
+        "rows": 22
+      },
+      "sourceSize": [
+        1104,
+        1056
+      ]
+    },
+    {
+      "id": "arch-ne",
+      "tileRect": {
+        "x": 85,
+        "y": 27,
+        "columns": 10,
+        "rows": 7
+      },
+      "sourceSize": [
+        480,
+        336
+      ]
+    },
+    {
+      "id": "pool",
+      "tileRect": {
+        "x": 85,
+        "y": 44,
+        "columns": 11,
+        "rows": 13
+      },
+      "sourceSize": [
+        528,
+        624
+      ]
+    },
+    {
+      "id": "arch-se",
+      "tileRect": {
+        "x": 70,
+        "y": 52,
+        "columns": 7,
+        "rows": 6
+      },
+      "sourceSize": [
+        336,
+        288
+      ]
+    },
+    {
+      "id": "shipyard",
+      "tileRect": {
+        "x": 76,
+        "y": 58,
+        "columns": 8,
+        "rows": 10
+      },
+      "sourceSize": [
+        384,
+        480
+      ]
+    },
+    {
+      "id": "palace-w",
+      "tileRect": {
+        "x": 6,
+        "y": 0,
+        "columns": 18,
+        "rows": 11
+      },
+      "sourceSize": [
+        864,
+        528
+      ]
+    },
+    {
+      "id": "palace-gate",
+      "tileRect": {
+        "x": 44,
+        "y": 0,
+        "columns": 10,
+        "rows": 11
+      },
+      "sourceSize": [
+        480,
+        528
+      ]
+    },
+    {
+      "id": "ships",
+      "tileRect": {
+        "x": 80,
+        "y": 65,
+        "columns": 11,
+        "rows": 8
+      },
+      "sourceSize": [
+        528,
+        384
+      ]
+    },
+    {
+      "id": "city-wall-segment",
+      "tileRect": {
+        "x": 60,
+        "y": 15,
+        "columns": 8,
+        "rows": 13
+      },
+      "sourceSize": [
+        384,
+        624
+      ]
+    },
+    {
+      "id": "palace-wall-segment",
+      "tileRect": {
+        "x": 23,
+        "y": 0,
+        "columns": 7,
+        "rows": 11
+      },
+      "sourceSize": [
+        336,
+        528
+      ]
+    }
+  ]
+}
