@@ -51,9 +51,19 @@ export class Rectangle {
 export class Sprite {
   texture: unknown;
 
-  position = { set: () => {} };
+  position = { set: () => {}, copyFrom: () => {} };
 
   visible = false;
+
+  width = 0;
+
+  height = 0;
+
+  alpha = 1;
+
+  blendMode = 'normal';
+
+  anchor = { set: () => {} };
 
   constructor(texture?: unknown) {
     this.texture = texture;
@@ -61,6 +71,11 @@ export class Sprite {
 
   destroy() {}
 }
+
+export const Assets = {
+  load: () => Promise.resolve(),
+  get: () => new Texture(),
+};
 
 export class Texture {
   static EMPTY = new Texture();

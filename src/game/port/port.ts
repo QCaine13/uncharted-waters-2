@@ -32,7 +32,10 @@ const createPort = (portId: string) => {
     portData.isSupplyPort,
     path,
   );
-  const renderer = createPortRenderer(canvas, { map });
+  const renderer = createPortRenderer(canvas, {
+    map,
+    hdPort: portData.tilemap === 0,
+  });
 
   renderer.onTileClick((tile) => {
     if (Input.isSuspended() || state.buildingId !== null) {

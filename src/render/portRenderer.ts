@@ -1,5 +1,6 @@
 import {
   Application,
+  Assets as PixiAssets,
   Container,
   Graphics,
   Rectangle,
@@ -7,6 +8,7 @@ import {
   Texture,
 } from 'pixi.js';
 import Assets from '../assets';
+import { hdBuildings } from '../game/images/hd/hdManifest';
 import { TILE_SIZE } from '../constants';
 import type { Map as GameMap } from '../map';
 import type { PortNpc } from '../game/port/portNpc';
@@ -51,7 +53,9 @@ interface Handlers {
 interface Session {
   world: Container;
   tileLayer: Container;
+  buildingLayer: Container;
   characterLayer: Container;
+  emissiveSprites: Sprite[];
   marker: Graphics;
   tileSprites: Sprite[];
   characterSprites: Map<Character, Sprite>;
@@ -146,6 +150,20 @@ const initApp = (canvas: HTMLCanvasElement): Promise<Application> => {
         characterSource = Texture.from(Assets.images('portCharacters')).source;
         characterSource.scaleMode = 'nearest';
 
+        const hdTextures = Promise.all(
+          hdBuildings.flatMap((building) =>
+            [building.url, building.emissive]
+              .filter((url): url is string => url !== null)
+              .map((url) => PixiAssets.load(url)),
+          ),
+        ).then((textures: Texture[]) => {
+          textures.forEach((texture) => {
+            const { source } = texture;
+            source.scaleMode = 'linear';
+          });
+          return app;
+        });
+
         canvas.addEventListener('pointerdown', (event) => {
           const session = activeSession;
 
@@ -180,7 +198,7 @@ const initApp = (canvas: HTMLCanvasElement): Promise<Application> => {
           { passive: false },
         );
 
-        return app;
+        return hdTextures;
       });
   }
 
@@ -190,7 +208,9 @@ const initApp = (canvas: HTMLCanvasElement): Promise<Application> => {
 const createSession = (): Session => ({
   world: new Container(),
   tileLayer: new Container(),
+  buildingLayer: new Container(),
   characterLayer: new Container(),
+  emissiveSprites: [],
   marker: new Graphics(),
   tileSprites: [],
   characterSprites: new Map(),
@@ -216,11 +236,12 @@ const drawMarker = (marker: Graphics, goal: Position | null) => {
 
 interface PortRendererOptions {
   map: GameMap;
+  hdPort: boolean;
 }
 
 const createPortRenderer = (
   canvas: HTMLCanvasElement,
-  { map }: PortRendererOptions,
+  { map, hdPort }: PortRendererOptions,
 ) => {
   const session = createSession();
   let ready = false;
@@ -230,8 +251,34 @@ const createPortRenderer = (
       activeSession.world.destroy({ children: true });
     }
 
+    if (hdPort) {
+      hdBuildings.forEach((building) => {
+        building.placements.forEach((placement) => {
+          const sprite = new Sprite(PixiAssets.get<Texture>(building.url));
+          sprite.position.set(placement.x * TILE_SIZE, placement.y * TILE_SIZE);
+          sprite.width = placement.columns * TILE_SIZE;
+          sprite.height = placement.rows * TILE_SIZE;
+          session.buildingLayer.addChild(sprite);
+
+          if (building.emissive) {
+            const emissive = new Sprite(
+              PixiAssets.get<Texture>(building.emissive),
+            );
+            emissive.position.copyFrom(sprite.position);
+            emissive.width = sprite.width;
+            emissive.height = sprite.height;
+            emissive.blendMode = 'add';
+            emissive.alpha = 0;
+            session.buildingLayer.addChild(emissive);
+            session.emissiveSprites.push(emissive);
+          }
+        });
+      });
+    }
+
     session.world.addChild(
       session.tileLayer,
+      session.buildingLayer,
       session.characterLayer,
       session.marker,
     );
