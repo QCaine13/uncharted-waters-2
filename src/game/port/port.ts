@@ -6,8 +6,9 @@ import createPortPath, { resolveClickTarget } from './portPath';
 import { getPortData } from './portUtils';
 import { getTimeOfDay, isDay } from '../../state/selectors';
 import { getCameraPosition } from '../world/sharedUtils';
-import createPortRenderer from '../../render/portRenderer';
+import createPortRenderer, { setZoomFactor } from '../../render/portRenderer';
 import { weatherFor } from '../../render/weather';
+import hdDebug from '../../render/hdDebug';
 import state from '../../state/state';
 import Input from '../../input';
 import { TILE_SIZE } from '../../constants';
@@ -38,6 +39,10 @@ const createPort = (portId: string) => {
     hdPort: portData.tilemap === 0,
     lightSpots: Object.values(portData.buildings),
   });
+
+  if (hdDebug.zoom !== null) {
+    setZoomFactor(hdDebug.zoom);
+  }
 
   renderer.onTileClick((tile) => {
     if (Input.isSuspended() || state.buildingId !== null) {
@@ -87,10 +92,12 @@ const createPort = (portId: string) => {
         camera,
         player,
         npcs: characters.npcs(),
-        timeOfDay: getTimeOfDay(),
+        timeOfDay: hdDebug.time ?? getTimeOfDay(),
         percentNextMove: PercentNextMove.get(),
         marker: path.goal(),
-        weather: weatherFor(portId, Math.floor(state.timePassed / 1440)),
+        weather:
+          hdDebug.weather ??
+          weatherFor(portId, Math.floor(state.timePassed / 1440)),
       });
     },
     characters: () => characters,

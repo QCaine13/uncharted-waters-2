@@ -41,6 +41,10 @@ const ZOOM_STEP = 0.25;
 // Session-only zoom level, shared across port visits.
 let zoomFactor = MIN_ZOOM;
 
+export const setZoomFactor = (zoom: number) => {
+  zoomFactor = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
+};
+
 type Character = PortPlayer | PortNpc;
 
 interface Frame {
