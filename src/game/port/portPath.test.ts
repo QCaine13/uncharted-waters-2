@@ -73,6 +73,49 @@ describe('findPath', () => {
     expect(findPath({ x: 0, y: 0 }, { x: -1, y: 0 }, open, bounds)).toBeNull();
   });
 
+  it('finds a path through a serpentine 96x96 maze visiting most of the grid', () => {
+    // Vertical walls on odd columns; each has a single gap that alternates
+    // between the bottom (y=95) and the top (y=0), so the only route from
+    // corner to corner snakes through nearly every row.
+    const grid = { columns: 96, rows: 96 };
+    const isBlocked = ({ x, y }: Position) => {
+      if (x % 2 === 0 || x === 95) {
+        return false;
+      }
+      const gapY = x % 4 === 1 ? 95 : 0;
+      return y !== gapY;
+    };
+
+    const path = findPath({ x: 0, y: 0 }, { x: 94, y: 0 }, isBlocked, grid);
+
+    expect(path).not.toBeNull();
+
+    const position = { x: 0, y: 0 };
+    const deltas = {
+      n: { x: 0, y: -1 },
+      e: { x: 1, y: 0 },
+      s: { x: 0, y: 1 },
+      w: { x: -1, y: 0 },
+    } as const;
+
+    let minY = Infinity;
+    let maxY = -Infinity;
+    path!.forEach((direction) => {
+      const { x, y } = deltas[direction];
+      position.x += x;
+      position.y += y;
+      minY = Math.min(minY, position.y);
+      maxY = Math.max(maxY, position.y);
+      expect(isBlocked(position)).toBe(false);
+    });
+
+    expect(position).toEqual({ x: 94, y: 0 });
+    // The route must reach both edges of the maze.
+    expect(minY).toBe(0);
+    expect(maxY).toBe(95);
+    expect(path!.length).toBeGreaterThan(1000);
+  });
+
   it('works with a 2x2-footprint style blocked predicate', () => {
     // Mimics map.collisionAt: blocked when either tile of the bottom row
     // of the footprint is a wall tile (x in [20..22] at any y).

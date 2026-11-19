@@ -49,7 +49,6 @@ export const findPath = (
     { position: Position; direction: CardinalDirection }
   >();
   let frontier: Position[] = [start];
-  let explored = 0;
 
   while (frontier.length) {
     const next: Position[] = [];
@@ -66,36 +65,36 @@ export const findPath = (
         };
         const key = keyOf(candidate);
 
-        if (!visited.has(key)) {
-          explored += 1;
-          if (explored > nodeBudget) {
+        if (
+          candidate.x >= 0 &&
+          candidate.y >= 0 &&
+          candidate.x < bounds.columns &&
+          candidate.y < bounds.rows &&
+          !visited.has(key)
+        ) {
+          // Each distinct node is seen once; blocked nodes are marked too so
+          // they cannot be recounted from another neighbour.
+          visited.add(key);
+          if (visited.size > nodeBudget) {
             return null;
           }
 
-          if (
-            candidate.x >= 0 &&
-            candidate.y >= 0 &&
-            candidate.x < bounds.columns &&
-            candidate.y < bounds.rows
-          ) {
-            if (candidate.x === goal.x && candidate.y === goal.y) {
-              const directions: CardinalDirection[] = [direction];
-              let step = position;
+          if (candidate.x === goal.x && candidate.y === goal.y) {
+            const directions: CardinalDirection[] = [direction];
+            let step = position;
 
-              while (step.x !== start.x || step.y !== start.y) {
-                const previous = cameFrom.get(keyOf(step))!;
-                directions.unshift(previous.direction);
-                step = previous.position;
-              }
-
-              return directions;
+            while (step.x !== start.x || step.y !== start.y) {
+              const previous = cameFrom.get(keyOf(step))!;
+              directions.unshift(previous.direction);
+              step = previous.position;
             }
 
-            if (!isBlocked(candidate)) {
-              visited.add(key);
-              cameFrom.set(key, { position, direction });
-              next.push(candidate);
-            }
+            return directions;
+          }
+
+          if (!isBlocked(candidate)) {
+            cameFrom.set(key, { position, direction });
+            next.push(candidate);
           }
         }
       }

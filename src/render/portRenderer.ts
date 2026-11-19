@@ -57,6 +57,7 @@ interface Session {
   characterSprites: Map<Character, Sprite>;
   lastOrigin: Position;
   lastTilesetRow: number;
+  lastTileWidth: number;
   camera: Position;
   handlers: Handlers;
 }
@@ -195,6 +196,7 @@ const createSession = (): Session => ({
   characterSprites: new Map(),
   lastOrigin: { x: -1, y: -1 },
   lastTilesetRow: -1,
+  lastTileWidth: -1,
   camera: { x: 0, y: 0 },
   handlers: { onTileClick: null, onSecondaryClick: null },
 });
@@ -253,19 +255,21 @@ const createPortRenderer = (
     const originX = Math.floor(session.camera.x);
     const originY = Math.floor(session.camera.y);
 
+    const width = Math.ceil(VIEW_TILES_X / zoomFactor) + 2;
+    const height = Math.ceil(VIEW_TILES_Y / zoomFactor) + 2;
+
     if (
       originX === session.lastOrigin.x &&
       originY === session.lastOrigin.y &&
-      tilesetRow === session.lastTilesetRow
+      tilesetRow === session.lastTilesetRow &&
+      width === session.lastTileWidth
     ) {
       return;
     }
 
     session.lastOrigin = { x: originX, y: originY };
     session.lastTilesetRow = tilesetRow;
-
-    const width = Math.ceil(VIEW_TILES_X / zoomFactor) + 2;
-    const height = Math.ceil(VIEW_TILES_Y / zoomFactor) + 2;
+    session.lastTileWidth = width;
 
     for (let index = 0; index < session.tileSprites.length; index += 1) {
       const sprite = session.tileSprites[index];
