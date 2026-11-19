@@ -2,9 +2,19 @@
  * Terrain classification for port tileset 0 (rows 0-3 of portTilesets.png).
  * Derived from tile colour statistics + map inspection; see /tmp/uw2-terrain-lisbon.png.
  * Index = tileset column (0-239).
+ *
+ * `ship` = tiles that draw a ship/boat hull over water in the legacy set —
+ * baked as water in the HD ground but still drawn from the legacy tileset.
  */
 export type PortTerrainClass =
-  'grass' | 'sand' | 'cobble' | 'water' | 'building' | 'tree' | 'shadow';
+  | 'grass'
+  | 'sand'
+  | 'cobble'
+  | 'water'
+  | 'building'
+  | 'tree'
+  | 'shadow'
+  | 'ship';
 
 const PORT_TERRAIN_TILESET_0: PortTerrainClass[] = [
   'grass',
@@ -62,52 +72,31 @@ const PORT_TERRAIN_TILESET_0: PortTerrainClass[] = [
   'water',
   'water',
   'tree',
-  'tree',
-  'water',
-  'tree',
-  'water',
+  'cobble',
+  'cobble',
+  'cobble',
+  'cobble',
   'building',
   'water',
   'water',
   'water',
   'water',
   'water',
+  'cobble',
   'water',
   'water',
   'water',
   'water',
   'water',
   'water',
-  'water',
   'building',
   'water',
   'building',
   'building',
   'building',
-  'building',
-  'building',
-  'building',
-  'building',
-  'building',
-  'building',
-  'building',
-  'water',
-  'water',
-  'water',
-  'building',
-  'building',
-  'building',
-  'building',
-  'building',
-  'building',
-  'building',
-  'building',
-  'building',
-  'building',
-  'building',
-  'building',
-  'building',
-  'tree',
+  'cobble',
+  'cobble',
+  'cobble',
   'building',
   'building',
   'building',
@@ -115,6 +104,13 @@ const PORT_TERRAIN_TILESET_0: PortTerrainClass[] = [
   'water',
   'water',
   'water',
+  'building',
+  'building',
+  'building',
+  'cobble',
+  'cobble',
+  'cobble',
+  'building',
   'building',
   'building',
   'building',
@@ -122,53 +118,67 @@ const PORT_TERRAIN_TILESET_0: PortTerrainClass[] = [
   'building',
   'building',
   'tree',
-  'water',
-  'water',
-  'water',
-  'water',
-  'water',
   'building',
   'building',
   'building',
   'building',
-  'water',
-  'water',
-  'building',
-  'building',
-  'water',
-  'water',
-  'building',
-  'building',
-  'building',
-  'building',
-  'water',
-  'water',
-  'building',
-  'water',
-  'building',
-  'water',
-  'building',
-  'building',
-  'building',
-  'building',
-  'water',
-  'water',
+  'ship',
+  'ship',
+  'ship',
   'building',
   'building',
   'building',
   'building',
   'building',
   'building',
-  'building',
-  'water',
-  'building',
-  'building',
-  'building',
-  'building',
-  'water',
-  'building',
+  'cobble',
+  'ship',
+  'ship',
+  'ship',
+  'ship',
+  'ship',
   'building',
   'building',
+  'building',
+  'building',
+  'ship',
+  'ship',
+  'ship',
+  'ship',
+  'ship',
+  'ship',
+  'building',
+  'building',
+  'building',
+  'building',
+  'ship',
+  'ship',
+  'ship',
+  'ship',
+  'ship',
+  'ship',
+  'building',
+  'building',
+  'building',
+  'building',
+  'ship',
+  'ship',
+  'ship',
+  'ship',
+  'ship',
+  'ship',
+  'ship',
+  'ship',
+  'building',
+  'ship',
+  'ship',
+  'ship',
+  'ship',
+  'ship',
+  'ship',
+  'ship',
+  'ship',
+  'ship',
   'building',
   'building',
   'building',
@@ -249,6 +259,20 @@ const PORT_TERRAIN_TILESET_0: PortTerrainClass[] = [
   'building',
 ];
 
+/*
+ * Positional overrides for tileset 0: indices shared between the quay-edge
+ * masonry and the gate pillars (33/38). On the harbour front they are stone
+ * edging, so they bake as cobble; at the gate (x48/x50) they stay buildings.
+ */
+const PORT_TERRAIN_OVERRIDES_0: { [key: string]: PortTerrainClass } = {
+  ...Object.fromEntries(
+    [67, 68, 69, 70].flatMap((y) =>
+      [25, 68, 93].map((x) => [JSON.stringify({ x, y }), 'cobble']),
+    ),
+  ),
+  [JSON.stringify({ x: 93, y: 66 })]: 'cobble',
+};
+
 export function portTerrainClass(
   tileset: number,
   tileIndex: number,
@@ -261,4 +285,16 @@ export function portTerrainClass(
     return null;
   }
   return PORT_TERRAIN_TILESET_0[tileIndex];
+}
+
+export function portTerrainClassAt(
+  tileset: number,
+  tileIndex: number,
+  position: { x: number; y: number },
+): PortTerrainClass | null {
+  if (tileset === 0) {
+    const override = PORT_TERRAIN_OVERRIDES_0[JSON.stringify(position)];
+    if (override) return override;
+  }
+  return portTerrainClass(tileset, tileIndex);
 }

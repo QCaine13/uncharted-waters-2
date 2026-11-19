@@ -24,23 +24,21 @@ GROUND_KEYS = ['grass', 'sand', 'cobble', 'water', 'water-shore']
 PROP_IDS = [
     'tree-1', 'tree-2', 'cypress', 'bush-1', 'bush-2',
     'flowerpot', 'lantern-post', 'crate', 'barrel',
+    # optional replacements for the legacy hull clusters when they appear
+    'ship-anchored', 'ship-anchored-2', 'boat-beached-1', 'boat-beached-2',
 ]
 # ids whose images tile horizontally across detected wall extents
 TILED_IDS = {'city-wall-segment', 'palace-wall-segment'}
 # ids that may appear at several positions (detected by matching tile data)
 DETECT_IDS = {'palace-w', 'city-wall-segment', 'palace-wall-segment'}
 # ids whose art is unusable as an overlay (kept on the legacy tiles)
-EXCLUDE_IDS = {
-    # 'ships' paints its own solid water backdrop rectangle, which clashes
-    # visibly with the animated HD water layer; ships stay on legacy tiles
-    'ships',
-}
+EXCLUDE_IDS = set()
 
 
 def load_terrain_classes(repo: Path):
     src = (repo / 'src/data/portTerrain.ts').read_text()
-    body = src.split('PORT_TERRAIN_TILESET_0: PortTerrainClass[] = [', 1)[1]
-    classes = re.findall(r"'(grass|sand|cobble|water|building|tree|shadow)'", body)
+    body = src.split('PORT_TERRAIN_TILESET_0: PortTerrainClass[] = [', 1)[1].split('];', 1)[0]
+    classes = re.findall(r"'(grass|sand|cobble|water|building|tree|shadow|ship)'", body)
     if len(classes) != 240:
         raise SystemExit(f'portTerrain.ts: expected 240 classes, got {len(classes)}')
     return classes
@@ -65,6 +63,34 @@ def find_placements(tilemap, columns, rows, rect):
             if ok:
                 hits.append((x, y))
     return hits
+
+
+def extend_walls(placements, classes, tilemap):
+    """Grow tiled wall extents sideways while the band's middle row is still
+    'building'-class, so the art reaches the edge of the opening (gate)."""
+    def wall_at(x, y):
+        return classes[tilemap[y * 96 + x]] == 'building'
+
+    out = []
+    for p in placements:
+        y = p['y'] + p['rows'] // 2
+        x0, x1 = p['x'], p['x'] + p['columns'] - 1
+        # extend while wall columns continue; bridge a single non-wall
+        # column when a wall column follows it (covers gate pillars)
+        while x0 > 0:
+            if wall_at(x0 - 1, y) or (x0 > 1 and wall_at(x0 - 2, y)
+                                      and classes[tilemap[y * 96 + x0 - 1]] != 'cobble'):
+                x0 -= 1
+            else:
+                break
+        while x1 < 95:
+            if wall_at(x1 + 1, y) or (x1 < 94 and wall_at(x1 + 2, y)
+                                      and classes[tilemap[y * 96 + x1 + 1]] != 'cobble'):
+                x1 += 1
+            else:
+                break
+        out.append({'x': x0, 'y': p['y'], 'columns': x1 - x0 + 1, 'rows': p['rows']})
+    return out
 
 
 def merge_runs(hits, w, h):
@@ -198,6 +224,8 @@ def main():
         placements = merge_runs(hits, rect['columns'], rect['rows']) if bid in TILED_IDS else [
             {'x': x, 'y': y, 'columns': rect['columns'], 'rows': rect['rows']} for x, y in hits
         ]
+        if bid == 'city-wall-segment':
+            placements = extend_walls(placements, classes, tilemap)
         if not placements:
             print(f'  ! {bid}: no placements detected, skipped')
             continue
@@ -225,8 +253,9 @@ def main():
         adjust_ts = (
             f'{{ x: {adjust[0]}, y: {adjust[1]} }}' if adjust else 'null'
         )
+        tile_ts = 'true' if bid in TILED_IDS else 'false'
         buildings_ts.append(
-            f"  {{ url: b_{var}, emissive: {emissive_ts}, adjust: {adjust_ts}, placements: [{pl_ts}] }},"
+            f"  {{ url: b_{var}, emissive: {emissive_ts}, adjust: {adjust_ts}, tile: {tile_ts}, placements: [{pl_ts}] }},"
         )
         if adjust:
             print(f'  ~ {bid}: alignment offset {adjust[0]},{adjust[1]} tiles')
@@ -290,6 +319,8 @@ export interface HdBuilding {{
   // uniform tile-unit translation when the art's opaque bbox is offset from
   // the building-tile footprint inside its rect (null = no correction)
   adjust: {{ x: number; y: number }} | null;
+  // true: repeat the art horizontally at its native rect aspect (walls)
+  tile: boolean;
   placements: HdPlacement[];
 }}
 
@@ -320,7 +351,7 @@ CLASS_COLORS = {
     'grass': (90, 140, 80), 'sand': (210, 190, 140),
     'cobble': (150, 150, 150), 'water': (40, 80, 140),
     'building': (60, 60, 60), 'tree': (30, 90, 40),
-    'shadow': (40, 40, 50),
+    'shadow': (40, 40, 50), 'ship': (20, 60, 110),
 }
 
 

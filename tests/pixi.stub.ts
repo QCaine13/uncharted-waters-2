@@ -16,6 +16,10 @@ export class Container {
 
   mask: unknown = null;
 
+  sortableChildren = false;
+
+  zIndex = 0;
+
   addChild(...children: unknown[]) {
     this.children.push(...children);
   }
@@ -87,6 +91,8 @@ export class Sprite {
 
   anchor = { set: () => {} };
 
+  zIndex = 0;
+
   constructor(texture?: unknown) {
     this.texture = texture;
   }
@@ -96,6 +102,8 @@ export class Sprite {
 
 export class TilingSprite extends Sprite {
   tilePosition = { x: 0, y: 0 };
+
+  tileScale = { set: () => {}, x: 1, y: 1 };
 }
 
 export const Assets = {

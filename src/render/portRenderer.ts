@@ -16,7 +16,7 @@ import {
   hdGroundComplete,
   hdProps,
 } from '../game/images/hd/hdManifest';
-import { bakeHdGround, loadImages } from './hdGround';
+import { bakeHdGround, loadImages, PROP_SPEC } from './hdGround';
 import { TILE_SIZE } from '../constants';
 import { getProtagonistId } from '../state/selectors';
 import { ambientAt } from './lighting';
@@ -78,17 +78,17 @@ interface Session {
   tileLayer: Container;
   groundLayer: Container;
   buildingLayer: Container;
-  propsLayer: Container;
+  actorLayer: Container;
   blobShadows: Graphics;
   waterTiles: TilingSprite[];
-  characterLayer: Container;
   shadows: Graphics;
   tint: Graphics;
   lights: Container;
   weather: Container;
   weatherShadows: Graphics;
   weatherFx: Graphics;
-  emissiveSprites: Sprite[];
+  emissiveSprites: (Sprite | TilingSprite)[];
+  lightSprites: Sprite[];
   marker: Graphics;
   tileSprites: Sprite[];
   characterSprites: Map<Character, Sprite>;
@@ -107,10 +107,12 @@ let characterSource: Texture['source'] | null = null;
 const tileTextureCache = new Map<string, Texture>();
 const characterTextureCache = new Map<number, Texture>();
 
-// HD character strips: 256px frames, feet baseline at y=232, drawn 96px
-// wide/tall so the sprite is 3x the legacy 64px frame.
-const HD_CHAR_SIZE = 96;
+// HD character strips: 256px frames, feet baseline at y=232, drawn 80px
+// (~2.5 tiles) tall so they read correctly next to 2-tile doorways.
+const HD_CHAR_SIZE = 80;
 const HD_CHAR_FRAME = 256;
+// imported building overlays are baked at 64px per tile
+const HD_ART_TILE_PX = 64;
 const HD_FEET_BASELINE = 232;
 
 const hdStripFrames = new Map<string, Texture[]>();
@@ -313,10 +315,9 @@ const createSession = (): Session => ({
   tileLayer: new Container(),
   groundLayer: new Container(),
   buildingLayer: new Container(),
-  propsLayer: new Container(),
+  actorLayer: new Container(),
   blobShadows: new Graphics(),
   waterTiles: [],
-  characterLayer: new Container(),
   shadows: new Graphics(),
   tint: new Graphics(),
   lights: new Container(),
@@ -324,6 +325,7 @@ const createSession = (): Session => ({
   weatherShadows: new Graphics(),
   weatherFx: new Graphics(),
   emissiveSprites: [],
+  lightSprites: [],
   marker: new Graphics(),
   tileSprites: [],
   characterSprites: new Map(),
@@ -448,22 +450,51 @@ const createPortRenderer = (
     if (hdPort) {
       hdBuildings.forEach((building) => {
         building.placements.forEach((placement) => {
-          const sprite = new Sprite(PixiAssets.get<Texture>(building.url));
+          // `tile` art (wall segments) repeats at its native tile aspect
+          // instead of stretching across the whole placement
+          const texture = PixiAssets.get<Texture>(building.url);
+          const sprite = building.tile
+            ? new TilingSprite({
+                texture,
+                width: placement.columns * TILE_SIZE,
+                height: placement.rows * TILE_SIZE,
+              })
+            : new Sprite(texture);
           sprite.position.set(
             (placement.x + (building.adjust?.x ?? 0)) * TILE_SIZE,
             (placement.y + (building.adjust?.y ?? 0)) * TILE_SIZE,
           );
-          sprite.width = placement.columns * TILE_SIZE;
-          sprite.height = placement.rows * TILE_SIZE;
+          if (building.tile) {
+            const tiled = sprite as TilingSprite;
+            tiled.tileScale.set(
+              TILE_SIZE / HD_ART_TILE_PX,
+              TILE_SIZE / HD_ART_TILE_PX,
+            );
+          } else {
+            sprite.width = placement.columns * TILE_SIZE;
+            sprite.height = placement.rows * TILE_SIZE;
+          }
           session.buildingLayer.addChild(sprite);
 
           if (building.emissive) {
-            const emissive = new Sprite(
-              PixiAssets.get<Texture>(building.emissive),
-            );
+            const eTexture = PixiAssets.get<Texture>(building.emissive);
+            const emissive = building.tile
+              ? new TilingSprite({
+                  texture: eTexture,
+                  width: placement.columns * TILE_SIZE,
+                  height: placement.rows * TILE_SIZE,
+                })
+              : new Sprite(eTexture);
             emissive.position.copyFrom(sprite.position);
-            emissive.width = sprite.width;
-            emissive.height = sprite.height;
+            if (building.tile) {
+              (emissive as TilingSprite).tileScale.set(
+                TILE_SIZE / HD_ART_TILE_PX,
+                TILE_SIZE / HD_ART_TILE_PX,
+              );
+            } else {
+              emissive.width = sprite.width;
+              emissive.height = sprite.height;
+            }
             emissive.blendMode = 'add';
             emissive.alpha = 0;
             session.buildingLayer.addChild(emissive);
@@ -483,7 +514,16 @@ const createPortRenderer = (
         legacyTileset: Assets.images('portTilesets'),
         groundImages,
         propIds: Object.keys(propImages),
-        buildingRects: hdBuildings.flatMap((building) => building.placements),
+        buildingRects: hdBuildings.flatMap((building) =>
+          building.placements.map((p) => ({
+            x: p.x + (building.adjust?.x ?? 0),
+            y: p.y + (building.adjust?.y ?? 0),
+            columns: p.columns,
+            rows: p.rows,
+          })),
+        ),
+        entrances: lightSpots,
+        isWalkable: (p) => !map.collisionAt(p),
       });
 
       // animated water under everything else, masked to water tiles
@@ -538,28 +578,36 @@ const createPortRenderer = (
           .fill({ color: 0x000000, alpha: 0.15 });
       });
 
-      bake.props.forEach(({ id, x, y }) => {
+      bake.props.forEach(({ id, x, y, width }) => {
         const sprite = new Sprite(PixiAssets.get<Texture>(hdProps[id]));
         sprite.anchor.set(0.5, 1);
         sprite.position.set(x, y);
-        let propHeight = TILE_SIZE * 1.25;
-        if (id.startsWith('bush')) {
-          propHeight = TILE_SIZE * 1.5;
-        } else if (id === 'cypress' || id.startsWith('tree')) {
-          propHeight = TILE_SIZE * 3;
+        if (width) {
+          sprite.width = width;
+        } else {
+          const spec = PROP_SPEC[id] ?? { w: 1, h: 1 };
+          sprite.height = spec.h * TILE_SIZE;
+          sprite.width =
+            sprite.height * (sprite.texture.width / sprite.texture.height);
+          if (sprite.width > spec.w * TILE_SIZE * 1.3) {
+            sprite.width = spec.w * TILE_SIZE;
+            sprite.height =
+              sprite.width * (sprite.texture.height / sprite.texture.width);
+          }
         }
-        sprite.height = propHeight;
-        session.propsLayer.addChild(sprite);
+        sprite.zIndex = y;
+        session.actorLayer.addChild(sprite);
       });
 
       bake.lanternSpots.forEach((spot) => {
         const light = new Sprite(warmLightTexture());
         light.anchor.set(0.5);
         light.position.set((spot.x + 0.5) * TILE_SIZE, spot.y * TILE_SIZE);
-        light.width = 80;
-        light.height = 80;
+        light.width = TILE_SIZE * 5;
+        light.height = TILE_SIZE * 5;
         light.blendMode = 'add';
         session.lights.addChild(light);
+        session.lightSprites.push(light);
       });
     }
 
@@ -571,13 +619,16 @@ const createPortRenderer = (
           (spot.x + 0.5) * TILE_SIZE,
           (spot.y + 0.5) * TILE_SIZE - 8,
         );
-        light.width = 96;
-        light.height = 96;
+        light.width = TILE_SIZE * 5;
+        light.height = TILE_SIZE * 5;
         light.blendMode = 'add';
         session.lights.addChild(light);
+        session.lightSprites.push(light);
       });
       session.tint.blendMode = 'multiply';
     }
+
+    session.actorLayer.sortableChildren = true;
 
     session.weatherShadows.blendMode = 'multiply';
     session.weather.addChild(session.weatherShadows, session.weatherFx);
@@ -587,9 +638,8 @@ const createPortRenderer = (
       session.groundLayer,
       session.buildingLayer,
       session.blobShadows,
-      session.propsLayer,
       session.shadows,
-      session.characterLayer,
+      session.actorLayer,
       session.lights,
       session.tint,
       session.marker,
@@ -660,7 +710,7 @@ const createPortRenderer = (
 
       if (!sprite) {
         sprite = new Sprite(characterTexture(character.frame()));
-        session.characterLayer.addChild(sprite);
+        session.actorLayer.addChild(sprite);
         session.characterSprites.set(character, sprite);
       }
     });
@@ -734,6 +784,7 @@ const createPortRenderer = (
             (position.x + 1) * TILE_SIZE,
             (position.y + 2) * TILE_SIZE,
           );
+          sprite.zIndex = (position.y + 2) * TILE_SIZE;
           session.shadows
             .ellipse(
               (position.x + 1) * TILE_SIZE,
@@ -746,6 +797,7 @@ const createPortRenderer = (
           sprite.anchor.set(0, 0);
           sprite.texture = characterTexture(frame);
           sprite.position.set(position.x * TILE_SIZE, position.y * TILE_SIZE);
+          sprite.zIndex = (position.y + 2) * TILE_SIZE;
         }
       });
 
@@ -765,16 +817,19 @@ const createPortRenderer = (
           .fill({ color: r * 65536 + g * 256 + b });
       }
 
+      const now = performance.now() / 1000;
       const lightAlpha = hdActive
         ? Math.min(1, Math.max(0, (ambient.darkness - 0.3) / 0.3))
         : 0;
-      session.lights.alpha = lightAlpha;
+      session.lightSprites.forEach((light, i) => {
+        const sprite = light;
+        sprite.alpha = lightAlpha * (0.82 + 0.18 * Math.sin(now * 7 + i * 1.7));
+      });
       session.emissiveSprites.forEach((emissive) => {
         const sprite = emissive;
         sprite.alpha = lightAlpha;
       });
 
-      const now = performance.now() / 1000;
       session.waterTiles.forEach((waterSprite, i) => {
         const sprite = waterSprite;
         sprite.tilePosition.x = -now * (i === 0 ? 6 : 11);
