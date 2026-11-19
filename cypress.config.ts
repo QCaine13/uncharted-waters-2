@@ -10,6 +10,9 @@ export default defineConfig({
   fixturesFolder: false,
   e2e: {
     baseUrl: 'http://localhost:8080',
+    // Specs share UI state across tests in a spec (menus left open by
+    // earlier tests). Cypress 12+ defaults this to true.
+    testIsolation: false,
     specPattern: 'tests/e2e/**/*.cy.ts',
     supportFile: 'tests/e2e/support.ts',
     setupNodeEvents(on) {

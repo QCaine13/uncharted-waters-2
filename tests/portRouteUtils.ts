@@ -232,7 +232,7 @@ export const enterAdjacentPortBuilding = (
         }),
     )
     .then((trace) => {
-      const diagnosticPath = Cypress.env('portEntryDiagnosticPath') as
+      const diagnosticPath = Cypress.expose('portEntryDiagnosticPath') as
         string | undefined;
       const persisted = diagnosticPath
         ? cy.writeFile(diagnosticPath, `${JSON.stringify(trace)}\n`, {

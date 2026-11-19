@@ -374,7 +374,7 @@ export const resumeCourse = (
             }),
         )
         .then((trace) => {
-          const diagnosticPath = Cypress.env('headingDiagnosticPath') as
+          const diagnosticPath = Cypress.expose('headingDiagnosticPath') as
             string | undefined;
           if (!diagnosticPath) return trace;
           return cy
@@ -588,7 +588,7 @@ type PlannedWorldUnblock = {
 const writeFirstVoyageNavigationDiagnostic = (
   record: unknown,
 ): Cypress.Chainable<null> => {
-  const path = Cypress.env('firstVoyageNavigationDiagnosticPath');
+  const path = Cypress.expose('firstVoyageNavigationDiagnosticPath');
   if (!path) return cy.wrap(null, { log: false });
   return cy
     .writeFile(path, `${JSON.stringify(record)}\n`, {

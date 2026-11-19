@@ -100,7 +100,7 @@ const loadFromOpenSystem = (combatRemains = true) => {
 };
 
 describe('M2 restored combat controls and resource settlement', () => {
-  const combatTest = Cypress.env('m2PreparationOnly') ? it.skip : it;
+  const combatTest = Cypress.expose('m2PreparationOnly') ? it.skip : it;
   combatTest(
     'restores attack and defense, isolates the System overlay, switches language and settles one duel reward',
     () => {
@@ -575,7 +575,7 @@ describe('M2 equipment and shipyard preparation', () => {
 
 describe('M2 story initiation from a completed M1 version-5 fixture', () => {
   const chapterTest =
-    Cypress.env('m2PreparationOnly') || Cypress.env('m2ControlsOnly')
+    Cypress.expose('m2PreparationOnly') || Cypress.expose('m2ControlsOnly')
       ? it.skip
       : it;
   chapterTest(

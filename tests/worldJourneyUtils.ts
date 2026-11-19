@@ -162,7 +162,7 @@ export const checkInAtLodge = (
         expect(saved.timePassed % 1440, `${context} woke at 08:00`).to.equal(
           480,
         );
-        const diagnosticPath = Cypress.env('buildingExitDiagnosticPath') as
+        const diagnosticPath = Cypress.expose('buildingExitDiagnosticPath') as
           string | undefined;
         if (diagnosticPath)
           return cy
@@ -266,7 +266,7 @@ export interface JourneyCheckpoint {
 }
 
 const checkpointRunId =
-  Cypress.env('journeyRunId') ||
+  Cypress.expose('journeyRunId') ||
   `run-${new Date().toISOString().replace(/[:.]/g, '-')}`;
 export const checkpointRoot = `.superpowers/sdd/2026-09-07-m3-joao-finale/full-journey-checkpoints/${checkpointRunId}`;
 const checkpoints: JourneyCheckpoint[] = [];
