@@ -8,8 +8,9 @@ import {
   Texture,
 } from 'pixi.js';
 import Assets from '../assets';
-import { hdBuildings } from '../game/images/hd/hdManifest';
+import { hdBuildings, hdCharacters } from '../game/images/hd/hdManifest';
 import { TILE_SIZE } from '../constants';
+import { getProtagonistId } from '../state/selectors';
 import type { Map as GameMap } from '../map';
 import type { PortNpc } from '../game/port/portNpc';
 import type { PortPlayer } from '../game/port/portPlayer';
@@ -55,6 +56,7 @@ interface Session {
   tileLayer: Container;
   buildingLayer: Container;
   characterLayer: Container;
+  shadows: Graphics;
   emissiveSprites: Sprite[];
   marker: Graphics;
   tileSprites: Sprite[];
@@ -73,6 +75,51 @@ let characterSource: Texture['source'] | null = null;
 
 const tileTextureCache = new Map<string, Texture>();
 const characterTextureCache = new Map<number, Texture>();
+
+// HD character strips: 256px frames, feet baseline at y=232, drawn 96px
+// wide/tall so the sprite is 3x the legacy 64px frame.
+const HD_CHAR_SIZE = 96;
+const HD_CHAR_FRAME = 256;
+const HD_FEET_BASELINE = 232;
+
+const hdStripFrames = new Map<string, Texture[]>();
+
+const PROTAGONIST_STRIPS: { [id: string]: string } = {
+  joao: 'farrell-son',
+  katarina: 'heroine-captain',
+  otto: 'privateer',
+  ernst: 'scholar',
+  pietro: 'adventurer',
+  ali: 'merchant-youth',
+};
+
+const npcStripId = (frame: number): string | null => {
+  if (frame < 16) {
+    return 'woman';
+  }
+  if (frame < 24) {
+    return 'man';
+  }
+  return (
+    ['merchant', 'dog', 'guard', 'beggar'][Math.floor((frame - 24) / 2)] ?? null
+  );
+};
+
+const hdFramesFor = (
+  frame: number,
+  protagonistId: string,
+): Texture[] | null => {
+  if (frame < 8) {
+    const preferred = PROTAGONIST_STRIPS[protagonistId] ?? 'farrell-son';
+    return (
+      hdStripFrames.get(preferred) ?? hdStripFrames.get('farrell-son') ?? null
+    );
+  }
+
+  const id = npcStripId(frame);
+
+  return id ? (hdStripFrames.get(id) ?? null) : null;
+};
 
 const tileTexture = (column: number, row: number): Texture => {
   const key = `${column}:${row}`;
@@ -150,13 +197,36 @@ const initApp = (canvas: HTMLCanvasElement): Promise<Application> => {
         characterSource = Texture.from(Assets.images('portCharacters')).source;
         characterSource.scaleMode = 'nearest';
 
-        const hdTextures = Promise.all(
-          hdBuildings.flatMap((building) =>
+        const hdTextures = Promise.all([
+          ...hdBuildings.flatMap((building) =>
             [building.url, building.emissive]
               .filter((url): url is string => url !== null)
               .map((url) => PixiAssets.load(url)),
           ),
-        ).then((textures: Texture[]) => {
+          ...Object.entries(hdCharacters).map(([id, { url, frames }]) =>
+            PixiAssets.load(url).then((texture: Texture) => {
+              const { source } = texture;
+              source.scaleMode = 'linear';
+              hdStripFrames.set(
+                id,
+                Array.from(
+                  { length: frames },
+                  (_unused, i) =>
+                    new Texture({
+                      source: texture.source,
+                      frame: new Rectangle(
+                        i * HD_CHAR_FRAME,
+                        0,
+                        HD_CHAR_FRAME,
+                        HD_CHAR_FRAME,
+                      ),
+                    }),
+                ),
+              );
+              return texture;
+            }),
+          ),
+        ]).then((textures: Texture[]) => {
           textures.forEach((texture) => {
             const { source } = texture;
             source.scaleMode = 'linear';
@@ -210,6 +280,7 @@ const createSession = (): Session => ({
   tileLayer: new Container(),
   buildingLayer: new Container(),
   characterLayer: new Container(),
+  shadows: new Graphics(),
   emissiveSprites: [],
   marker: new Graphics(),
   tileSprites: [],
@@ -279,6 +350,7 @@ const createPortRenderer = (
     session.world.addChild(
       session.tileLayer,
       session.buildingLayer,
+      session.shadows,
       session.characterLayer,
       session.marker,
     );
@@ -396,15 +468,41 @@ const createPortRenderer = (
       syncTiles(timeOfDay);
       syncCharacters([player, ...npcs]);
 
+      const protagonistId = getProtagonistId();
+      session.shadows.clear();
+
       [player, ...npcs].forEach((character) => {
         const sprite = session.characterSprites.get(character);
         if (!sprite) {
           return;
         }
 
+        const frame = character.frame();
         const position = character.position(percentNextMove);
-        sprite.texture = characterTexture(character.frame());
-        sprite.position.set(position.x * TILE_SIZE, position.y * TILE_SIZE);
+        const hdFrames = hdFramesFor(frame, protagonistId);
+
+        if (hdFrames) {
+          sprite.texture = hdFrames[frame % hdFrames.length];
+          sprite.anchor.set(0.5, HD_FEET_BASELINE / HD_CHAR_FRAME);
+          sprite.width = HD_CHAR_SIZE;
+          sprite.height = HD_CHAR_SIZE;
+          sprite.position.set(
+            (position.x + 1) * TILE_SIZE,
+            (position.y + 2) * TILE_SIZE,
+          );
+          session.shadows
+            .ellipse(
+              (position.x + 1) * TILE_SIZE,
+              (position.y + 2) * TILE_SIZE - 4,
+              TILE_SIZE / 2,
+              5,
+            )
+            .fill({ color: 0x000000, alpha: 0.25 });
+        } else {
+          sprite.anchor.set(0, 0);
+          sprite.texture = characterTexture(frame);
+          sprite.position.set(position.x * TILE_SIZE, position.y * TILE_SIZE);
+        }
       });
 
       const markerChanged =

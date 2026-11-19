@@ -32,6 +32,14 @@ export class Graphics {
     return this;
   }
 
+  ellipse() {
+    return this;
+  }
+
+  fill() {
+    return this;
+  }
+
   stroke() {
     return this;
   }
