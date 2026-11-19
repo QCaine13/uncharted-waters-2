@@ -177,6 +177,24 @@ def bake_emissive(img: Image.Image):
     return out.filter(ImageFilter.GaussianBlur(6))
 
 
+def bake_shadow(img: Image.Image, tiled: bool):
+    """Silhouette drop shadow from the art's own alpha: blurred dark shape,
+    so the contact shadow hugs the building's silhouette instead of its
+    bounding rect. Tiled walls only cast along the bottom edge."""
+    rgba = img.convert('RGBA')
+    w, h = rgba.size
+    alpha = rgba.split()[3].point(lambda a: 77 if a > 48 else 0)
+    out = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+    out.putalpha(alpha)
+    if tiled:
+        # keep only the bottom ~0.6 tile of silhouette
+        cut = int(h - HD_TILE * 0.6)
+        strip = out.crop((0, cut, w, h))
+        out = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+        out.paste(strip, (0, cut), strip)
+    return out.filter(ImageFilter.GaussianBlur(HD_TILE * 0.25))
+
+
 def js_id(name):
     return re.sub(r'[^a-zA-Z0-9]', '_', name)
 
@@ -246,6 +264,11 @@ def main():
             imports.append(f"import b_{var}_e from './lisbon/buildings/{bid}-emissive.png';")
             emissive_ts = f'b_{var}_e'
 
+        shadow = bake_shadow(img, bid in TILED_IDS)
+        shadow.save(lisbon_dir / f'{bid}-shadow.png')
+        imports.append(f"import b_{var}_s from './lisbon/buildings/{bid}-shadow.png';")
+        shadow_ts = f'b_{var}_s'
+
         pl_ts = ', '.join(
             f"{{ x: {p['x']}, y: {p['y']}, columns: {p['columns']}, rows: {p['rows']} }}"
             for p in placements
@@ -255,7 +278,7 @@ def main():
         )
         tile_ts = 'true' if bid in TILED_IDS else 'false'
         buildings_ts.append(
-            f"  {{ url: b_{var}, emissive: {emissive_ts}, adjust: {adjust_ts}, tile: {tile_ts}, placements: [{pl_ts}] }},"
+            f"  {{ url: b_{var}, emissive: {emissive_ts}, shadow: {shadow_ts}, adjust: {adjust_ts}, tile: {tile_ts}, placements: [{pl_ts}] }},"
         )
         if adjust:
             print(f'  ~ {bid}: alignment offset {adjust[0]},{adjust[1]} tiles')
@@ -316,6 +339,7 @@ export interface HdPlacement {{
 export interface HdBuilding {{
   url: string;
   emissive: string | null;
+  shadow: string | null;
   // uniform tile-unit translation when the art's opaque bbox is offset from
   // the building-tile footprint inside its rect (null = no correction)
   adjust: {{ x: number; y: number }} | null;

@@ -555,22 +555,6 @@ export const bakeHdGround = ({
     }
 
     context.putImageData(frame, 0, 0);
-    if (!waterOnly) {
-      // soft drop shadow baked under each building overlay so facades sit on
-      // the ground (offset down-right ~0.3 tile, blurred)
-      context.save();
-      context.filter = 'blur(8px)';
-      context.fillStyle = 'rgba(0,0,0,0.25)';
-      buildingRects.forEach((r) => {
-        context.fillRect(
-          (r.x + 0.3) * TILE_SIZE - cx * size,
-          (r.y + 0.3) * TILE_SIZE - cy * size,
-          r.columns * TILE_SIZE,
-          r.rows * TILE_SIZE,
-        );
-      });
-      context.restore();
-    }
     return { canvas, x: cx * size, y: cy * size };
   };
 
@@ -748,7 +732,24 @@ export const bakeHdGround = ({
       }
     });
 
+    // one single row of lanterns along the water-side edge of the quay —
+    // the tile row whose cobble cells border the most open water
+    let quayY = -1;
+    let quayYCount = 0;
     for (let y = 0; y + 2 < MAP_TILES; y += 1) {
+      let count = 0;
+      for (let x = 0; x < MAP_TILES; x += 1) {
+        if (classes[y][x] === 'cobble' && classes[y + 2][x] === 'water') {
+          count += 1;
+        }
+      }
+      if (count > quayYCount) {
+        quayYCount = count;
+        quayY = y;
+      }
+    }
+    if (quayY >= 0) {
+      const y = quayY;
       let runStart = -1;
       for (let x = 0; x <= MAP_TILES; x += 1) {
         const isQuayEdge =

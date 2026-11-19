@@ -131,7 +131,7 @@ const PORT_TERRAIN_TILESET_0: PortTerrainClass[] = [
   'building',
   'building',
   'building',
-  'cobble',
+  'tree',
   'ship',
   'ship',
   'ship',

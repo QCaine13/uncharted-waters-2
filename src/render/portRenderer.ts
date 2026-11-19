@@ -475,6 +475,32 @@ const createPortRenderer = (
             sprite.width = placement.columns * TILE_SIZE;
             sprite.height = placement.rows * TILE_SIZE;
           }
+          if (building.shadow) {
+            // silhouette shadow baked from the art's alpha, offset
+            // down-right so the contact shadow hugs the building's edge
+            const sTexture = PixiAssets.get<Texture>(building.shadow);
+            const shadow = building.tile
+              ? new TilingSprite({
+                  texture: sTexture,
+                  width: placement.columns * TILE_SIZE,
+                  height: placement.rows * TILE_SIZE,
+                })
+              : new Sprite(sTexture);
+            shadow.position.set(
+              sprite.position.x + TILE_SIZE * 0.25,
+              sprite.position.y + TILE_SIZE * 0.2,
+            );
+            if (building.tile) {
+              (shadow as TilingSprite).tileScale.set(
+                TILE_SIZE / HD_ART_TILE_PX,
+                TILE_SIZE / HD_ART_TILE_PX,
+              );
+            } else {
+              shadow.width = sprite.width;
+              shadow.height = sprite.height;
+            }
+            session.buildingLayer.addChild(shadow);
+          }
           session.buildingLayer.addChild(sprite);
 
           if (building.emissive) {
