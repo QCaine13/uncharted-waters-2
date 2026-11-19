@@ -446,7 +446,8 @@ describe('naval rules', () => {
     [{ hull: 30, crew: 0 }, 'crew'],
   ] as const)(
     'recognizes zero $s as defeat at revision zero without spending supplies',
-    (override) => {
+    (override, field) => {
+      expect(override[field]).toBe(0);
       const created = createNaval({
         encounterId: 'joao.m3.ottoman-one',
         player: {
