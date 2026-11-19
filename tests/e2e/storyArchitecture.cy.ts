@@ -67,13 +67,24 @@ const clickCharacterLine = (body: string, position: 1 | 2) => {
   cy.get('[data-test=building]').click();
 };
 
-const pixelChecksum = (regions: Uint8ClampedArray[]) => {
-  let checksum = 0;
-  regions.forEach((pixels) => {
-    for (let i = 0; i < pixels.length; i += 17)
-      checksum = (checksum * 31 + pixels[i]) >>> 0;
-  });
-  return checksum;
+// Weather, water shimmer and other animated overlays repaint only a few
+// pixels per frame, while a walking character repaints thousands, so
+// movement is detected by counting substantially-changed bytes instead of
+// comparing exact checksums (measured on the HD build: rain ≤ ~270
+// bytes/frame, a one-tile move leaves ~1900+ bytes).
+const PIXEL_DELTA = 8;
+const MOVED_BYTES = 1200;
+const QUIET_BYTES = 400;
+
+const countChangedBytes = (
+  before: Uint8ClampedArray,
+  after: Uint8ClampedArray,
+) => {
+  let changed = 0;
+  for (let i = 0; i < before.length; i += 1) {
+    if (Math.abs(before[i] - after[i]) > PIXEL_DELTA) changed += 1;
+  }
+  return changed;
 };
 
 const screenPosition = ({ x, y }: MapPosition) => {
@@ -96,13 +107,13 @@ const snapshot2d = (canvas: HTMLCanvasElement) => {
   return context;
 };
 
-const playerFrame = (canvas: HTMLCanvasElement, position: MapPosition) => {
+const playerPixels = (canvas: HTMLCanvasElement, position: MapPosition) => {
   const context = snapshot2d(canvas);
   const screen = screenPosition(position);
-  return pixelChecksum([context.getImageData(screen.x, screen.y, 64, 64).data]);
+  return context.getImageData(screen.x, screen.y, 64, 64).data;
 };
 
-const movementFrame = (
+const movementPixels = (
   canvas: HTMLCanvasElement,
   from: MapPosition,
   to: MapPosition,
@@ -114,7 +125,7 @@ const movementFrame = (
   const y = Math.min(fromScreen.y, toScreen.y);
   const width = Math.abs(fromScreen.x - toScreen.x) + 64;
   const height = Math.abs(fromScreen.y - toScreen.y) + 64;
-  return pixelChecksum([context.getImageData(x, y, width, height).data]);
+  return context.getImageData(x, y, width, height).data;
 };
 
 const nextPosition = (
@@ -134,14 +145,14 @@ const moveOneTile = (key: DirectionKey, context: string) =>
         ) as HTMLCanvasElement;
         const from = { ...modeledPosition };
         const to = nextPosition(from, key);
-        const startingPlayerFrame = playerFrame(canvas, from);
-        const startingMovementFrame = movementFrame(canvas, from, to);
+        const startingPlayerPixels = playerPixels(canvas, from);
+        const startingMovementPixels = movementPixels(canvas, from, to);
         window.document.dispatchEvent(
           new window.KeyboardEvent('keydown', { key, bubbles: true }),
         );
 
         const waitUntilSettled = (
-          previousMovementFrame: number,
+          previousMovementPixels: Uint8ClampedArray,
           stableFrames: number,
           remainingFrames = 600,
         ) => {
@@ -153,13 +164,19 @@ const moveOneTile = (key: DirectionKey, context: string) =>
               reject(new Error(`Movement ${key} did not settle at ${context}`));
               return;
             }
-            const currentMovementFrame = movementFrame(canvas, from, to);
+            const currentMovementPixels = movementPixels(canvas, from, to);
             const nextStableFrames =
-              currentMovementFrame === previousMovementFrame
+              countChangedBytes(previousMovementPixels, currentMovementPixels) <
+              QUIET_BYTES
                 ? stableFrames + 1
                 : 0;
             if (nextStableFrames >= 6) {
-              if (currentMovementFrame === startingMovementFrame) {
+              if (
+                countChangedBytes(
+                  startingMovementPixels,
+                  currentMovementPixels,
+                ) < MOVED_BYTES
+              ) {
                 reject(new Error(`Movement ${key} was blocked at ${context}`));
               } else {
                 modeledPosition = to;
@@ -168,7 +185,7 @@ const moveOneTile = (key: DirectionKey, context: string) =>
               return;
             }
             waitUntilSettled(
-              currentMovementFrame,
+              currentMovementPixels,
               nextStableFrames,
               remainingFrames - 1,
             );
@@ -192,14 +209,19 @@ const moveOneTile = (key: DirectionKey, context: string) =>
               reject(new Error(`Entered a building during ${context}`));
               return;
             }
-            if (playerFrame(canvas, from) === startingPlayerFrame) {
+            if (
+              countChangedBytes(
+                startingPlayerPixels,
+                playerPixels(canvas, from),
+              ) < MOVED_BYTES
+            ) {
               waitUntilHandled(remainingFrames - 1);
               return;
             }
             window.document.dispatchEvent(
               new window.KeyboardEvent('keyup', { key, bubbles: true }),
             );
-            waitUntilSettled(movementFrame(canvas, from, to), 0);
+            waitUntilSettled(movementPixels(canvas, from, to), 0);
           });
         };
 

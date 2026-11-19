@@ -62,24 +62,54 @@ const playerFrame = (canvas: HTMLCanvasElement, position: MapPosition) => {
   return pixelChecksum([context.getImageData(screen.x, screen.y, 64, 64).data]);
 };
 
-const movementFrame = (
+const movementRect = (from: MapPosition, to: MapPosition) => {
+  const fromScreen = screenPosition(from);
+  const toScreen = screenPosition(to);
+  return {
+    x: Math.min(fromScreen.x, toScreen.x),
+    y: Math.min(fromScreen.y, toScreen.y),
+    width: Math.abs(fromScreen.x - toScreen.x) + 64,
+    height: Math.abs(fromScreen.y - toScreen.y) + 64,
+  };
+};
+
+// Weather, water shimmer and other animated overlays repaint only a few
+// pixels per frame, while a walking character repaints thousands, so
+// movement is detected by counting substantially-changed bytes instead of
+// comparing exact checksums (measured on the HD build: rain ≤ ~270
+// bytes/frame, a one-tile move leaves ~1900+ bytes).
+const PIXEL_DELTA = 8;
+const MOVED_BYTES = 1200;
+const QUIET_BYTES = 400;
+
+const countChangedBytes = (
+  before: Uint8ClampedArray,
+  after: Uint8ClampedArray,
+) => {
+  let changed = 0;
+  for (let i = 0; i < before.length; i += 1) {
+    if (Math.abs(before[i] - after[i]) > PIXEL_DELTA) changed += 1;
+  }
+  return changed;
+};
+
+const playerPixels = (canvas: HTMLCanvasElement, position: MapPosition) => {
+  const screen = screenPosition(position);
+  return snapshot2d(canvas).getImageData(screen.x, screen.y, 64, 64).data;
+};
+
+const movementPixels = (
   canvas: HTMLCanvasElement,
   from: MapPosition,
   to: MapPosition,
 ) => {
-  const context = snapshot2d(canvas);
-  const fromScreen = screenPosition(from);
-  const toScreen = screenPosition(to);
-  const x = Math.min(fromScreen.x, toScreen.x);
-  const y = Math.min(fromScreen.y, toScreen.y);
-  return pixelChecksum([
-    context.getImageData(
-      x,
-      y,
-      Math.abs(fromScreen.x - toScreen.x) + 64,
-      Math.abs(fromScreen.y - toScreen.y) + 64,
-    ).data,
-  ]);
+  const rect = movementRect(from, to);
+  return snapshot2d(canvas).getImageData(
+    rect.x,
+    rect.y,
+    rect.width,
+    rect.height,
+  ).data;
 };
 
 const nextPosition = (
@@ -257,12 +287,16 @@ export const moveOnePortTile = (key: DirectionKey, context: string) =>
         ) as HTMLCanvasElement;
         const from = { ...modeledPosition };
         const to = nextPosition(from, key);
-        const startingPlayerFrame = playerFrame(canvas, from);
-        const startingMovementFrame = movementFrame(canvas, from, to);
+        const startingPlayerPixels = playerPixels(canvas, from);
+        const startingMovementPixels = movementPixels(canvas, from, to);
         window.document.dispatchEvent(
           new window.KeyboardEvent('keydown', { key, bubbles: true }),
         );
-        const settle = (previous: number, stable: number, remaining = 600) => {
+        const settle = (
+          previous: Uint8ClampedArray,
+          stable: number,
+          remaining = 600,
+        ) => {
           window.requestAnimationFrame(() => {
             if (!remaining) {
               window.document.dispatchEvent(
@@ -271,10 +305,15 @@ export const moveOnePortTile = (key: DirectionKey, context: string) =>
               reject(new Error(`Movement ${key} did not settle at ${context}`));
               return;
             }
-            const current = movementFrame(canvas, from, to);
-            const nextStable = current === previous ? stable + 1 : 0;
+            const current = movementPixels(canvas, from, to);
+            const nextStable =
+              countChangedBytes(previous, current) < QUIET_BYTES
+                ? stable + 1
+                : 0;
             if (nextStable >= 6) {
-              if (current === startingMovementFrame)
+              if (
+                countChangedBytes(startingMovementPixels, current) < MOVED_BYTES
+              )
                 reject(new Error(`Movement ${key} was blocked at ${context}`));
               else {
                 modeledPosition = to;
@@ -296,14 +335,19 @@ export const moveOnePortTile = (key: DirectionKey, context: string) =>
               );
               return;
             }
-            if (playerFrame(canvas, from) === startingPlayerFrame) {
+            if (
+              countChangedBytes(
+                startingPlayerPixels,
+                playerPixels(canvas, from),
+              ) < MOVED_BYTES
+            ) {
               start(remaining - 1);
               return;
             }
             window.document.dispatchEvent(
               new window.KeyboardEvent('keyup', { key, bubbles: true }),
             );
-            settle(movementFrame(canvas, from, to), 0);
+            settle(movementPixels(canvas, from, to), 0);
           });
         };
         start();
