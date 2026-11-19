@@ -34,13 +34,32 @@ import b_city_wall_segment from './lisbon/buildings/city-wall-segment.png';
 import b_city_wall_segment_e from './lisbon/buildings/city-wall-segment-emissive.png';
 import b_palace_wall_segment from './lisbon/buildings/palace-wall-segment.png';
 import b_palace_wall_segment_e from './lisbon/buildings/palace-wall-segment-emissive.png';
+import c_adventurer from './characters/adventurer.png';
 import c_beggar from './characters/beggar.png';
 import c_dog from './characters/dog.png';
 import c_farrell_son from './characters/farrell-son.png';
 import c_guard from './characters/guard.png';
+import c_heroine_captain from './characters/heroine-captain.png';
 import c_man from './characters/man.png';
 import c_merchant from './characters/merchant.png';
+import c_merchant_youth from './characters/merchant-youth.png';
+import c_privateer from './characters/privateer.png';
+import c_scholar from './characters/scholar.png';
 import c_woman from './characters/woman.png';
+import g_grass from './ground/grass.png';
+import g_sand from './ground/sand.png';
+import g_cobble from './ground/cobble.png';
+import g_water from './ground/water.png';
+import g_water_shore from './ground/water-shore.png';
+import p_tree_1 from './props/tree-1.png';
+import p_tree_2 from './props/tree-2.png';
+import p_cypress from './props/cypress.png';
+import p_bush_1 from './props/bush-1.png';
+import p_bush_2 from './props/bush-2.png';
+import p_flowerpot from './props/flowerpot.png';
+import p_lantern_post from './props/lantern-post.png';
+import p_crate from './props/crate.png';
+import p_barrel from './props/barrel.png';
 
 export interface HdPlacement {
   x: number;
@@ -156,17 +175,38 @@ export const hdBuildings: HdBuilding[] = [
 ];
 
 export const hdCharacters: { [id: string]: { url: string; frames: number } } = {
+  adventurer: { url: c_adventurer, frames: 8 },
   beggar: { url: c_beggar, frames: 2 },
   dog: { url: c_dog, frames: 2 },
   'farrell-son': { url: c_farrell_son, frames: 8 },
   guard: { url: c_guard, frames: 2 },
+  'heroine-captain': { url: c_heroine_captain, frames: 8 },
   man: { url: c_man, frames: 8 },
   merchant: { url: c_merchant, frames: 2 },
+  'merchant-youth': { url: c_merchant_youth, frames: 8 },
+  privateer: { url: c_privateer, frames: 8 },
+  scholar: { url: c_scholar, frames: 8 },
   woman: { url: c_woman, frames: 8 },
 };
 
-export const hdGround: { [kind: string]: string } = {};
+export const hdGround: { [kind: string]: string } = {
+  grass: g_grass,
+  sand: g_sand,
+  cobble: g_cobble,
+  water: g_water,
+  'water-shore': g_water_shore,
+};
 
-export const hdGroundComplete = false;
+export const hdGroundComplete = true;
 
-export const hdProps: { [id: string]: string } = {};
+export const hdProps: { [id: string]: string } = {
+  'tree-1': p_tree_1,
+  'tree-2': p_tree_2,
+  cypress: p_cypress,
+  'bush-1': p_bush_1,
+  'bush-2': p_bush_2,
+  flowerpot: p_flowerpot,
+  'lantern-post': p_lantern_post,
+  crate: p_crate,
+  barrel: p_barrel,
+};
