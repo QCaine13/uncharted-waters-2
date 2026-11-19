@@ -34,7 +34,7 @@ const pubOptions = [
   'Waitress',
   'Gamble',
 ] as const;
-type PubOptions = typeof pubOptions[number];
+type PubOptions = (typeof pubOptions)[number];
 
 const enabledPubOptions: PubOptions[] = [
   'Recruit Crew',

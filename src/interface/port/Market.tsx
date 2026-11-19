@@ -22,7 +22,7 @@ const marketOptions = [
   'Invest',
   'Market Rate',
 ] as const;
-type MarketOption = typeof marketOptions[number];
+type MarketOption = (typeof marketOptions)[number];
 
 const QUANTITY_PRESETS = [1, 5, 10, 25, 50];
 

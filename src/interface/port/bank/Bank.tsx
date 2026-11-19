@@ -15,7 +15,7 @@ import InputNumber from '../../common/InputNumber';
 import { t } from '../../../localization';
 
 const bankOptions = ['Deposit', 'Withdraw', 'Borrow', 'Repay'] as const;
-type BankOptions = typeof bankOptions[number];
+type BankOptions = (typeof bankOptions)[number];
 
 export default function Bank() {
   const { selectOption, next, back, reset, state } =

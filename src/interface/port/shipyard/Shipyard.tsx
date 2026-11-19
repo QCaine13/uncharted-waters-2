@@ -43,7 +43,7 @@ const shipyardOptions = [
   'Remodel',
   'Invest',
 ] as const;
-type ShipyardOptions = typeof shipyardOptions[number];
+type ShipyardOptions = (typeof shipyardOptions)[number];
 
 interface RepairSelection {
   index: number;

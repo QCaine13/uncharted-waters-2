@@ -12,7 +12,7 @@ import gameState from '../../state/state';
 import { t } from '../../localization';
 
 const lodgeOptions = ['Check In', 'Gossip', 'Port Info'] as const;
-type LodgeOptions = typeof lodgeOptions[number];
+type LodgeOptions = (typeof lodgeOptions)[number];
 
 export default function Lodge() {
   const { selectOption, back, state } = useBuilding<LodgeOptions>();

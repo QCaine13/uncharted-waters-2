@@ -2,7 +2,7 @@ import type { Position } from '../../types';
 import type { GoodId } from '../../data/goodsData';
 
 export const provisions = ['water', 'food', 'lumber', 'shot'] as const;
-export type Provisions = typeof provisions[number];
+export type Provisions = (typeof provisions)[number];
 
 export type CargoType = Provisions | GoodId;
 

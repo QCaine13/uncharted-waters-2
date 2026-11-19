@@ -14,12 +14,10 @@ export type CharacterMessage = {
 type PassiveMessage = VendorMessage | CharacterMessage;
 
 export type VendorMessageBoxType =
-  | ({ body: string } & MessageBoxCommonType)
-  | null;
+  ({ body: string } & MessageBoxCommonType) | null;
 
 export type CharacterMessageBoxType =
-  | ({ body: string; characterId: string } & MessageBoxCommonType)
-  | null;
+  ({ body: string; characterId: string } & MessageBoxCommonType) | null;
 
 type MessageBoxCommonType = {
   acknowledge?: () => void;

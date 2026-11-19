@@ -270,22 +270,20 @@ const m2JournalScenarios: JournalScenario[] = [
     'pursuit-first-sea',
     'pursuit-first-port',
     'katarina-battle-start',
-  ].map(
-    (_lastEvent, index, progression): JournalScenario => ({
-      events: [
-        'domingo-missing',
-        'lodge-search',
-        'kahn-shipyard-start',
-        'identity-revealed',
-        'kahn-house-start',
-        ...progression.slice(0, index + 1),
-      ],
-      combatResults: {
-        'joao.m2.kahn-shipyard': 'defeat',
-        'joao.m2.kahn-house': 'victory',
-      },
-    }),
-  ),
+  ].map((_lastEvent, index, progression): JournalScenario => ({
+    events: [
+      'domingo-missing',
+      'lodge-search',
+      'kahn-shipyard-start',
+      'identity-revealed',
+      'kahn-house-start',
+      ...progression.slice(0, index + 1),
+    ],
+    combatResults: {
+      'joao.m2.kahn-shipyard': 'defeat',
+      'joao.m2.kahn-house': 'victory',
+    },
+  })),
   {
     events: [
       'domingo-missing',

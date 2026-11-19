@@ -354,8 +354,7 @@ export const getEncounter = (
   encounterId: string,
 ): CombatEncounter | undefined =>
   encounterCatalog[encounterId as CombatEncounterId] as
-    | CombatEncounter
-    | undefined;
+    CombatEncounter | undefined;
 
 export const canReplayEncounter = (
   encounterId: string,

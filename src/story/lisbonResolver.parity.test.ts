@@ -119,15 +119,15 @@ describe('Lisbon resolver legacy-oracle parity', () => {
                 randomCandidates.length
                   ? randomCandidates
                   : actual
-                  ? [actual.id]
-                  : [],
+                    ? [actual.id]
+                    : [],
               ).toEqual(
                 expected.map((id) =>
                   buildingId === '7'
                     ? `${id}.bank`
                     : buildingId === '9'
-                    ? `${id}.guild`
-                    : id,
+                      ? `${id}.guild`
+                      : id,
                 ),
               );
               comparisons += 1;

@@ -18,7 +18,7 @@ const guildOptions = [
   'Report Discoveries',
   'Country Info',
 ] as const;
-type GuildOption = typeof guildOptions[number];
+type GuildOption = (typeof guildOptions)[number];
 
 const hasOpenStoryAssignment = (): boolean => {
   const completed = new Set(state.storyEvents ?? []);

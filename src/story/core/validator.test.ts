@@ -90,7 +90,7 @@ const expectedCodes = [
   'priority-conflict',
 ] as const;
 
-type ExpectedCode = typeof expectedCodes[number];
+type ExpectedCode = (typeof expectedCodes)[number];
 type InvalidCase = {
   code: ExpectedCode;
   path: string;

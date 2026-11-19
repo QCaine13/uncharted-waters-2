@@ -163,8 +163,7 @@ export const checkInAtLodge = (
           480,
         );
         const diagnosticPath = Cypress.env('buildingExitDiagnosticPath') as
-          | string
-          | undefined;
+          string | undefined;
         if (diagnosticPath)
           return cy
             .writeFile(
@@ -642,10 +641,10 @@ const pulseToward = (
         stalledObservations > 0
           ? 50
           : Math.abs(delta) > 40
-          ? 5000
-          : Math.abs(delta) > 12
-          ? 1800
-          : 50;
+            ? 5000
+            : Math.abs(delta) > 12
+              ? 1800
+              : 50;
       return resumeCourse(key, pulse)
         .then((course) =>
           settleWorldCourseInterruption(
@@ -780,10 +779,10 @@ const dockAtPlannedPort = (
         Math.abs(deltaX) > 2
           ? 'x'
           : Math.abs(deltaY) > 2
-          ? 'y'
-          : Math.abs(deltaX) <= Math.abs(deltaY)
-          ? 'x'
-          : 'y';
+            ? 'y'
+            : Math.abs(deltaX) <= Math.abs(deltaY)
+              ? 'x'
+              : 'y';
       const fallbackDelta = fallbackAxis === 'x' ? deltaX : deltaY;
       const fallbackKey =
         fallbackAxis === 'x'
@@ -791,8 +790,8 @@ const dockAtPlannedPort = (
             ? 'd'
             : 'a'
           : fallbackDelta > 0
-          ? 's'
-          : 'w';
+            ? 's'
+            : 'w';
       // A fractional position can round onto the wrong side of a coastal
       // corner. Prefer a short constant-direction correction only when the
       // shipped collision model proves it reaches the exact docking diamond.

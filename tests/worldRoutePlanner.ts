@@ -125,7 +125,7 @@ class MinHeap {
   push(value: [number, number]) {
     const values = this.values;
     values.push(value);
-    for (let index = values.length - 1; index > 0; ) {
+    for (let index = values.length - 1; index > 0;) {
       const parent = (index - 1) >> 1;
       if (values[parent][0] <= value[0]) break;
       values[index] = values[parent];
@@ -140,7 +140,7 @@ class MinHeap {
     const last = values.pop()!;
     if (values.length) {
       values[0] = last;
-      for (let index = 0; ; ) {
+      for (let index = 0; ;) {
         const left = index * 2 + 1;
         if (left >= values.length) break;
         const right = left + 1;
@@ -198,8 +198,8 @@ export const planWorldRoute = ({
     // route grid itself marks as blocked. Find a short ordinary heading whose
     // shipped collision response slides the fleet into an open route origin;
     // the browser executes this prefix and replans from its next visible Save.
-    const escapeDirections = (['a', 's', 'd', 'w'] as const).map(
-      (key) => directions.find(([candidate]) => candidate === key)!,
+    const escapeDirections = (['a', 's', 'd', 'w'] as const).map((key) =>
+      directions.find(([candidate]) => candidate === key)!,
     );
     for (const [key, xDelta, yDelta] of escapeDirections) {
       let expected = { ...rawStart };

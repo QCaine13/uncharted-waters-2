@@ -15,7 +15,7 @@ import {
 import { t } from '../../localization';
 
 const palaceOptions = ['Meet Ruler', 'Defect', 'Gold', 'Ship'] as const;
-type PalaceOption = typeof palaceOptions[number];
+type PalaceOption = (typeof palaceOptions)[number];
 
 const enabledPalaceOptions: PalaceOption[] = ['Meet Ruler', 'Gold'];
 

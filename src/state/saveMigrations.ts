@@ -34,7 +34,7 @@ export const PROTAGONIST_IDS = [
   'pietro',
   'ali',
 ] as const;
-export type ProtagonistId = typeof PROTAGONIST_IDS[number];
+export type ProtagonistId = (typeof PROTAGONIST_IDS)[number];
 
 export interface PortInvestment {
   economy: number;

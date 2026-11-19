@@ -18,7 +18,7 @@ import HarborSummary from './HarborSummary';
 import { t } from '../../../localization';
 
 const harborOptions = ['Sail', 'Supply', 'Moor'] as const;
-type HarborOptions = typeof harborOptions[number];
+type HarborOptions = (typeof harborOptions)[number];
 
 const harborDisabledOptions: HarborOptions[] = ['Moor'];
 

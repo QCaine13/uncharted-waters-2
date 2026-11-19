@@ -30,8 +30,8 @@ export const classifyDockingCorrectionMovement = ({
     totalMovement < 0.01
       ? ('stalled' as const)
       : requestedAxisProgress >= 0.01
-      ? ('targetward-movement' as const)
-      : ('unexpected-movement' as const);
+        ? ('targetward-movement' as const)
+        : ('unexpected-movement' as const);
   return {
     outcome,
     requestedAxisMovement,

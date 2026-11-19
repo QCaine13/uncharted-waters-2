@@ -8,12 +8,7 @@ export type FameType = 'adventure' | 'pirate' | 'trade';
 export type DarkLineLayer = 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
 
 export type ProtagonistId =
-  | 'joao'
-  | 'catalina'
-  | 'otto'
-  | 'pietro'
-  | 'ernst'
-  | 'ali';
+  'joao' | 'catalina' | 'otto' | 'pietro' | 'ernst' | 'ali';
 
 export interface StoryHooks {
   protagonists: ProtagonistId[];

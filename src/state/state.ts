@@ -35,11 +35,7 @@ type UsedShipsAtPort = { [key: string]: UsedShips };
 export type UsedShips = { [key: string]: string };
 
 export type Role =
-  | number
-  | 'firstMate'
-  | 'bookKeeper'
-  | 'chiefNavigator'
-  | null;
+  number | 'firstMate' | 'bookKeeper' | 'chiefNavigator' | null;
 
 type Mate = {
   sailorId: string;

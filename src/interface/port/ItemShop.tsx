@@ -19,7 +19,7 @@ import {
 import { t } from '../../localization';
 
 const itemShopOptions = ['Buy', 'Sell'] as const;
-type ItemShopOptions = typeof itemShopOptions[number];
+type ItemShopOptions = (typeof itemShopOptions)[number];
 
 // TODO haggling, items that cannot be sold, equipment limit
 export default function ItemShop() {

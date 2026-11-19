@@ -8,7 +8,7 @@ import { getAtMosque, getGold } from '../../state/selectors';
 import InputNumber from '../common/InputNumber';
 
 const churchOptions = ['Pray', 'Donate'] as const;
-type ChurchOptions = typeof churchOptions[number];
+type ChurchOptions = (typeof churchOptions)[number];
 
 export default function Church() {
   const { selectOption, next, back, reset, state } =

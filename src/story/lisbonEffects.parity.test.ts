@@ -20,7 +20,7 @@ const keyFor = (id: string): LegacyKey => {
   return found[0];
 };
 
-const buildingFor = (event: typeof lisbonOpeningEvents[number]): string => {
+const buildingFor = (event: (typeof lisbonOpeningEvents)[number]): string => {
   const result = JSON.stringify(event.trigger).match(
     /"atBuilding","buildingId":"(\d+)"/,
   )?.[1];

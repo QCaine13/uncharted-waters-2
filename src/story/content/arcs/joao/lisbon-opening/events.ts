@@ -55,9 +55,10 @@ const eventTrigger = (
     { type: 'atPort', portId: '1' },
     { type: 'stage', stage: 'building' },
     { type: 'atBuilding', buildingId },
-    ...blockedBy.map(
-      (key): StoryCondition => ({ type: 'not', condition: completed(key) }),
-    ),
+    ...blockedBy.map((key): StoryCondition => ({
+      type: 'not',
+      condition: completed(key),
+    })),
     ...requires.map(completed),
     ...(timeWindow === undefined
       ? []

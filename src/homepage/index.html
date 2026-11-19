@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
@@ -415,18 +415,21 @@
 
         const offset = character * width * 2;
 
-        setTimeout(() => {
-          element.style.backgroundPosition = `-${width + offset}px 0`;
-
-          setTimeout(() => {
-            element.style.backgroundPosition = `-${width * 2 + offset}px 0`;
+        setTimeout(
+          () => {
+            element.style.backgroundPosition = `-${width + offset}px 0`;
 
             setTimeout(() => {
-              element.style.backgroundPosition = `0 0`;
-              blink(element, characters);
+              element.style.backgroundPosition = `-${width * 2 + offset}px 0`;
+
+              setTimeout(() => {
+                element.style.backgroundPosition = `0 0`;
+                blink(element, characters);
+              }, 100);
             }, 100);
-          }, 100);
-        }, random(1000, 6000 / characters));
+          },
+          random(1000, 6000 / characters),
+        );
       };
 
       document.querySelectorAll('.animate-blink').forEach((element) => {

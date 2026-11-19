@@ -375,8 +375,7 @@ export const resumeCourse = (
         )
         .then((trace) => {
           const diagnosticPath = Cypress.env('headingDiagnosticPath') as
-            | string
-            | undefined;
+            string | undefined;
           if (!diagnosticPath) return trace;
           return cy
             .writeFile(diagnosticPath, `${JSON.stringify(trace)}\n`, {

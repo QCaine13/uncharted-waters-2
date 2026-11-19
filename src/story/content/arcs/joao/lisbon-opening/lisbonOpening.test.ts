@@ -131,7 +131,7 @@ const eventById = (id: string): StoryEvent => {
   return event;
 };
 
-type LegacyKey = typeof legacyKeys[number];
+type LegacyKey = (typeof legacyKeys)[number];
 type NormalizedMessage = {
   body: string;
   position: number;
