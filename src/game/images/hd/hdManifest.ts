@@ -28,8 +28,6 @@ import b_palace_w from './lisbon/buildings/palace-w.png';
 import b_palace_w_e from './lisbon/buildings/palace-w-emissive.png';
 import b_palace_gate from './lisbon/buildings/palace-gate.png';
 import b_palace_gate_e from './lisbon/buildings/palace-gate-emissive.png';
-import b_ships from './lisbon/buildings/ships.png';
-import b_ships_e from './lisbon/buildings/ships-emissive.png';
 import b_city_wall_segment from './lisbon/buildings/city-wall-segment.png';
 import b_city_wall_segment_e from './lisbon/buildings/city-wall-segment-emissive.png';
 import b_palace_wall_segment from './lisbon/buildings/palace-wall-segment.png';
@@ -71,6 +69,9 @@ export interface HdPlacement {
 export interface HdBuilding {
   url: string;
   emissive: string | null;
+  // uniform tile-unit translation when the art's opaque bbox is offset from
+  // the building-tile footprint inside its rect (null = no correction)
+  adjust: { x: number; y: number } | null;
   placements: HdPlacement[];
 }
 
@@ -78,66 +79,79 @@ export const hdBuildings: HdBuilding[] = [
   {
     url: b_market_bank,
     emissive: b_market_bank_e,
+    adjust: null,
     placements: [{ x: 26, y: 51, columns: 22, rows: 12 }],
   },
   {
     url: b_church,
     emissive: b_church_e,
+    adjust: { x: 0.44, y: -0.63 },
     placements: [{ x: 7, y: 52, columns: 13, rows: 14 }],
   },
   {
     url: b_harbor,
     emissive: b_harbor_e,
+    adjust: { x: 0.0, y: -1.03 },
     placements: [{ x: 52, y: 62, columns: 6, rows: 8 }],
   },
   {
     url: b_guild,
     emissive: b_guild_e,
+    adjust: null,
     placements: [{ x: 29, y: 28, columns: 15, rows: 10 }],
   },
   {
     url: b_lodge,
     emissive: b_lodge_e,
+    adjust: { x: 0.0, y: -0.53 },
     placements: [{ x: 29, y: 39, columns: 16, rows: 10 }],
   },
   {
     url: b_itemshop,
     emissive: b_itemshop_e,
+    adjust: null,
     placements: [{ x: 5, y: 40, columns: 15, rows: 9 }],
   },
   {
     url: b_pub,
     emissive: b_pub_e,
+    adjust: null,
     placements: [{ x: 51, y: 27, columns: 8, rows: 10 }],
   },
   {
     url: b_mansion,
     emissive: b_mansion_e,
+    adjust: null,
     placements: [{ x: 59, y: 30, columns: 23, rows: 22 }],
   },
   {
     url: b_arch_ne,
     emissive: b_arch_ne_e,
+    adjust: { x: 0.05, y: -0.59 },
     placements: [{ x: 85, y: 27, columns: 10, rows: 7 }],
   },
   {
     url: b_pool,
     emissive: b_pool_e,
+    adjust: null,
     placements: [{ x: 85, y: 44, columns: 11, rows: 13 }],
   },
   {
     url: b_arch_se,
     emissive: b_arch_se_e,
+    adjust: null,
     placements: [{ x: 70, y: 52, columns: 7, rows: 6 }],
   },
   {
     url: b_shipyard,
     emissive: b_shipyard_e,
+    adjust: { x: 0.92, y: -0.53 },
     placements: [{ x: 76, y: 58, columns: 8, rows: 10 }],
   },
   {
     url: b_palace_w,
     emissive: b_palace_w_e,
+    adjust: null,
     placements: [
       { x: 6, y: 0, columns: 18, rows: 11 },
       { x: 29, y: 0, columns: 18, rows: 11 },
@@ -148,16 +162,13 @@ export const hdBuildings: HdBuilding[] = [
   {
     url: b_palace_gate,
     emissive: b_palace_gate_e,
+    adjust: null,
     placements: [{ x: 44, y: 0, columns: 10, rows: 11 }],
-  },
-  {
-    url: b_ships,
-    emissive: b_ships_e,
-    placements: [{ x: 80, y: 65, columns: 11, rows: 8 }],
   },
   {
     url: b_city_wall_segment,
     emissive: b_city_wall_segment_e,
+    adjust: null,
     placements: [
       { x: 0, y: 15, columns: 46, rows: 13 },
       { x: 53, y: 15, columns: 43, rows: 13 },
@@ -166,6 +177,7 @@ export const hdBuildings: HdBuilding[] = [
   {
     url: b_palace_wall_segment,
     emissive: b_palace_wall_segment_e,
+    adjust: null,
     placements: [
       { x: 0, y: 0, columns: 7, rows: 11 },
       { x: 23, y: 0, columns: 7, rows: 11 },

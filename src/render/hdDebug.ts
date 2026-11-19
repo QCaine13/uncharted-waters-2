@@ -12,18 +12,27 @@ interface HdDebug {
   time: number | null;
   weather: Weather | null;
   zoom: number | null;
+  camera: { x: number; y: number } | null;
 }
 
 const read = (): HdDebug => {
   const params = new URLSearchParams(window.location.search);
 
   if (params.get('hddebug') !== '1') {
-    return { enabled: false, time: null, weather: null, zoom: null };
+    return {
+      enabled: false,
+      time: null,
+      weather: null,
+      zoom: null,
+      camera: null,
+    };
   }
 
   const time = Number(params.get('time'));
   const weather = params.get('weather');
   const zoom = Number(params.get('zoom'));
+  const camx = Number(params.get('camx'));
+  const camy = Number(params.get('camy'));
 
   return {
     enabled: true,
@@ -32,7 +41,11 @@ const read = (): HdDebug => {
     weather: ['clear', 'cloudy', 'rain', 'fog'].includes(weather ?? '')
       ? (weather as Weather)
       : null,
-    zoom: params.get('zoom') !== null && zoom >= 1 && zoom <= 2 ? zoom : null,
+    zoom: params.get('zoom') !== null && zoom >= 0.2 && zoom <= 2 ? zoom : null,
+    camera:
+      params.get('camx') !== null && params.get('camy') !== null
+        ? { x: camx, y: camy }
+        : null,
   };
 };
 

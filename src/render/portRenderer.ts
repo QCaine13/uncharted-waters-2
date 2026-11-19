@@ -45,6 +45,11 @@ export const setZoomFactor = (zoom: number) => {
   zoomFactor = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
 };
 
+// hddebug=1 may zoom out below 1 to inspect whole-town renders.
+export const setDebugZoomFactor = (zoom: number) => {
+  zoomFactor = Math.min(MAX_ZOOM, Math.max(0.1, zoom));
+};
+
 type Character = PortPlayer | PortNpc;
 
 interface Frame {
@@ -444,7 +449,10 @@ const createPortRenderer = (
       hdBuildings.forEach((building) => {
         building.placements.forEach((placement) => {
           const sprite = new Sprite(PixiAssets.get<Texture>(building.url));
-          sprite.position.set(placement.x * TILE_SIZE, placement.y * TILE_SIZE);
+          sprite.position.set(
+            (placement.x + (building.adjust?.x ?? 0)) * TILE_SIZE,
+            (placement.y + (building.adjust?.y ?? 0)) * TILE_SIZE,
+          );
           sprite.width = placement.columns * TILE_SIZE;
           sprite.height = placement.rows * TILE_SIZE;
           session.buildingLayer.addChild(sprite);

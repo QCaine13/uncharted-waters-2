@@ -10,7 +10,6 @@ import type { Position } from '../types';
 /* eslint-disable no-bitwise, no-continue, prefer-destructuring, no-param-reassign */
 const MAP_TILES = 96;
 const CHUNK_TILES = 48; // 48*32 = 1536px, under the 2048 texture limit
-const DAY_TILE = 16;
 
 type GroundClass = 'grass' | 'sand' | 'cobble' | 'water' | 'building';
 
@@ -68,10 +67,11 @@ const valueNoise = (x: number, y: number, scale: number, seed: number) => {
   return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
 };
 
-const GROUND_IDS = ['tree', 'shadow'] as const;
+const TRUE_GROUND = new Set<GroundClass>(['grass', 'sand', 'cobble', 'water']);
 
 const resolveClasses = (
   tileAt: (position: Position) => number,
+  covered: boolean[][],
 ): { classes: GroundClass[][]; raw: PortTerrainClass[][] } => {
   const raw: PortTerrainClass[][] = [];
   const classes: GroundClass[][] = [];
@@ -83,33 +83,42 @@ const resolveClasses = (
     }
   }
 
+  // Multi-source BFS: nearest true-ground class for every tile, so building,
+  // tree and shadow tiles get the surrounding ground baked underneath
+  // overlays and props (no legacy tiles peeking out around silhouettes).
+  const nearest: (GroundClass | null)[][] = [];
+  const queue: Position[] = [];
+  for (let y = 0; y < MAP_TILES; y += 1) {
+    nearest[y] = [];
+    for (let x = 0; x < MAP_TILES; x += 1) {
+      const cls = raw[y][x] as GroundClass;
+      nearest[y][x] = TRUE_GROUND.has(cls) ? cls : null;
+      if (nearest[y][x]) queue.push({ x, y });
+    }
+  }
+  for (let head = 0; head < queue.length; head += 1) {
+    const { x, y } = queue[head];
+    const cls = nearest[y][x];
+    for (let d = 0; d < 4; d += 1) {
+      const nx = x + [1, -1, 0, 0][d];
+      const ny = y + [0, 0, 1, -1][d];
+      if (nx < 0 || ny < 0 || nx >= MAP_TILES || ny >= MAP_TILES) continue;
+      if (nearest[ny][nx] !== null) continue;
+      nearest[ny][nx] = cls;
+      queue.push({ x: nx, y: ny });
+    }
+  }
+
   for (let y = 0; y < MAP_TILES; y += 1) {
     classes[y] = [];
     for (let x = 0; x < MAP_TILES; x += 1) {
       const cls = raw[y][x];
-
-      if (GROUND_IDS.includes(cls as 'tree' | 'shadow')) {
-        const counts: Partial<Record<GroundClass, number>> = {};
-        for (let dy = -1; dy <= 1; dy += 1) {
-          for (let dx = -1; dx <= 1; dx += 1) {
-            const nx = x + dx;
-            const ny = y + dy;
-            if (nx < 0 || ny < 0 || nx >= MAP_TILES || ny >= MAP_TILES)
-              continue;
-            const n = raw[ny][nx];
-            if (!GROUND_IDS.includes(n as 'tree' | 'shadow')) {
-              const g = n as GroundClass;
-              counts[g] = (counts[g] ?? 0) + 1;
-            }
-          }
-        }
-        const best = (Object.entries(counts) as [GroundClass, number][]).sort(
-          (a, b) => b[1] - a[1],
-        )[0];
-        classes[y][x] = best ? best[0] : 'grass';
-      } else {
-        classes[y][x] = cls as GroundClass;
-      }
+      // Structures with no overlay art keep their legacy tiles; everything
+      // else resolves to the nearest walkable/shore ground class.
+      classes[y][x] =
+        cls === 'building' && !covered[y][x]
+          ? 'building'
+          : (nearest[y][x] ?? 'grass');
     }
   }
 
@@ -139,7 +148,20 @@ export const bakeHdGround = ({
   propIds,
   buildingRects,
 }: BakeOptions): HdGroundBake => {
-  const { classes, raw } = resolveClasses(tileAt);
+  const covered: boolean[][] = [];
+  for (let y = 0; y < MAP_TILES; y += 1) {
+    covered[y] = new Array(MAP_TILES).fill(false);
+  }
+  buildingRects.forEach((rect) => {
+    for (let y = rect.y; y < rect.y + rect.rows; y += 1) {
+      for (let x = rect.x; x < rect.x + rect.columns; x += 1) {
+        if (x >= 0 && y >= 0 && x < MAP_TILES && y < MAP_TILES)
+          covered[y][x] = true;
+      }
+    }
+  });
+
+  const { classes, raw } = resolveClasses(tileAt, covered);
 
   const groundData: { [kind: string]: ImageData } = {};
   Object.entries(groundImages).forEach(([kind, img]) => {
@@ -251,12 +273,13 @@ export const bakeHdGround = ({
         } else {
           if (cls === 'water') continue;
           if (cls === 'building') {
-            // uncovered structures stay on the legacy tile
+            // uncovered structures stay on the legacy tile; the tileset is
+            // upscaled 2x so each tile occupies TILE_SIZE px
             const tx = Math.floor(wx / TILE_SIZE);
             const ty = Math.floor(wy / TILE_SIZE);
             const index = tileAt({ x: tx, y: ty });
-            const lx = index * DAY_TILE + Math.floor((wx % TILE_SIZE) / 2);
-            const ly = Math.floor((wy % TILE_SIZE) / 2);
+            const lx = index * TILE_SIZE + (wx % TILE_SIZE);
+            const ly = TILE_SIZE + (wy % TILE_SIZE); // row 1 = daylight
             const li = (ly * legacy.width + lx) * 4;
             frame.data[i] = legacy.data[li];
             frame.data[i + 1] = legacy.data[li + 1];
@@ -326,6 +349,18 @@ export const bakeHdGround = ({
   for (let y = 0; y < MAP_TILES; y += 1) {
     for (let x = 0; x < MAP_TILES; x += 1) {
       if (classes[y][x] !== 'grass' && classes[y][x] !== 'cobble') continue;
+      // no decor on wall walkways or ground pressed against structures
+      let nearStructure = false;
+      for (let dy = -1; dy <= 1 && !nearStructure; dy += 1) {
+        for (let dx = -1; dx <= 1 && !nearStructure; dx += 1) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx >= 0 && ny >= 0 && nx < MAP_TILES && ny < MAP_TILES) {
+            if (raw[ny][nx] === 'building') nearStructure = true;
+          }
+        }
+      }
+      if (nearStructure) continue;
       const roll = hash2(x, y, 97);
       if (roll > 0.004 || !DECOR.length) continue;
       const pick = DECOR[Math.floor(hash2(x, y, 98) * DECOR.length)];

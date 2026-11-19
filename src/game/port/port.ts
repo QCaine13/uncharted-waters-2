@@ -6,7 +6,9 @@ import createPortPath, { resolveClickTarget } from './portPath';
 import { getPortData } from './portUtils';
 import { getTimeOfDay, isDay } from '../../state/selectors';
 import { getCameraPosition } from '../world/sharedUtils';
-import createPortRenderer, { setZoomFactor } from '../../render/portRenderer';
+import createPortRenderer, {
+  setDebugZoomFactor,
+} from '../../render/portRenderer';
 import { weatherFor } from '../../render/weather';
 import hdDebug from '../../render/hdDebug';
 import state from '../../state/state';
@@ -41,7 +43,7 @@ const createPort = (portId: string) => {
   });
 
   if (hdDebug.zoom !== null) {
-    setZoomFactor(hdDebug.zoom);
+    setDebugZoomFactor(hdDebug.zoom);
   }
 
   renderer.onTileClick((tile) => {
@@ -89,7 +91,7 @@ const createPort = (portId: string) => {
       );
 
       renderer.render({
-        camera,
+        camera: hdDebug.camera ?? camera,
         player,
         npcs: characters.npcs(),
         timeOfDay: hdDebug.time ?? getTimeOfDay(),
