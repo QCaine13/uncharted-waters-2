@@ -35,6 +35,7 @@ const createPort = (portId: string) => {
   const renderer = createPortRenderer(canvas, {
     map,
     hdPort: portData.tilemap === 0,
+    lightSpots: Object.values(portData.buildings),
   });
 
   renderer.onTileClick((tile) => {

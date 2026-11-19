@@ -8,9 +8,14 @@ import {
   Texture,
 } from 'pixi.js';
 import Assets from '../assets';
-import { hdBuildings, hdCharacters } from '../game/images/hd/hdManifest';
+import {
+  hdBuildings,
+  hdCharacters,
+  hdGroundComplete,
+} from '../game/images/hd/hdManifest';
 import { TILE_SIZE } from '../constants';
 import { getProtagonistId } from '../state/selectors';
+import { ambientAt } from './lighting';
 import type { Map as GameMap } from '../map';
 import type { PortNpc } from '../game/port/portNpc';
 import type { PortPlayer } from '../game/port/portPlayer';
@@ -57,6 +62,8 @@ interface Session {
   buildingLayer: Container;
   characterLayer: Container;
   shadows: Graphics;
+  tint: Graphics;
+  lights: Container;
   emissiveSprites: Sprite[];
   marker: Graphics;
   tileSprites: Sprite[];
@@ -281,6 +288,8 @@ const createSession = (): Session => ({
   buildingLayer: new Container(),
   characterLayer: new Container(),
   shadows: new Graphics(),
+  tint: new Graphics(),
+  lights: new Container(),
   emissiveSprites: [],
   marker: new Graphics(),
   tileSprites: [],
@@ -305,14 +314,35 @@ const drawMarker = (marker: Graphics, goal: Position | null) => {
   marker.position.set((goal.x + 1) * TILE_SIZE, (goal.y + 1) * TILE_SIZE);
 };
 
+let lightTexture: Texture | null = null;
+
+const warmLightTexture = (): Texture => {
+  if (!lightTexture) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const context = canvas.getContext('2d')!;
+    const gradient = context.createRadialGradient(32, 32, 2, 32, 32, 32);
+    gradient.addColorStop(0, 'rgba(255,210,140,0.9)');
+    gradient.addColorStop(0.5, 'rgba(255,170,80,0.35)');
+    gradient.addColorStop(1, 'rgba(255,150,60,0)');
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 64, 64);
+    lightTexture = Texture.from(canvas);
+  }
+
+  return lightTexture;
+};
+
 interface PortRendererOptions {
   map: GameMap;
   hdPort: boolean;
+  lightSpots: Position[];
 }
 
 const createPortRenderer = (
   canvas: HTMLCanvasElement,
-  { map, hdPort }: PortRendererOptions,
+  { map, hdPort, lightSpots }: PortRendererOptions,
 ) => {
   const session = createSession();
   let ready = false;
@@ -347,11 +377,29 @@ const createPortRenderer = (
       });
     }
 
+    if (hdPort) {
+      lightSpots.forEach((spot) => {
+        const light = new Sprite(warmLightTexture());
+        light.anchor.set(0.5);
+        light.position.set(
+          (spot.x + 0.5) * TILE_SIZE,
+          (spot.y + 0.5) * TILE_SIZE - 8,
+        );
+        light.width = 96;
+        light.height = 96;
+        light.blendMode = 'add';
+        session.lights.addChild(light);
+      });
+      session.tint.blendMode = 'multiply';
+    }
+
     session.world.addChild(
       session.tileLayer,
       session.buildingLayer,
       session.shadows,
       session.characterLayer,
+      session.lights,
+      session.tint,
       session.marker,
     );
     app.stage.addChild(session.world);
@@ -503,6 +551,31 @@ const createPortRenderer = (
           sprite.texture = characterTexture(frame);
           sprite.position.set(position.x * TILE_SIZE, position.y * TILE_SIZE);
         }
+      });
+
+      const hdActive = hdPort && hdGroundComplete;
+      const ambient = ambientAt(timeOfDay);
+
+      session.tint.clear();
+      if (hdActive) {
+        const [r, g, b] = ambient.tint.map(Math.round);
+        session.tint
+          .rect(
+            camera.x * TILE_SIZE,
+            camera.y * TILE_SIZE,
+            CANVAS_WIDTH / zoomFactor + TILE_SIZE,
+            CANVAS_HEIGHT / zoomFactor + TILE_SIZE,
+          )
+          .fill({ color: r * 65536 + g * 256 + b });
+      }
+
+      const lightAlpha = hdActive
+        ? Math.min(1, Math.max(0, (ambient.darkness - 0.3) / 0.3))
+        : 0;
+      session.lights.alpha = lightAlpha;
+      session.emissiveSprites.forEach((emissive) => {
+        const sprite = emissive;
+        sprite.alpha = lightAlpha;
       });
 
       const markerChanged =

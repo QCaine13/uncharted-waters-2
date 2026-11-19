@@ -12,6 +12,8 @@ export class Application {
 export class Container {
   children: unknown[] = [];
 
+  alpha = 1;
+
   addChild(...children: unknown[]) {
     this.children.push(...children);
   }
@@ -24,7 +26,13 @@ export class Container {
 }
 
 export class Graphics {
+  blendMode = 'normal';
+
   clear() {
+    return this;
+  }
+
+  rect() {
     return this;
   }
 
