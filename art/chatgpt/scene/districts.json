@@ -1,0 +1,250 @@
+{
+  "tilePx": 32,
+  "mapTiles": [
+    96,
+    96
+  ],
+  "windowTiles": [
+    48,
+    32
+  ],
+  "note": "window = [x, y] top-left tile of a 48x32-tile (1536x1024 px) image. owned = [x0, y0, x1, y1] tile rects this district contributes to the final map; seams are feathered half a tile.",
+  "order": [
+    "C2",
+    "C1",
+    "C3",
+    "B2",
+    "B1",
+    "B3",
+    "A2",
+    "A1",
+    "A3",
+    "D1",
+    "D2"
+  ],
+  "districts": {
+    "A1": {
+      "name": "王宫西段与城墙",
+      "window": [
+        0,
+        0
+      ],
+      "owned": [
+        [
+          0,
+          0,
+          26.5,
+          27.5
+        ]
+      ]
+    },
+    "A2": {
+      "name": "王宫正门与城墙",
+      "window": [
+        24,
+        0
+      ],
+      "owned": [
+        [
+          26.5,
+          0,
+          70,
+          27.5
+        ]
+      ]
+    },
+    "A3": {
+      "name": "王宫东段与城墙",
+      "window": [
+        48,
+        0
+      ],
+      "owned": [
+        [
+          70,
+          0,
+          96,
+          27.5
+        ]
+      ]
+    },
+    "B1": {
+      "name": "西城区：池塘、道具店、公会、旅馆",
+      "window": [
+        0,
+        27
+      ],
+      "owned": [
+        [
+          0,
+          27.5,
+          46,
+          50.5
+        ]
+      ]
+    },
+    "B2": {
+      "name": "中城区：酒馆与公爵府",
+      "window": [
+        44,
+        27
+      ],
+      "owned": [
+        [
+          46,
+          27.5,
+          59,
+          50.5
+        ],
+        [
+          59,
+          27.5,
+          83.5,
+          52.6
+        ]
+      ]
+    },
+    "B3": {
+      "name": "东城区：拱门与水池庭院",
+      "window": [
+        48,
+        27
+      ],
+      "owned": [
+        [
+          83.5,
+          27.5,
+          96,
+          58
+        ]
+      ]
+    },
+    "C1": {
+      "name": "教堂与西侧海滩",
+      "window": [
+        0,
+        50
+      ],
+      "owned": [
+        [
+          0,
+          50.5,
+          22,
+          80
+        ]
+      ]
+    },
+    "C2": {
+      "name": "码头与市场",
+      "window": [
+        20,
+        50
+      ],
+      "owned": [
+        [
+          22,
+          50.5,
+          59,
+          80
+        ],
+        [
+          59,
+          52.6,
+          67,
+          80
+        ]
+      ]
+    },
+    "C3": {
+      "name": "造船厂与东码头",
+      "window": [
+        48,
+        50
+      ],
+      "owned": [
+        [
+          67,
+          52.6,
+          83.5,
+          80
+        ],
+        [
+          83.5,
+          58,
+          96,
+          80
+        ]
+      ]
+    },
+    "D1": {
+      "name": "外海西",
+      "window": [
+        0,
+        64
+      ],
+      "owned": [
+        [
+          0,
+          80,
+          48,
+          96
+        ]
+      ]
+    },
+    "D2": {
+      "name": "外海东",
+      "window": [
+        48,
+        64
+      ],
+      "owned": [
+        [
+          48,
+          80,
+          96,
+          96
+        ]
+      ]
+    }
+  },
+  "pilot": {
+    "file": "district-quay-market.png",
+    "window": [
+      20,
+      52
+    ]
+  },
+  "patches": {
+    "P1": {
+      "name": "大宅正门与门前灌木",
+      "window": [
+        48,
+        27
+      ],
+      "owned": [
+        [
+          57,
+          29,
+          84,
+          56
+        ]
+      ]
+    },
+    "P2": {
+      "name": "公会正门",
+      "window": [
+        20,
+        20
+      ],
+      "owned": [
+        [
+          28,
+          27.6,
+          45.5,
+          38.8
+        ]
+      ]
+    }
+  },
+  "patchNote": "patches are composited over the blended districts with their feathered owned mask as alpha"
+}
