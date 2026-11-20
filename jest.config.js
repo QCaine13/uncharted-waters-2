@@ -5,7 +5,9 @@ module.exports = {
     '\\.tsx?$': '@swc/jest',
   },
   moduleNameMapper: {
-    '\\.(png|bin|ogg|mp3|wasm|webp)$': 'identity-obj-proxy',
+    '\\.(bin|ogg|mp3|wasm)$': 'identity-obj-proxy',
+    // images are used as <img src>/texture URLs, so they must be strings
+    '\\.(png|webp)$': '<rootDir>/tests/fileMock.js',
     '^pixi.js$': '<rootDir>/tests/pixi.stub.ts',
   },
   testEnvironment: 'jsdom',

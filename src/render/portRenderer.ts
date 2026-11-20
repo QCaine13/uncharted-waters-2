@@ -24,6 +24,7 @@ import {
   isSceneCovered,
 } from '../game/images/hd/hdSceneManifest';
 import { bakeHdGround, loadImages, PROP_SPEC } from './hdGround';
+import { stepProgress, walk16Frame } from './hdWalk';
 import { TILE_SIZE } from '../constants';
 import { getProtagonistId } from '../state/selectors';
 import { ambientAt } from './lighting';
@@ -997,7 +998,13 @@ const createPortRenderer = (
         const hdFrames = hdFramesFor(frame, protagonistId);
 
         if (hdFrames) {
-          sprite.texture = hdFrames[frame % hdFrames.length];
+          // 16-frame strips pick stride/passing by step progress; the
+          // legacy 8- and 2-frame strips keep the frame index as-is
+          const index =
+            hdFrames.length === 16
+              ? walk16Frame(frame, stepProgress(character, percentNextMove))
+              : frame % hdFrames.length;
+          sprite.texture = hdFrames[index];
           sprite.anchor.set(0.5, HD_FEET_BASELINE / HD_CHAR_FRAME);
           sprite.width = HD_CHAR_SIZE;
           sprite.height = HD_CHAR_SIZE;
