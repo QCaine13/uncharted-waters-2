@@ -1,6 +1,7 @@
 import React from 'react';
 
 import Assets from '../../assets';
+import { hdPortraits } from '../../game/images/hd/hdManifest';
 import { classNames } from '../interfaceUtils';
 
 interface Props {
@@ -30,6 +31,18 @@ export default function CharacterPortrait({
   className,
 }: Props) {
   if (portraitId !== undefined) {
+    const hdUrl = hdPortraits[portraitId];
+    if (hdUrl) {
+      return (
+        <img
+          src={hdUrl}
+          className={classNames('object-cover', className ?? '')}
+          alt=""
+          data-test="character-portrait-hd"
+        />
+      );
+    }
+
     return (
       <img
         src={Assets.characters(portraitId)}

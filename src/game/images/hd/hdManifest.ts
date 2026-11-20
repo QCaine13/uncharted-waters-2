@@ -77,6 +77,12 @@ import p_flowerpot from './props/flowerpot.png';
 import p_lantern_post from './props/lantern-post.png';
 import p_crate from './props/crate.png';
 import p_barrel from './props/barrel.png';
+import r_farrell_son from './portraits/farrell-son.webp';
+import r_heroine_captain from './portraits/heroine-captain.webp';
+import r_privateer from './portraits/privateer.webp';
+import r_scholar from './portraits/scholar.webp';
+import r_adventurer from './portraits/adventurer.webp';
+import r_merchant_youth from './portraits/merchant-youth.webp';
 
 export interface HdPlacement {
   x: number;
@@ -283,4 +289,14 @@ export const hdProps: { [id: string]: string } = {
   'lantern-post': p_lantern_post,
   crate: p_crate,
   barrel: p_barrel,
+};
+
+// HD protagonist portraits keyed by legacy portrait id
+export const hdPortraits: { [portraitId: string]: string } = {
+  '1': r_farrell_son,
+  '2': r_heroine_captain,
+  '3': r_privateer,
+  '4': r_scholar,
+  '5': r_adventurer,
+  '6': r_merchant_youth,
 };
