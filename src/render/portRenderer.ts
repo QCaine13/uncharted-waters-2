@@ -18,7 +18,9 @@ import {
 } from '../game/images/hd/hdManifest';
 import {
   HD_SCENE_CHUNK_PX,
+  HD_SCENE_LAMPS,
   hdSceneChunks,
+  hdSceneWaterMask,
   isSceneCovered,
 } from '../game/images/hd/hdSceneManifest';
 import { bakeHdGround, loadImages, PROP_SPEC } from './hdGround';
@@ -85,9 +87,11 @@ interface Session {
   groundLayer: Container;
   buildingLayer: Container;
   sceneLayer: Container;
+  sceneWater: Container;
   actorLayer: Container;
   blobShadows: Graphics;
   waterTiles: TilingSprite[];
+  sceneStreaks: TilingSprite[];
   shadows: Graphics;
   tint: Graphics;
   lights: Container;
@@ -246,6 +250,7 @@ const initApp = (canvas: HTMLCanvasElement): Promise<Application> => {
           ...Object.values(hdProps).map((url) => PixiAssets.load(url)),
           ...Object.values(hdGround).map((url) => PixiAssets.load(url)),
           ...hdSceneChunks.map(({ url }) => PixiAssets.load(url)),
+          ...(hdSceneWaterMask ? [PixiAssets.load(hdSceneWaterMask)] : []),
           ...Object.entries(hdCharacters).map(([id, { url, frames }]) =>
             PixiAssets.load(url).then((texture: Texture) => {
               const { source } = texture;
@@ -324,9 +329,11 @@ const createSession = (): Session => ({
   groundLayer: new Container(),
   buildingLayer: new Container(),
   sceneLayer: new Container(),
+  sceneWater: new Container(),
   actorLayer: new Container(),
   blobShadows: new Graphics(),
   waterTiles: [],
+  sceneStreaks: [],
   shadows: new Graphics(),
   tint: new Graphics(),
   lights: new Container(),
@@ -437,6 +444,44 @@ const warmLightTexture = (): Texture => {
   return lightTexture;
 };
 
+let streakTexture: Texture | null = null;
+
+/*
+  Seamless 256px streak field for animated water over the painted scene:
+  sparse soft horizontally-elongated light streaks, drawn with wraparound
+  copies so the texture tiles without seams.
+*/
+const waterStreakTexture = (): Texture => {
+  if (!streakTexture) {
+    const size = 256;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const context = canvas.getContext('2d')!;
+    context.filter = 'blur(1.5px)';
+
+    for (let i = 0; i < 42; i += 1) {
+      const x = ((i * 73) % size) + ((i * 29) % 17);
+      const y = (i * 97) % size;
+      const w = 24 + ((i * 37) % 56);
+      const h = 1.5 + ((i * 13) % 3);
+      const alpha = 0.06 + ((i * 11) % 10) * 0.012;
+      context.fillStyle = `rgba(255,255,255,${alpha})`;
+      [-size, 0, size].forEach((ox) => {
+        [-size, 0, size].forEach((oy) => {
+          context.beginPath();
+          context.ellipse(x + ox, y + oy, w, h, 0, 0, Math.PI * 2);
+          context.fill();
+        });
+      });
+    }
+
+    streakTexture = Texture.from(canvas);
+  }
+
+  return streakTexture;
+};
+
 interface PortRendererOptions {
   map: GameMap;
   hdPort: boolean;
@@ -498,6 +543,29 @@ const createPortRenderer = (
         sprite.position.set(cx * HD_SCENE_CHUNK_PX, cy * HD_SCENE_CHUNK_PX);
         session.sceneLayer.addChild(sprite);
       });
+
+      // animated streaks over the painting's water, masked to painted sea
+      // and ponds so the still image keeps subtle motion
+      if (hdSceneWaterMask) {
+        [0.1, 0.07].forEach((alpha) => {
+          const streak = new TilingSprite({
+            texture: waterStreakTexture(),
+            width: MAP_PIXELS,
+            height: MAP_PIXELS,
+          });
+          streak.alpha = alpha;
+          streak.blendMode = 'add';
+          session.sceneWater.addChild(streak);
+          session.sceneStreaks.push(streak);
+        });
+        const maskSprite = new Sprite(
+          PixiAssets.get<Texture>(hdSceneWaterMask),
+        );
+        maskSprite.width = MAP_PIXELS;
+        maskSprite.height = MAP_PIXELS;
+        session.sceneWater.addChild(maskSprite);
+        session.sceneWater.mask = maskSprite;
+      }
 
       hdBuildings.forEach((building) => {
         building.placements.forEach((placement) => {
@@ -740,7 +808,30 @@ const createPortRenderer = (
     }
 
     if (hdPort) {
+      // warm glows on painted lamp heads (sconces, door lanterns, posts)
+      HD_SCENE_LAMPS.forEach(({ x, y }) => {
+        const light = new Sprite(warmLightTexture());
+        light.anchor.set(0.5);
+        light.position.set(x, y);
+        light.width = TILE_SIZE * 4;
+        light.height = TILE_SIZE * 4;
+        light.blendMode = 'add';
+        session.lights.addChild(light);
+        session.lightSprites.push(light);
+      });
+
       lightSpots.forEach((spot) => {
+        // skip the procedural door light when a detected painted lamp
+        // already covers that spot — avoids doubled glow
+        const px = (spot.x + 0.5) * TILE_SIZE;
+        const py = (spot.y + 0.5) * TILE_SIZE - 8;
+        const lampNear = HD_SCENE_LAMPS.some(
+          (lamp) =>
+            (lamp.x - px) ** 2 + (lamp.y - py) ** 2 < (3 * TILE_SIZE) ** 2,
+        );
+        if (lampNear) {
+          return;
+        }
         const light = new Sprite(warmLightTexture());
         light.anchor.set(0.5);
         light.position.set(
@@ -766,6 +857,7 @@ const createPortRenderer = (
       session.groundLayer,
       session.buildingLayer,
       session.sceneLayer,
+      session.sceneWater,
       session.blobShadows,
       session.shadows,
       session.actorLayer,
@@ -963,6 +1055,15 @@ const createPortRenderer = (
         const sprite = waterSprite;
         sprite.tilePosition.x = -now * (i === 0 ? 6 : 11);
         sprite.tilePosition.y = i === 0 ? 0 : -now * 4;
+      });
+
+      // painted-water streaks drift slowly and dim at night (~35% strength)
+      const streakFade = 1 - 0.65 * lightAlpha;
+      session.sceneStreaks.forEach((streak, i) => {
+        const sprite = streak;
+        sprite.tilePosition.x = (i === 0 ? 6 : -4) * now;
+        sprite.tilePosition.y = i === 0 ? now * 2 : 0;
+        sprite.alpha = (i === 0 ? 0.1 : 0.07) * streakFade;
       });
 
       drawWeather(session, weather, timeOfDay, now);
