@@ -38,6 +38,7 @@
 | 0    | **本文件** + [DECISIONS.md](DECISIONS.md) + [glossary.md](glossary.md) | 导航、决策日志、三语术语                                    | 中文 |
 | 0    | [roadmap.md](roadmap.md)                                               | 统一路线图（做什么、按什么节奏）                            | 中英 |
 | 1    | [1-baseline/](1-baseline/README.md)                                    | 原作复刻基线：现状审计、原作系统、原作 6 路线故事、数据目标 | 英文 |
+| 1a   | [全机制参数圣经](1-baseline/console-versions-and-mechanics-bible.md) + [差距与创新蓝图](1-baseline/parity-gap-and-innovation-blueprint.md) | 主机口碑评测选型、原版公式参数拆解、源码差距对标与未来六大创新玩法 | 中文 |
 | 2    | [2-world-design/](2-world-design/)                                     | 世界扩展设计：地图现代化、港口扩张策略                      | 英文 |
 | 3    | [3-narrative/](3-narrative/README.md)                                  | 新剧本叙事层：方法论、世界观总览、全球档案、样例            | 中文 |
 | 4    | [4-engineering/](4-engineering/README.md)                              | 实现提案：数据架构、剧情引擎、存档迁移                      | 英文 |

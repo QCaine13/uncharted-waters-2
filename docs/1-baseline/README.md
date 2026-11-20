@@ -66,6 +66,12 @@ implemented in this codebase.
 
 In this folder (`1-baseline/`):
 
+- [console-versions-and-mechanics-bible.md](console-versions-and-mechanics-bible.md):
+  cross-platform console comparison (PC-98/DOS, SFC, MD, PS1, SS) and complete
+  original mechanics & formula breakdown (in Chinese).
+- [parity-gap-and-innovation-blueprint.md](parity-gap-and-innovation-blueprint.md):
+  codebase parity gap audit against `src/` and six-pillar innovation blueprint
+  with `Save v8–v11` evolution plan (in Chinese).
 - [systems.md](systems.md): top-level gameplay systems and feature gaps.
 - [data-targets.md](data-targets.md): data tables we should build or expand.
 - [story-outline.md](story-outline.md): six-protagonist (original) story outline
