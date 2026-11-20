@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SpeakerXMarkIcon, SpeakerWaveIcon } from '@heroicons/react/24/solid';
 
 import { getRegionOrIfSupplyPort } from '../../game/port/portUtils';
@@ -19,9 +19,8 @@ import moslemDance from './assets/moslem-dance.mp3';
 /*
   https://developer.mozilla.org/en-US/docs/Web/Media/Autoplay_guide
 
-  As Sound is never unmounted, calling pause() as described in
-  https://developer.mozilla.org/en-US/docs/Web/API/HTMLAudioElement/Audio#memory_usage_and_management
-  won’t be necessary.
+  Loading a save remounts Left, including Sound. Each instance must release
+  its own looping audio so the previous track cannot survive that remount.
  */
 
 const getAudioElement = () => {
@@ -95,15 +94,24 @@ export const playAudio = async (audio: HTMLAudioElement) => {
 };
 
 export default function Sound({ portId, buildingId }: Props) {
-  const audioRef = useRef(getAudioElement());
+  const [audio] = useState(getAudioElement);
 
   const [hasPlayed, setHasPlayed] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
 
   const triggerAutoplay = () => {
-    playAudio(audioRef.current);
+    playAudio(audio);
     setHasPlayed(true);
   };
+
+  useEffect(
+    () => () => {
+      audio.pause();
+      audio.removeAttribute('src');
+      audio.load();
+    },
+    [audio],
+  );
 
   useEffect(() => {
     const track = getTrack({
@@ -112,10 +120,10 @@ export default function Sound({ portId, buildingId }: Props) {
     });
 
     // without this check, the track will play from the beginning
-    if (audioRef.current.src !== track) {
-      audioRef.current.src = track;
+    if (audio.src !== track) {
+      audio.src = track;
     }
-  }, [portId, buildingId]);
+  }, [audio, portId, buildingId]);
 
   useEffect(() => {
     if (hasPlayed) {
@@ -132,8 +140,8 @@ export default function Sound({ portId, buildingId }: Props) {
   }, [hasPlayed]);
 
   useEffect(() => {
-    audioRef.current.muted = !soundOn;
-  }, [soundOn]);
+    audio.muted = !soundOn;
+  }, [audio, soundOn]);
 
   return (
     <div
