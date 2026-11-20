@@ -420,7 +420,7 @@ def main():
         )
         mask_import = "import s_water_mask from './scene/lisbon-water-mask.webp';"
 
-    lamps_ts = ',\n'.join(
+    lamps_ts = '\n'.join(
         f'  {{ x: {int(round(lx))}, y: {int(round(ly))} }},' for lx, ly in lamps
     )
     coverage_ts = ',\n'.join(f"  '{row}'" for row in coverage)
