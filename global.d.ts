@@ -9,3 +9,4 @@ declare module '*.png';
 declare module '*.wasm';
 declare module '*.ogg';
 declare module '*.mp3';
+declare module '*.webp';

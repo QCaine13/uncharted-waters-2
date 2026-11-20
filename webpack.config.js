@@ -32,7 +32,7 @@ module.exports = (env, argv) => {
           use: [MiniCssExtractPlugin.loader, 'css-loader', 'postcss-loader'],
         },
         {
-          test: /\.(ogg|mp3|png|wasm)$/,
+          test: /\.(ogg|mp3|png|wasm|webp)$/,
           type: 'asset/resource',
         },
       ],

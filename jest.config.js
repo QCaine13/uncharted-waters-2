@@ -5,7 +5,7 @@ module.exports = {
     '\\.tsx?$': '@swc/jest',
   },
   moduleNameMapper: {
-    '\\.(png|bin|ogg|mp3|wasm)$': 'identity-obj-proxy',
+    '\\.(png|bin|ogg|mp3|wasm|webp)$': 'identity-obj-proxy',
     '^pixi.js$': '<rootDir>/tests/pixi.stub.ts',
   },
   testEnvironment: 'jsdom',

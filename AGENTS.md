@@ -25,6 +25,11 @@
   `art/chatgpt/output` (default: the main checkout's copy) into
   `src/game/images/hd/` and regenerates `hdManifest.ts`. Idempotent — re-run
   after new art lands. Requires Python with Pillow (`/tmp/uw2-venv/bin/python`).
+- `scripts/art/import-scene.py [--scene DIR]` stitches the district paintings
+  under `art/chatgpt/scene/output` (default: the main checkout's copy) into
+  WebP chunks under `src/game/images/hd/scene/` plus `hdSceneManifest.ts`.
+  The pilot `district-quay-market.png` is used only while `output/C2.png`
+  does not exist. Same Pillow venv (needs numpy).
 - Debug query params (work in production builds, only with `hddebug=1`):
   - `?hddebug=1&time=<0-1439>` — visual time-of-day only, game state unchanged
   - `?hddebug=1&weather=clear|cloudy|rain|fog`

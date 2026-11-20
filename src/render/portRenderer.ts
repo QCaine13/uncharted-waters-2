@@ -16,6 +16,11 @@ import {
   hdGroundComplete,
   hdProps,
 } from '../game/images/hd/hdManifest';
+import {
+  HD_SCENE_CHUNK_PX,
+  hdSceneChunks,
+  isSceneCovered,
+} from '../game/images/hd/hdSceneManifest';
 import { bakeHdGround, loadImages, PROP_SPEC } from './hdGround';
 import { TILE_SIZE } from '../constants';
 import { getProtagonistId } from '../state/selectors';
@@ -79,6 +84,7 @@ interface Session {
   tileLayer: Container;
   groundLayer: Container;
   buildingLayer: Container;
+  sceneLayer: Container;
   actorLayer: Container;
   blobShadows: Graphics;
   waterTiles: TilingSprite[];
@@ -239,6 +245,7 @@ const initApp = (canvas: HTMLCanvasElement): Promise<Application> => {
           ),
           ...Object.values(hdProps).map((url) => PixiAssets.load(url)),
           ...Object.values(hdGround).map((url) => PixiAssets.load(url)),
+          ...hdSceneChunks.map(({ url }) => PixiAssets.load(url)),
           ...Object.entries(hdCharacters).map(([id, { url, frames }]) =>
             PixiAssets.load(url).then((texture: Texture) => {
               const { source } = texture;
@@ -316,6 +323,7 @@ const createSession = (): Session => ({
   tileLayer: new Container(),
   groundLayer: new Container(),
   buildingLayer: new Container(),
+  sceneLayer: new Container(),
   actorLayer: new Container(),
   blobShadows: new Graphics(),
   waterTiles: [],
@@ -448,9 +456,52 @@ const createPortRenderer = (
       activeSession.weather.destroy({ children: true });
     }
 
+    // painted-scene coverage grid (Lisbon only; empty manifest -> all false)
+    const sceneTiles: boolean[][] = [];
+    for (let y = 0; y < MAP_TILES; y += 1) {
+      sceneTiles[y] = new Array(MAP_TILES).fill(false);
+    }
     if (hdPort) {
+      for (let y = 0; y < MAP_TILES; y += 1) {
+        for (let x = 0; x < MAP_TILES; x += 1) {
+          sceneTiles[y][x] = isSceneCovered(x, y);
+        }
+      }
+    }
+
+    // an overlay whose footprint sits mostly under the painting is part of
+    // the scene itself — drop the sprite so it isn't drawn twice
+    const placementCovered = (p: {
+      x: number;
+      y: number;
+      columns: number;
+      rows: number;
+    }) => {
+      let covered = 0;
+      let total = 0;
+      for (let y = Math.floor(p.y); y < Math.ceil(p.y + p.rows); y += 1) {
+        for (let x = Math.floor(p.x); x < Math.ceil(p.x + p.columns); x += 1) {
+          if (x >= 0 && y >= 0 && x < MAP_TILES && y < MAP_TILES) {
+            total += 1;
+            if (sceneTiles[y][x]) covered += 1;
+          }
+        }
+      }
+      return total > 0 && covered / total > 0.5;
+    };
+
+    if (hdPort) {
+      hdSceneChunks.forEach(({ cx, cy, url }) => {
+        // chunks carry a 1px overlap border so linear filtering shows no
+        // seam between them at fractional zoom
+        const sprite = new Sprite(PixiAssets.get<Texture>(url));
+        sprite.position.set(cx * HD_SCENE_CHUNK_PX, cy * HD_SCENE_CHUNK_PX);
+        session.sceneLayer.addChild(sprite);
+      });
+
       hdBuildings.forEach((building) => {
         building.placements.forEach((placement) => {
+          if (placementCovered(placement)) return;
           // `tile` art (wall segments) repeats at its native tile aspect
           // instead of stretching across the whole placement
           const texture = PixiAssets.get<Texture>(building.url);
@@ -608,6 +659,7 @@ const createPortRenderer = (
           })),
         ),
         opaqueTiles,
+        sceneCovered: sceneTiles,
         entrances: lightSpots,
         isWalkable: (p) => !map.collisionAt(p),
       });
@@ -713,6 +765,7 @@ const createPortRenderer = (
       session.tileLayer,
       session.groundLayer,
       session.buildingLayer,
+      session.sceneLayer,
       session.blobShadows,
       session.shadows,
       session.actorLayer,

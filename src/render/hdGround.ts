@@ -287,6 +287,9 @@ interface BakeOptions {
   // per-tile flags for tiles covered by opaque overlay art; falls back to
   // the full rect coverage when absent
   opaqueTiles?: boolean[][];
+  // tiles fully covered by the painted scene — props, blob shadows, night
+  // lanterns and legacy hulls there are painted into the scene itself
+  sceneCovered?: boolean[][];
   entrances?: Position[];
   isWalkable?: (position: Position) => boolean;
 }
@@ -298,6 +301,7 @@ export const bakeHdGround = ({
   propIds,
   buildingRects,
   opaqueTiles,
+  sceneCovered,
   entrances = [],
   isWalkable = () => false,
 }: BakeOptions): HdGroundBake => {
@@ -494,7 +498,11 @@ export const bakeHdGround = ({
           if (cls !== 'water') continue;
           const tx = Math.floor(wx / TILE_SIZE);
           const ty = Math.floor(wy / TILE_SIZE);
-          if (raw[ty][tx] === 'ship' && !shipCovered[ty][tx]) {
+          if (
+            raw[ty][tx] === 'ship' &&
+            !shipCovered[ty][tx] &&
+            !sceneCovered?.[ty]?.[tx]
+          ) {
             // uncovered ship hull: legacy tile from the day row
             const index = tileAt({ x: tx, y: ty });
             const lx = index * TILE_SIZE + (wx % TILE_SIZE);
@@ -603,6 +611,7 @@ export const bakeHdGround = ({
     const tx = Math.floor(x / TILE_SIZE);
     const ty = Math.floor((y - 1) / TILE_SIZE);
     if (tx < 0 || ty < 0 || tx >= MAP_TILES || ty >= MAP_TILES) return;
+    if (sceneCovered?.[ty]?.[tx]) return;
     const blocked = opaqueTiles ? opaqueTiles[ty][tx] : covered[ty][tx];
     if (!blocked) {
       props.push({ id, x, y });
@@ -673,7 +682,7 @@ export const bakeHdGround = ({
         }
       } else {
         run = 0;
-        if (cls === 'shadow' && !covered[y][x]) {
+        if (cls === 'shadow' && !covered[y][x] && !sceneCovered?.[y]?.[x]) {
           blobShadows.push({
             x: (x + 0.5) * TILE_SIZE,
             y: (y + 0.5) * TILE_SIZE,
@@ -728,7 +737,9 @@ export const bakeHdGround = ({
           (spot.x + 0.5) * TILE_SIZE,
           (spot.y + 1) * TILE_SIZE,
         );
-        lanternSpots.push(spot);
+        if (!sceneCovered?.[spot.y]?.[spot.x]) {
+          lanternSpots.push(spot);
+        }
       }
     });
 
@@ -764,7 +775,9 @@ export const bakeHdGround = ({
               (lx + 0.5) * TILE_SIZE,
               (y + 1) * TILE_SIZE,
             );
-            lanternSpots.push({ x: lx, y });
+            if (!sceneCovered?.[y]?.[lx]) {
+              lanternSpots.push({ x: lx, y });
+            }
           }
           runStart = -1;
         }
