@@ -184,8 +184,51 @@ describe('resolveClickTarget', () => {
     ).toEqual({ x: 9, y: 9 });
   });
 
-  it('snaps to a building within Chebyshev distance 3', () => {
+  it('enters the building when the door footprint is clicked', () => {
     const building = { x: 12, y: 8 };
+
+    expect(
+      resolveClickTarget(
+        { x: 13, y: 9 },
+        {
+          buildings: [building],
+          isBlocked: open,
+          bounds,
+        },
+      ),
+    ).toEqual(building);
+  });
+
+  it('enters the building from its widened approach area', () => {
+    const building = { x: 12, y: 8 };
+
+    // one tile left of the door, two tiles up
+    expect(
+      resolveClickTarget(
+        { x: 11, y: 6 },
+        {
+          buildings: [building],
+          isBlocked: open,
+          bounds,
+        },
+      ),
+    ).toEqual(building);
+  });
+
+  it('does not enter a building on a road click below the door', () => {
+    const building = { x: 12, y: 8 };
+
+    // the approach area ends one tile under the door footprint (y <= b.y+1)
+    expect(
+      resolveClickTarget(
+        { x: 12, y: 11 },
+        {
+          buildings: [building],
+          isBlocked: open,
+          bounds,
+        },
+      ),
+    ).toEqual({ x: 12, y: 10 });
 
     expect(
       resolveClickTarget(
@@ -196,7 +239,49 @@ describe('resolveClickTarget', () => {
           bounds,
         },
       ),
-    ).toEqual(building);
+    ).toEqual({ x: 10, y: 9 });
+  });
+
+  it('enters a building when its body is clicked', () => {
+    // door at {12,8}; solid block covering the building body above the
+    // approach area (which ends at y = b.y - 2)
+    const solid = new Set<string>();
+    for (let y = 4; y <= 8; y += 1) {
+      for (let x = 11; x <= 14; x += 1) {
+        solid.add(`${x},${y}`);
+      }
+    }
+    const isSolidTile = (p: Position) => solid.has(`${p.x},${p.y}`);
+
+    expect(
+      resolveClickTarget(
+        { x: 12, y: 4 },
+        {
+          buildings: [{ x: 12, y: 8 }],
+          isBlocked: open,
+          isSolidTile,
+          bounds,
+        },
+      ),
+    ).toEqual({ x: 12, y: 8 });
+  });
+
+  it('enters nothing on open water far from any door', () => {
+    // solid everywhere: the flood caps at 400 tiles and finds no door
+    const isSolidTile = () => true;
+    const isBlocked = () => true;
+
+    expect(
+      resolveClickTarget(
+        { x: 50, y: 50 },
+        {
+          buildings: [{ x: 12, y: 8 }],
+          isBlocked,
+          isSolidTile,
+          bounds,
+        },
+      ),
+    ).toBeNull();
   });
 
   it('ignores a building further than 3 tiles away', () => {

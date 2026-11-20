@@ -306,6 +306,19 @@ const createMap = (visibleArea: [number, number], portData?: PortData) => {
         return tile >= 50;
       });
     },
+    // whether one tile is fully solid (both footprint columns) — used by
+    // click-to-move's flood fill, which needs per-tile solidity
+    solidAt: (position: Position): boolean => {
+      if (outOfBoundsAt(position)) {
+        return true;
+      }
+
+      if (portData) {
+        return tiles(position) >= collisionIndices.either;
+      }
+
+      return tiles(position) >= 50;
+    },
     tileAt: (position: Position): number => tiles(position),
     tilesetRow: getTilesetOffset,
     tilemapColumns,

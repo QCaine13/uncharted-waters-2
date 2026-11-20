@@ -109,14 +109,14 @@ export const findPath = (
 export interface ClickTargetOptions {
   buildings: Position[];
   isBlocked: (p: Position) => boolean;
+  // single-tile solidity used by the click-on-building flood fill; the
+  // caller feeds it from the tilemap (tile >= collisionIndices.either)
+  isSolidTile?: (p: Position) => boolean;
   bounds: { columns: number; rows: number };
 }
 
 const inBounds = (p: Position, bounds: { columns: number; rows: number }) =>
   p.x >= 0 && p.y >= 0 && p.x < bounds.columns && p.y < bounds.rows;
-
-const chebyshev = (a: Position, b: Position) =>
-  Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
 
 const isWalkable = (
   p: Position,
@@ -124,35 +124,119 @@ const isWalkable = (
   bounds: { columns: number; rows: number },
 ) => inBounds(p, bounds) && !isBlocked(p);
 
+const doorDistance = (building: Position, tile: Position) => {
+  const dx = tile.x - (building.x + 0.5);
+  const dy = tile.y - (building.y + 0.5);
+
+  return dx * dx + dy * dy;
+};
+
+/*
+  Door approach area: the 2x2 door footprint widened by one tile
+  left/right and two tiles up, so clicks in front of a door mean "enter".
+*/
+const inDoorApproach = (building: Position, tile: Position) =>
+  tile.x >= building.x - 1 &&
+  tile.x <= building.x + 2 &&
+  tile.y >= building.y - 2 &&
+  tile.y <= building.y + 1;
+
+// the door footprint itself, widened by one tile on every side
+const touchesDoor = (building: Position, tile: Position) =>
+  tile.x >= building.x - 1 &&
+  tile.x <= building.x + 2 &&
+  tile.y >= building.y - 1 &&
+  tile.y <= building.y + 2;
+
+const FLOOD_CAP = 400;
+
 /*
   Resolves a clicked map tile to the player position (top-left of the 2x2
   footprint) to path towards.
 
-  - A building within Chebyshev distance 3 of the clicked tile becomes the
-    goal, so clicking a building walks into it.
+  - A click inside a door's approach area (footprint + 1 tile sideways,
+    +2 tiles up) walks into that building; the nearest door centre wins.
+  - A click on solid ground flood-fills over solid tiles (cap 400); when
+    the fill reaches a door footprint it walks into that building.
   - Otherwise the player's feet should land on the clicked tile.
   - A blocked non-building goal snaps to the nearest walkable position
     within radius 3.
   - Returns null when nothing usable is found (the click is ignored).
- */
+*/
 export const resolveClickTarget = (
   clickedTile: Position,
-  { buildings, isBlocked, bounds }: ClickTargetOptions,
+  { buildings, isBlocked, isSolidTile, bounds }: ClickTargetOptions,
 ): Position | null => {
+  const isSolid = isSolidTile ?? isBlocked;
+
   let nearestBuilding: Position | null = null;
   let nearestDistance = Infinity;
 
   buildings.forEach((building) => {
-    const distance = chebyshev(building, clickedTile);
+    if (inDoorApproach(building, clickedTile)) {
+      const distance = doorDistance(building, clickedTile);
 
-    if (distance <= 3 && distance < nearestDistance) {
-      nearestBuilding = building;
-      nearestDistance = distance;
+      if (distance < nearestDistance) {
+        nearestBuilding = building;
+        nearestDistance = distance;
+      }
     }
   });
 
   if (nearestBuilding) {
     return nearestBuilding;
+  }
+
+  // clicking the body or roof of a building enters it: flood over solid
+  // tiles from the click until a door footprint is reached
+  if (isSolid(clickedTile)) {
+    const reached = new Set<Position>();
+    const visited = new Set<string>([keyOf(clickedTile)]);
+    let frontier: Position[] = [clickedTile];
+
+    while (frontier.length && visited.size <= FLOOD_CAP) {
+      const next: Position[] = [];
+
+      frontier.forEach((position) => {
+        buildings.forEach((building) => {
+          if (touchesDoor(building, position)) {
+            reached.add(building);
+          }
+        });
+
+        CARDINALS.forEach((direction) => {
+          const { xDelta, yDelta } = directionToChanges[direction];
+          const candidate = { x: position.x + xDelta, y: position.y + yDelta };
+          const key = keyOf(candidate);
+
+          if (
+            !visited.has(key) &&
+            inBounds(candidate, bounds) &&
+            isSolid(candidate)
+          ) {
+            visited.add(key);
+            next.push(candidate);
+          }
+        });
+      });
+
+      frontier = next;
+    }
+
+    if (reached.size) {
+      let best: Position | null = null;
+      let bestDistance = Infinity;
+      reached.forEach((building) => {
+        const distance = doorDistance(building, clickedTile);
+
+        if (distance < bestDistance) {
+          best = building;
+          bestDistance = distance;
+        }
+      });
+
+      return best;
+    }
   }
 
   const feetTarget = { x: clickedTile.x, y: clickedTile.y - 1 };

@@ -54,6 +54,7 @@ const createPort = (portId: string) => {
     const target = resolveClickTarget(tile, {
       buildings: Object.values(portData.buildings),
       isBlocked: map.collisionAt,
+      isSolidTile: map.solidAt,
       bounds,
     });
 
